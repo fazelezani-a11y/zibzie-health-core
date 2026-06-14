@@ -1,0 +1,6 @@
+@Zibzie.HealthCore.Api_HostAddress = http://localhost:5230
+
+GET {{Zibzie.HealthCore.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

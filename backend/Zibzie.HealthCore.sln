@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zibzie.HealthCore.Api", "Zibzie.HealthCore.Api\Zibzie.HealthCore.Api.csproj", "{2193D2CE-0D02-428B-8ACB-26F3EBAB8D46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zibzie.HealthCore.Domain", "Zibzie.HealthCore.Domain\Zibzie.HealthCore.Domain.csproj", "{24F62E7D-956B-4BBD-9C91-19C05E1A6D65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zibzie.HealthCore.Application", "Zibzie.HealthCore.Application\Zibzie.HealthCore.Application.csproj", "{A1ABEC13-83F6-49E8-A911-09F19394C5E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zibzie.HealthCore.Infrastructure", "Zibzie.HealthCore.Infrastructure\Zibzie.HealthCore.Infrastructure.csproj", "{75450AF2-B9BB-48FE-9FD1-31614EE247E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2193D2CE-0D02-428B-8ACB-26F3EBAB8D46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2193D2CE-0D02-428B-8ACB-26F3EBAB8D46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2193D2CE-0D02-428B-8ACB-26F3EBAB8D46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2193D2CE-0D02-428B-8ACB-26F3EBAB8D46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24F62E7D-956B-4BBD-9C91-19C05E1A6D65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24F62E7D-956B-4BBD-9C91-19C05E1A6D65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24F62E7D-956B-4BBD-9C91-19C05E1A6D65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24F62E7D-956B-4BBD-9C91-19C05E1A6D65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1ABEC13-83F6-49E8-A911-09F19394C5E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1ABEC13-83F6-49E8-A911-09F19394C5E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1ABEC13-83F6-49E8-A911-09F19394C5E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1ABEC13-83F6-49E8-A911-09F19394C5E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75450AF2-B9BB-48FE-9FD1-31614EE247E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75450AF2-B9BB-48FE-9FD1-31614EE247E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75450AF2-B9BB-48FE-9FD1-31614EE247E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75450AF2-B9BB-48FE-9FD1-31614EE247E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

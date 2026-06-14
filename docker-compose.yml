@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: zibzie-healthcore-db
+    environment:
+      POSTGRES_DB: zibzie_healthcore
+      POSTGRES_USER: zibzie
+      POSTGRES_PASSWORD: zibzie_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - healthcore_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  healthcore_pgdata:
