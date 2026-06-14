@@ -34,25 +34,33 @@ function DetailRow({
 
 function PatientCard({ patient }: { patient: PatientListItem }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold text-slate-950">
-            {patient.fullName || "بدون نام"}
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">پرونده سلامت بیمار</p>
+    <Link
+      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+      href={`/patients/${patient.id}`}
+    >
+      <article>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-950">
+              {patient.fullName || "بدون نام"}
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">پرونده سلامت بیمار</p>
+          </div>
+          <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+            فعال
+          </span>
         </div>
-        <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-          فعال
-        </span>
-      </div>
 
-      <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
-        <DetailRow label="موبایل" value={patient.mobileNumber} />
-        <DetailRow label="کد ملی" value={patient.nationalCode} />
-        <DetailRow label="تاریخ تولد" value={formatBirthDate(patient.birthDate)} />
-      </div>
-    </article>
+        <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
+          <DetailRow label="موبایل" value={patient.mobileNumber} />
+          <DetailRow label="کد ملی" value={patient.nationalCode} />
+          <DetailRow
+            label="تاریخ تولد"
+            value={formatBirthDate(patient.birthDate)}
+          />
+        </div>
+      </article>
+    </Link>
   );
 }
 
