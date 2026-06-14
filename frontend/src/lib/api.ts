@@ -110,6 +110,33 @@ export type MedicationSummary = {
   updatedAt: string | null;
 };
 
+export type CreateConditionInput = {
+  name: string;
+  status: string;
+  startedYear: string;
+  treatmentSummary: string;
+  clinicianNote: string;
+};
+
+export type CreateAllergyInput = {
+  allergen: string;
+  allergyType: string;
+  severity: string;
+  reactionDescription: string;
+  clinicianNote: string;
+};
+
+export type CreateMedicationInput = {
+  name: string;
+  dose: string;
+  frequency: string;
+  route: string;
+  reason: string;
+  startDate: string;
+  isCurrent: boolean;
+  clinicianNote: string;
+};
+
 export type PatientSummary = {
   id: string;
   firstName: string;
@@ -137,6 +164,16 @@ function apiUrl(path: string) {
 function optionalValue(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function optionalNumber(value: string) {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -204,4 +241,83 @@ export async function getPatientSummary(id: string): Promise<PatientSummary> {
   return requestJson<PatientSummary>(`/api/health-core/patients/${id}/summary`, {
     cache: "no-store",
   });
+}
+
+export async function createCondition(
+  patientId: string,
+  input: CreateConditionInput,
+): Promise<ConditionSummary> {
+  return requestJson<ConditionSummary>(
+    `/api/health-core/patients/${patientId}/conditions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: input.name.trim(),
+        status: optionalValue(input.status),
+        startedYear: optionalNumber(input.startedYear),
+        treatmentSummary: optionalValue(input.treatmentSummary),
+        clinicianNote: optionalValue(input.clinicianNote),
+        sourceType: "ClinicianEntered",
+        verificationStatus: "ClinicianVerified",
+        sensitivityLevel: "Normal",
+      }),
+    },
+  );
+}
+
+export async function createAllergy(
+  patientId: string,
+  input: CreateAllergyInput,
+): Promise<AllergySummary> {
+  return requestJson<AllergySummary>(
+    `/api/health-core/patients/${patientId}/allergies`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        allergen: input.allergen.trim(),
+        allergyType: optionalValue(input.allergyType),
+        severity: optionalValue(input.severity),
+        reactionDescription: optionalValue(input.reactionDescription),
+        clinicianNote: optionalValue(input.clinicianNote),
+        sourceType: "ClinicianEntered",
+        verificationStatus: "ClinicianVerified",
+        sensitivityLevel: "Normal",
+      }),
+    },
+  );
+}
+
+export async function createMedication(
+  patientId: string,
+  input: CreateMedicationInput,
+): Promise<MedicationSummary> {
+  return requestJson<MedicationSummary>(
+    `/api/health-core/patients/${patientId}/medications`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: input.name.trim(),
+        dose: optionalValue(input.dose),
+        frequency: optionalValue(input.frequency),
+        route: optionalValue(input.route),
+        reason: optionalValue(input.reason),
+        startDate: optionalValue(input.startDate),
+        endDate: null,
+        isCurrent: input.isCurrent,
+        clinicianNote: optionalValue(input.clinicianNote),
+        sourceType: "ClinicianEntered",
+        verificationStatus: "ClinicianVerified",
+        sensitivityLevel: "Normal",
+      }),
+    },
+  );
 }

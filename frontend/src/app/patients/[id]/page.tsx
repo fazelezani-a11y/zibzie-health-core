@@ -7,6 +7,11 @@ import {
   type MedicationSummary,
   type PatientSummary,
 } from "@/lib/api";
+import {
+  AllergyCreateForm,
+  ConditionCreateForm,
+  MedicationCreateForm,
+} from "./MedicalHistoryForms";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +54,13 @@ function EmptySection({ text }: { text: string }) {
   );
 }
 
-function ConditionsSection({ items }: { items: ConditionSummary[] }) {
+function ConditionsSection({
+  items,
+  patientId,
+}: {
+  items: ConditionSummary[];
+  patientId: string;
+}) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="text-lg font-bold text-slate-950">بیماری‌ها</h2>
@@ -73,11 +84,18 @@ function ConditionsSection({ items }: { items: ConditionSummary[] }) {
           ))
         )}
       </div>
+      <ConditionCreateForm patientId={patientId} />
     </section>
   );
 }
 
-function AllergiesSection({ items }: { items: AllergySummary[] }) {
+function AllergiesSection({
+  items,
+  patientId,
+}: {
+  items: AllergySummary[];
+  patientId: string;
+}) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="text-lg font-bold text-slate-950">آلرژی‌ها</h2>
@@ -101,11 +119,18 @@ function AllergiesSection({ items }: { items: AllergySummary[] }) {
           ))
         )}
       </div>
+      <AllergyCreateForm patientId={patientId} />
     </section>
   );
 }
 
-function MedicationsSection({ items }: { items: MedicationSummary[] }) {
+function MedicationsSection({
+  items,
+  patientId,
+}: {
+  items: MedicationSummary[];
+  patientId: string;
+}) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="text-lg font-bold text-slate-950">داروهای فعلی</h2>
@@ -129,6 +154,7 @@ function MedicationsSection({ items }: { items: MedicationSummary[] }) {
           ))
         )}
       </div>
+      <MedicationCreateForm patientId={patientId} />
     </section>
   );
 }
@@ -172,9 +198,12 @@ function PatientSummaryView({ summary }: { summary: PatientSummary }) {
       </dl>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <ConditionsSection items={summary.conditions} />
-        <AllergiesSection items={summary.allergies} />
-        <MedicationsSection items={summary.currentMedications} />
+        <ConditionsSection items={summary.conditions} patientId={summary.id} />
+        <AllergiesSection items={summary.allergies} patientId={summary.id} />
+        <MedicationsSection
+          items={summary.currentMedications}
+          patientId={summary.id}
+        />
       </section>
     </main>
   );
