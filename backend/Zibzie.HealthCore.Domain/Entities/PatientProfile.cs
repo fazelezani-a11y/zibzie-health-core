@@ -43,4 +43,6 @@ public class PatientProfile
     public List<PatientDocument> Documents { get; set; } = new();
 
     public List<PatientParaclinicalResult> ParaclinicalResults { get; set; } = new();
+
+    public List<CarePlanItem> CarePlanItems { get; set; } = new();
 }
