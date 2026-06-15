@@ -31,6 +31,7 @@ const eventTypeOptions = [
 const sourceTypeOptions = ["Manual", "System", "ClinicianEntered"];
 const visibilityOptions = ["Internal", "PatientVisible"];
 const sensitivityOptions = ["Normal", "Sensitive"];
+const timelineRefreshEventName = "zibzie:timeline-refresh";
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -287,6 +288,22 @@ export default function PatientTimeline({ patientId }: { patientId: string }) {
     }, 0);
 
     return () => window.clearTimeout(timer);
+  }, [loadTimeline]);
+
+  useEffect(() => {
+    function handleTimelineRefresh() {
+      setIsLoading(true);
+      void loadTimeline();
+    }
+
+    window.addEventListener(timelineRefreshEventName, handleTimelineRefresh);
+
+    return () => {
+      window.removeEventListener(
+        timelineRefreshEventName,
+        handleTimelineRefresh,
+      );
+    };
   }, [loadTimeline]);
 
   return (
