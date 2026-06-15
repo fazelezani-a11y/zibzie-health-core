@@ -39,4 +39,6 @@ public class PatientProfile
     public List<Medication> Medications { get; set; } = new();
 
     public List<PatientTimelineEvent> TimelineEvents { get; set; } = new();
+
+    public List<PatientDocument> Documents { get; set; } = new();
 }
