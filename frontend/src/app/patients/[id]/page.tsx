@@ -15,6 +15,7 @@ import {
 import PatientCarePlan from "./PatientCarePlan";
 import PatientDocuments from "./PatientDocuments";
 import PatientParaclinicalResults from "./PatientParaclinicalResults";
+import PatientReminders from "./PatientReminders";
 import PatientTimeline from "./PatientTimeline";
 
 export const dynamic = "force-dynamic";
@@ -208,6 +209,8 @@ function PatientSummaryView({ summary }: { summary: PatientSummary }) {
       <PatientParaclinicalResults patientId={summary.id} />
 
       <PatientCarePlan patientId={summary.id} />
+
+      <PatientReminders patientId={summary.id} />
 
       <section className="grid gap-4 lg:grid-cols-3">
         <ConditionsSection items={summary.conditions} patientId={summary.id} />
