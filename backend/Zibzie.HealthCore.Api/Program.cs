@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Zibzie.HealthCore.Application.Patients;
+using Zibzie.HealthCore.Infrastructure.Patients;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +15,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseNpgsql(connectionString);
 });
+
+builder.Services.AddScoped<IPatientSummaryService, PatientSummaryService>();
 
 builder.Services.AddCors(options =>
 {
