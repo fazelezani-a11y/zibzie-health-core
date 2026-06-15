@@ -12,6 +12,7 @@ import {
   ConditionCreateForm,
   MedicationCreateForm,
 } from "./MedicalHistoryForms";
+import PatientTimeline from "./PatientTimeline";
 
 export const dynamic = "force-dynamic";
 
@@ -196,6 +197,8 @@ function PatientSummaryView({ summary }: { summary: PatientSummary }) {
         <InfoItem label="تماس اضطراری" value={emergencyContact} />
         <InfoItem label="ایمیل" value={summary.email} />
       </dl>
+
+      <PatientTimeline patientId={summary.id} />
 
       <section className="grid gap-4 lg:grid-cols-3">
         <ConditionsSection items={summary.conditions} patientId={summary.id} />
