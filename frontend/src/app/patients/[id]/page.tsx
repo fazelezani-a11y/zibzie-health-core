@@ -12,6 +12,7 @@ import {
   ConditionCreateForm,
   MedicationCreateForm,
 } from "./MedicalHistoryForms";
+import PatientCarePlan from "./PatientCarePlan";
 import PatientDocuments from "./PatientDocuments";
 import PatientParaclinicalResults from "./PatientParaclinicalResults";
 import PatientTimeline from "./PatientTimeline";
@@ -205,6 +206,8 @@ function PatientSummaryView({ summary }: { summary: PatientSummary }) {
       <PatientDocuments patientId={summary.id} />
 
       <PatientParaclinicalResults patientId={summary.id} />
+
+      <PatientCarePlan patientId={summary.id} />
 
       <section className="grid gap-4 lg:grid-cols-3">
         <ConditionsSection items={summary.conditions} patientId={summary.id} />
