@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Medication> Medications => Set<Medication>();
 
+    public DbSet<PatientTimelineEvent> PatientTimelineEvents => Set<PatientTimelineEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -213,6 +215,53 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.IsCurrent);
 
             entity.HasIndex(x => x.IsDeleted);
+        });
+
+        modelBuilder.Entity<PatientTimelineEvent>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.EventType)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Title)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(2000);
+
+            entity.Property(x => x.OccurredAt)
+                .IsRequired();
+
+            entity.Property(x => x.SourceType)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(x => x.RelatedRecordType)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Visibility)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(x => x.SensitivityLevel)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasOne(x => x.PatientProfile)
+                .WithMany(x => x.TimelineEvents)
+                .HasForeignKey(x => x.PatientProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.PatientProfileId);
+
+            entity.HasIndex(x => x.OccurredAt);
+
+            entity.HasIndex(x => x.IsDeleted);
+
+            entity.HasIndex(x => x.EventType);
         });
     }
 }

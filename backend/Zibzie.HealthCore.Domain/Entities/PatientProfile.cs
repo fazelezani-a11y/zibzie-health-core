@@ -37,4 +37,6 @@ public class PatientProfile
     public List<Allergy> Allergies { get; set; } = new();
 
     public List<Medication> Medications { get; set; } = new();
+
+    public List<PatientTimelineEvent> TimelineEvents { get; set; } = new();
 }
