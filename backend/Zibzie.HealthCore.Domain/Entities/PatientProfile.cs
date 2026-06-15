@@ -45,4 +45,6 @@ public class PatientProfile
     public List<PatientParaclinicalResult> ParaclinicalResults { get; set; } = new();
 
     public List<CarePlanItem> CarePlanItems { get; set; } = new();
+
+    public List<PatientReminder> Reminders { get; set; } = new();
 }
