@@ -1,8 +1,6 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Measurements;
-using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -12,10 +10,14 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class PatientMeasurementsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IPatientMeasurementService _patientMeasurementService;
 
-    public PatientMeasurementsController(AppDbContext dbContext)
+    public PatientMeasurementsController(
+        AppDbContext dbContext,
+        IPatientMeasurementService patientMeasurementService)
     {
         _dbContext = dbContext;
+        _patientMeasurementService = patientMeasurementService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/measurements")]
@@ -152,10 +154,9 @@ public class PatientMeasurementsController : ControllerBase
             });
         }
 
-        var patientExists = await _dbContext.PatientProfiles
-            .AnyAsync(x => x.Id == patientId && x.IsActive);
+        var dto = await _patientMeasurementService.CreatePatientMeasurementAsync(patientId, request);
 
-        if (!patientExists)
+        if (dto is null)
         {
             return NotFound(new
             {
@@ -163,60 +164,10 @@ public class PatientMeasurementsController : ControllerBase
             });
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var measurementType = request.MeasurementType.Trim();
-        var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
-            ? measurementType
-            : request.DisplayName.Trim();
-
-        var measurement = new PatientMeasurement
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            MeasurementType = measurementType,
-            DisplayName = displayName,
-            Value = request.Value.Value,
-            Unit = request.Unit.Trim(),
-            MeasuredAt = request.MeasuredAt?.ToUniversalTime() ?? now,
-            Method = NormalizeOptional(request.Method),
-            BodySite = NormalizeOptional(request.BodySite),
-            Context = NormalizeOptional(request.Context),
-            ReferenceRange = NormalizeOptional(request.ReferenceRange),
-            IsAbnormal = request.IsAbnormal,
-            TargetMin = request.TargetMin,
-            TargetMax = request.TargetMax,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
-            RelatedRecordType = NormalizeOptional(request.RelatedRecordType),
-            RelatedRecordId = request.RelatedRecordId,
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
-            CreatedAt = now
-        };
-
-        var timelineEvent = new PatientTimelineEvent
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            EventType = TimelineEventTypes.Measurement,
-            Title = "ثبت شاخص سلامت",
-            Description = $"{measurement.DisplayName}: {measurement.Value.ToString(CultureInfo.InvariantCulture)} {measurement.Unit}",
-            OccurredAt = measurement.MeasuredAt,
-            SourceType = SourceTypes.System,
-            RelatedRecordType = RecordTypes.PatientMeasurement,
-            RelatedRecordId = measurement.Id,
-            Visibility = VisibilityValues.Internal,
-            SensitivityLevel = measurement.SensitivityLevel,
-            CreatedAt = now
-        };
-
-        _dbContext.PatientMeasurements.Add(measurement);
-        _dbContext.PatientTimelineEvents.Add(timelineEvent);
-        await _dbContext.SaveChangesAsync();
-
         return CreatedAtAction(
             nameof(GetPatientMeasurement),
-            new { measurementId = measurement.Id },
-            ToDto(measurement));
+            new { measurementId = dto.Id },
+            dto);
     }
 
     [HttpGet("api/health-core/measurements/{measurementId:guid}")]

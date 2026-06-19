@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.CarePlans;
 using Zibzie.HealthCore.Application.Documents;
+using Zibzie.HealthCore.Application.Measurements;
 using Zibzie.HealthCore.Application.Patients;
 using Zibzie.HealthCore.Application.Reminders;
 using Zibzie.HealthCore.Infrastructure.CarePlans;
 using Zibzie.HealthCore.Infrastructure.Documents;
+using Zibzie.HealthCore.Infrastructure.Measurements;
 using Zibzie.HealthCore.Infrastructure.Patients;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 using Zibzie.HealthCore.Infrastructure.Reminders;
@@ -33,6 +35,7 @@ builder.Services.AddScoped<IPatientSummaryService, PatientSummaryService>();
 builder.Services.AddScoped<IPatientDocumentService, PatientDocumentService>();
 builder.Services.AddScoped<ICarePlanItemService, CarePlanItemService>();
 builder.Services.AddScoped<IPatientReminderService, PatientReminderService>();
+builder.Services.AddScoped<IPatientMeasurementService, PatientMeasurementService>();
 
 builder.Services.AddCors(options =>
 {
