@@ -69,6 +69,14 @@ function isHighPriority(reminder: PatientReminder) {
   return reminder.priority === "High" || reminder.priority === "Urgent";
 }
 
+function isSystemGenerated(reminder: PatientReminder) {
+  return reminder.sourceType === "System";
+}
+
+function isGeneratedFromCarePlan(reminder: PatientReminder) {
+  return reminder.relatedRecordType === "CarePlanItem";
+}
+
 function TextInput({
   label,
   value,
@@ -155,6 +163,8 @@ function ReminderCard({ reminder }: { reminder: PatientReminder }) {
   const completedAt = formatDateTime(reminder.completedAt);
   const overdue = isOverduePending(reminder);
   const completed = isDone(reminder);
+  const systemGenerated = isSystemGenerated(reminder);
+  const generatedFromCarePlan = isGeneratedFromCarePlan(reminder);
   const priorityTone =
     reminder.priority === "Urgent"
       ? "danger"
@@ -177,6 +187,10 @@ function ReminderCard({ reminder }: { reminder: PatientReminder }) {
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <Badge tone="info">{reminder.reminderType}</Badge>
+          {systemGenerated ? <Badge tone="info">خودکار</Badge> : null}
+          {generatedFromCarePlan ? (
+            <Badge tone="muted">ساخته‌شده از برنامه مراقبتی</Badge>
+          ) : null}
           <Badge tone={priorityTone}>{reminder.priority}</Badge>
           {overdue ? <Badge tone="danger">سررسید گذشته</Badge> : null}
           {isHighPriority(reminder) ? (
