@@ -171,7 +171,7 @@ public class PatientRemindersController : ControllerBase
             CompletedAt = string.Equals(status, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase) ? now : null,
             Status = status,
             Priority = string.IsNullOrWhiteSpace(request.Priority) ? CommonPriorities.Normal : request.Priority.Trim(),
-            Audience = string.IsNullOrWhiteSpace(request.Audience) ? "Internal" : request.Audience.Trim(),
+            Audience = string.IsNullOrWhiteSpace(request.Audience) ? AudienceTypes.Internal : request.Audience.Trim(),
             Channel = string.IsNullOrWhiteSpace(request.Channel) ? null : request.Channel.Trim(),
             RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
             RelatedRecordId = request.RelatedRecordId,
@@ -191,7 +191,7 @@ public class PatientRemindersController : ControllerBase
             SourceType = SourceTypes.System,
             RelatedRecordType = RecordTypes.PatientReminder,
             RelatedRecordId = reminder.Id,
-            Visibility = "Internal",
+            Visibility = VisibilityValues.Internal,
             SensitivityLevel = reminder.SensitivityLevel,
             CreatedAt = now
         };

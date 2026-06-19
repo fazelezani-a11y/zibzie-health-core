@@ -200,7 +200,7 @@ public class CarePlanItemsController : ControllerBase
             SourceType = SourceTypes.System,
             RelatedRecordType = RecordTypes.CarePlanItem,
             RelatedRecordId = item.Id,
-            Visibility = "Internal",
+            Visibility = VisibilityValues.Internal,
             SensitivityLevel = item.SensitivityLevel,
             CreatedAt = now
         };

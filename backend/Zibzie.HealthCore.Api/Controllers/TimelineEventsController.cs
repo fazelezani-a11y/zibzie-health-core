@@ -45,7 +45,7 @@ public class TimelineEventsController : ControllerBase
 
         if (!includeInternal)
         {
-            query = query.Where(x => x.Visibility == "PatientVisible");
+            query = query.Where(x => x.Visibility == VisibilityValues.PatientVisible);
         }
 
         var events = await query
@@ -117,7 +117,7 @@ public class TimelineEventsController : ControllerBase
             SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
             RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
             RelatedRecordId = request.RelatedRecordId,
-            Visibility = string.IsNullOrWhiteSpace(request.Visibility) ? "Internal" : request.Visibility.Trim(),
+            Visibility = string.IsNullOrWhiteSpace(request.Visibility) ? VisibilityValues.Internal : request.Visibility.Trim(),
             SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };

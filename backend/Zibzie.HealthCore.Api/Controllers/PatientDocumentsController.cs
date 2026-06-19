@@ -151,7 +151,7 @@ public class PatientDocumentsController : ControllerBase
             SourceType = SourceTypes.System,
             RelatedRecordType = RecordTypes.PatientDocument,
             RelatedRecordId = document.Id,
-            Visibility = "Internal",
+            Visibility = VisibilityValues.Internal,
             SensitivityLevel = document.SensitivityLevel,
             CreatedAt = now
         };

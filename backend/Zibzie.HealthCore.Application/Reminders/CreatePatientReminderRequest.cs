@@ -16,7 +16,7 @@ public class CreatePatientReminderRequest
 
     public string Priority { get; set; } = CommonPriorities.Normal;
 
-    public string Audience { get; set; } = "Internal";
+    public string Audience { get; set; } = AudienceTypes.Internal;
 
     public string? Channel { get; set; }
 

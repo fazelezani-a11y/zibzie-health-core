@@ -183,7 +183,7 @@ public class ParaclinicalResultsController : ControllerBase
             SourceType = SourceTypes.System,
             RelatedRecordType = RecordTypes.PatientParaclinicalResult,
             RelatedRecordId = result.Id,
-            Visibility = "Internal",
+            Visibility = VisibilityValues.Internal,
             SensitivityLevel = result.SensitivityLevel,
             CreatedAt = now
         };

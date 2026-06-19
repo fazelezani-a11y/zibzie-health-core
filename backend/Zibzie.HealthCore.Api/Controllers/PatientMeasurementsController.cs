@@ -204,7 +204,7 @@ public class PatientMeasurementsController : ControllerBase
             SourceType = SourceTypes.System,
             RelatedRecordType = RecordTypes.PatientMeasurement,
             RelatedRecordId = measurement.Id,
-            Visibility = "Internal",
+            Visibility = VisibilityValues.Internal,
             SensitivityLevel = measurement.SensitivityLevel,
             CreatedAt = now
         };

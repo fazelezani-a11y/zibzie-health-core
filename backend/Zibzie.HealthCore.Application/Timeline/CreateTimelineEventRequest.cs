@@ -18,7 +18,7 @@ public class CreateTimelineEventRequest
 
     public Guid? RelatedRecordId { get; set; }
 
-    public string Visibility { get; set; } = "Internal";
+    public string Visibility { get; set; } = VisibilityValues.Internal;
 
     public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 }
