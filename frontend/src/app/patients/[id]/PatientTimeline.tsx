@@ -258,7 +258,13 @@ function TimelineCreateForm({
   );
 }
 
-export default function PatientTimeline({ patientId }: { patientId: string }) {
+export default function PatientTimeline({
+  patientId,
+  showCreateForm = true,
+}: {
+  patientId: string;
+  showCreateForm?: boolean;
+}) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -328,9 +334,11 @@ export default function PatientTimeline({ patientId }: { patientId: string }) {
         </button>
       </div>
 
-      <div className="mt-5">
-        <TimelineCreateForm patientId={patientId} onCreated={loadTimeline} />
-      </div>
+      {showCreateForm ? (
+        <div className="mt-5">
+          <TimelineCreateForm patientId={patientId} onCreated={loadTimeline} />
+        </div>
+      ) : null}
 
       <div className="mt-5 space-y-3">
         {isLoading ? (

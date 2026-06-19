@@ -286,6 +286,159 @@ function sortByMeasuredAtAscending(measurements: PatientMeasurement[]) {
   });
 }
 
+type MeasurementTrendGroup = {
+  measurementType: string;
+  displayName: string;
+  unit: string;
+  latest: PatientMeasurement;
+  points: PatientMeasurement[];
+};
+
+function getMeasurementTrendGroups(
+  measurements: PatientMeasurement[],
+): MeasurementTrendGroup[] {
+  const grouped = measurements.reduce<Record<string, PatientMeasurement[]>>(
+    (groups, measurement) => ({
+      ...groups,
+      [measurement.measurementType]: [
+        ...(groups[measurement.measurementType] ?? []),
+        measurement,
+      ],
+    }),
+    {},
+  );
+
+  return Object.entries(grouped)
+    .map(([measurementType, group]) => {
+      const points = sortByMeasuredAtAscending(group);
+      const latest = points[points.length - 1];
+
+      return {
+        measurementType,
+        displayName: latest?.displayName ?? measurementType,
+        unit: latest?.unit ?? "",
+        latest,
+        points,
+      };
+    })
+    .filter(
+      (group): group is MeasurementTrendGroup =>
+        Boolean(group.latest) && group.points.length >= 2,
+    )
+    .sort((first, second) => {
+      const firstAbnormal = first.latest.isAbnormal ? 1 : 0;
+      const secondAbnormal = second.latest.isAbnormal ? 1 : 0;
+
+      return secondAbnormal - firstAbnormal || second.points.length - first.points.length;
+    });
+}
+
+function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
+  const width = 180;
+  const height = 54;
+  const values = group.points.map((point) => point.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const range = maxValue - minValue || 1;
+  const linePoints = group.points
+    .map((point, index) => {
+      const x =
+        group.points.length === 1
+          ? 0
+          : (index / (group.points.length - 1)) * width;
+      const y = 6 + ((maxValue - point.value) / range) * (height - 12);
+
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <article className="rounded-md border border-slate-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-950">
+            {group.displayName}
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">
+            {formatNumber(group.points.length)} داده
+          </p>
+        </div>
+        <Badge tone={group.latest.isAbnormal ? "rose" : "teal"}>
+          {formatNumber(group.latest.value)} {group.unit}
+        </Badge>
+      </div>
+      <svg
+        aria-label={`روند ${group.displayName}`}
+        className="mt-3 h-14 w-full rounded-md bg-slate-50"
+        preserveAspectRatio="none"
+        role="img"
+        viewBox={`0 0 ${width} ${height}`}
+      >
+        <polyline
+          fill="none"
+          points={linePoints}
+          stroke={group.latest.isAbnormal ? "#e11d48" : "#0f766e"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+        />
+        {group.points.map((point, index) => {
+          const x =
+            group.points.length === 1
+              ? 0
+              : (index / (group.points.length - 1)) * width;
+          const y = 6 + ((maxValue - point.value) / range) * (height - 12);
+
+          return (
+            <circle
+              cx={x}
+              cy={y}
+              fill={point.isAbnormal ? "#e11d48" : "#0f766e"}
+              key={point.id}
+              r="3.5"
+            />
+          );
+        })}
+      </svg>
+    </article>
+  );
+}
+
+function MeasurementQuickTrends({
+  groups,
+}: {
+  groups: MeasurementTrendGroup[];
+}) {
+  return (
+    <section className="rounded-md border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-base font-bold text-slate-950">
+            روندهای سریع شاخص‌ها
+          </h3>
+          <p className="mt-1 text-sm leading-7 text-slate-600">
+            خلاصه کوچک از شاخص‌هایی که حداقل دو داده ثبت‌شده دارند.
+          </p>
+        </div>
+        {groups.length > 0 ? (
+          <Badge tone="teal">{formatNumber(groups.length)} نمودار</Badge>
+        ) : null}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {groups.length > 0 ? (
+          groups.map((group) => (
+            <MiniTrendCard group={group} key={group.measurementType} />
+          ))
+        ) : (
+          <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm leading-7 text-slate-600 sm:col-span-2 xl:col-span-3">
+            برای نمایش نمودار سریع، حداقل دو اندازه‌گیری از یک نوع لازم است.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function MeasurementTrend({
   measurementType,
   measurements,
@@ -810,6 +963,11 @@ export default function PatientMeasurements({
     );
   }, [measurements, trendMeasurementType]);
 
+  const quickTrendGroups = useMemo(
+    () => getMeasurementTrendGroups(measurements).slice(0, 3),
+    [measurements],
+  );
+
   async function handleCreated(createdMeasurementType: string) {
     setMeasurementTypeFilter(createdMeasurementType);
     await loadMeasurements();
@@ -837,6 +995,10 @@ export default function PatientMeasurements({
         >
           به‌روزرسانی
         </button>
+      </div>
+
+      <div className="mt-5">
+        <MeasurementQuickTrends groups={quickTrendGroups} />
       </div>
 
       <div className="mt-5">
