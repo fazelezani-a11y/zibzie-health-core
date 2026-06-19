@@ -11,10 +11,14 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class PatientRemindersController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IPatientReminderService _patientReminderService;
 
-    public PatientRemindersController(AppDbContext dbContext)
+    public PatientRemindersController(
+        AppDbContext dbContext,
+        IPatientReminderService patientReminderService)
     {
         _dbContext = dbContext;
+        _patientReminderService = patientReminderService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/reminders")]
@@ -146,10 +150,9 @@ public class PatientRemindersController : ControllerBase
             });
         }
 
-        var patientExists = await _dbContext.PatientProfiles
-            .AnyAsync(x => x.Id == patientId && x.IsActive);
+        var dto = await _patientReminderService.CreatePatientReminderAsync(patientId, request);
 
-        if (!patientExists)
+        if (dto is null)
         {
             return NotFound(new
             {
@@ -157,53 +160,10 @@ public class PatientRemindersController : ControllerBase
             });
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var status = string.IsNullOrWhiteSpace(request.Status) ? ReminderStatuses.Pending : request.Status.Trim();
-
-        var reminder = new PatientReminder
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            ReminderType = request.ReminderType.Trim(),
-            Title = request.Title.Trim(),
-            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            DueAt = request.DueAt.Value.ToUniversalTime(),
-            CompletedAt = string.Equals(status, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase) ? now : null,
-            Status = status,
-            Priority = string.IsNullOrWhiteSpace(request.Priority) ? CommonPriorities.Normal : request.Priority.Trim(),
-            Audience = string.IsNullOrWhiteSpace(request.Audience) ? AudienceTypes.Internal : request.Audience.Trim(),
-            Channel = string.IsNullOrWhiteSpace(request.Channel) ? null : request.Channel.Trim(),
-            RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
-            RelatedRecordId = request.RelatedRecordId,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
-            CreatedAt = now
-        };
-
-        var timelineEvent = new PatientTimelineEvent
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            EventType = TimelineEventTypes.Reminder,
-            Title = "ثبت یادآور",
-            Description = reminder.Title,
-            OccurredAt = now,
-            SourceType = SourceTypes.System,
-            RelatedRecordType = RecordTypes.PatientReminder,
-            RelatedRecordId = reminder.Id,
-            Visibility = VisibilityValues.Internal,
-            SensitivityLevel = reminder.SensitivityLevel,
-            CreatedAt = now
-        };
-
-        _dbContext.PatientReminders.Add(reminder);
-        _dbContext.PatientTimelineEvents.Add(timelineEvent);
-        await _dbContext.SaveChangesAsync();
-
         return CreatedAtAction(
             nameof(GetPatientReminder),
-            new { reminderId = reminder.Id },
-            ToDto(reminder));
+            new { reminderId = dto.Id },
+            dto);
     }
 
     [HttpGet("api/health-core/reminders/{reminderId:guid}")]
