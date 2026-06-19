@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Application.CarePlans;
 
 public class CreateCarePlanItemRequest
@@ -20,9 +22,9 @@ public class CreateCarePlanItemRequest
 
     public DateTimeOffset? DueAt { get; set; }
 
-    public string Status { get; set; } = "Planned";
+    public string Status { get; set; } = CarePlanStatuses.Planned;
 
-    public string Priority { get; set; } = "Normal";
+    public string Priority { get; set; } = CommonPriorities.Normal;
 
     public string? ResultSummary { get; set; }
 
@@ -32,9 +34,9 @@ public class CreateCarePlanItemRequest
 
     public Guid? RelatedRecordId { get; set; }
 
-    public string SourceType { get; set; } = "Manual";
+    public string SourceType { get; set; } = SourceTypes.Manual;
 
-    public string VerificationStatus { get; set; } = "Unverified";
+    public string VerificationStatus { get; set; } = VerificationStatuses.Unverified;
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 }

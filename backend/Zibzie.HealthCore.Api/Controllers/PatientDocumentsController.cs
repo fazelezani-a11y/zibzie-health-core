@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Documents;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -133,9 +134,9 @@ public class PatientDocumentsController : ControllerBase
             FileReference = string.IsNullOrWhiteSpace(request.FileReference) ? null : request.FileReference.Trim(),
             MimeType = string.IsNullOrWhiteSpace(request.MimeType) ? null : request.MimeType.Trim(),
             FileSizeBytes = request.FileSizeBytes,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "Manual" : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "Unverified" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -143,12 +144,12 @@ public class PatientDocumentsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             PatientProfileId = patientId,
-            EventType = "Document",
+            EventType = TimelineEventTypes.Document,
             Title = "ثبت مدرک پزشکی",
             Description = document.Title,
             OccurredAt = document.DocumentDate ?? now,
-            SourceType = "System",
-            RelatedRecordType = "PatientDocument",
+            SourceType = SourceTypes.System,
+            RelatedRecordType = RecordTypes.PatientDocument,
             RelatedRecordId = document.Id,
             Visibility = "Internal",
             SensitivityLevel = document.SensitivityLevel,

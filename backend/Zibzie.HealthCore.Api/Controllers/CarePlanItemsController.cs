@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.CarePlans;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -77,14 +78,14 @@ public class CarePlanItemsController : ControllerBase
         }
 
         var items = await query
-            .OrderBy(x => x.Status == "Completed" || x.Status == "Cancelled")
+            .OrderBy(x => x.Status == CarePlanStatuses.Completed || x.Status == CarePlanStatuses.Cancelled)
             .ThenBy(x => x.DueAt == null)
             .ThenBy(x => x.DueAt)
             .ThenBy(x =>
-                x.Priority == "Urgent" ? 0 :
-                x.Priority == "High" ? 1 :
-                x.Priority == "Normal" ? 2 :
-                x.Priority == "Low" ? 3 : 4)
+                x.Priority == CommonPriorities.Urgent ? 0 :
+                x.Priority == CommonPriorities.High ? 1 :
+                x.Priority == CommonPriorities.Normal ? 2 :
+                x.Priority == CommonPriorities.Low ? 3 : 4)
             .ThenByDescending(x => x.CreatedAt)
             .Select(x => new CarePlanItemDto
             {
@@ -160,7 +161,7 @@ public class CarePlanItemsController : ControllerBase
         var now = DateTimeOffset.UtcNow;
         var plannedAt = request.PlannedAt?.ToUniversalTime();
         var dueAt = request.DueAt?.ToUniversalTime();
-        var status = string.IsNullOrWhiteSpace(request.Status) ? "Planned" : request.Status.Trim();
+        var status = string.IsNullOrWhiteSpace(request.Status) ? CarePlanStatuses.Planned : request.Status.Trim();
 
         var item = new CarePlanItem
         {
@@ -175,16 +176,16 @@ public class CarePlanItemsController : ControllerBase
             AssignedTo = string.IsNullOrWhiteSpace(request.AssignedTo) ? null : request.AssignedTo.Trim(),
             PlannedAt = plannedAt,
             DueAt = dueAt,
-            CompletedAt = string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase) ? now : null,
+            CompletedAt = string.Equals(status, CarePlanStatuses.Completed, StringComparison.OrdinalIgnoreCase) ? now : null,
             Status = status,
-            Priority = string.IsNullOrWhiteSpace(request.Priority) ? "Normal" : request.Priority.Trim(),
+            Priority = string.IsNullOrWhiteSpace(request.Priority) ? CommonPriorities.Normal : request.Priority.Trim(),
             ResultSummary = string.IsNullOrWhiteSpace(request.ResultSummary) ? null : request.ResultSummary.Trim(),
             NextAction = string.IsNullOrWhiteSpace(request.NextAction) ? null : request.NextAction.Trim(),
             RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
             RelatedRecordId = request.RelatedRecordId,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "Manual" : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "Unverified" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -192,12 +193,12 @@ public class CarePlanItemsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             PatientProfileId = patientId,
-            EventType = "CarePlan",
+            EventType = TimelineEventTypes.CarePlan,
             Title = "ثبت آیتم پلن مراقبتی",
             Description = item.Title,
             OccurredAt = item.PlannedAt ?? item.DueAt ?? now,
-            SourceType = "System",
-            RelatedRecordType = "CarePlanItem",
+            SourceType = SourceTypes.System,
+            RelatedRecordType = RecordTypes.CarePlanItem,
             RelatedRecordId = item.Id,
             Visibility = "Internal",
             SensitivityLevel = item.SensitivityLevel,
@@ -300,8 +301,8 @@ public class CarePlanItemsController : ControllerBase
 
             var normalizedStatus = request.Status.Trim();
             statusChangedToCompleted =
-                !string.Equals(item.Status, "Completed", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(normalizedStatus, "Completed", StringComparison.OrdinalIgnoreCase);
+                !string.Equals(item.Status, CarePlanStatuses.Completed, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(normalizedStatus, CarePlanStatuses.Completed, StringComparison.OrdinalIgnoreCase);
             item.Status = normalizedStatus;
         }
 

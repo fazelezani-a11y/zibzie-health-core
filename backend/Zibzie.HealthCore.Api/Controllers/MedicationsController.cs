@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.MedicalHistory;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -96,9 +97,9 @@ public class MedicationsController : ControllerBase
             EndDate = request.EndDate,
             IsCurrent = request.IsCurrent,
             ClinicianNote = string.IsNullOrWhiteSpace(request.ClinicianNote) ? null : request.ClinicianNote.Trim(),
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "PatientSelfReport" : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "SelfReported" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.PatientSelfReport : request.SourceType.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.SelfReported : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -146,9 +147,9 @@ public class MedicationsController : ControllerBase
         medication.EndDate = request.EndDate;
         medication.IsCurrent = request.IsCurrent;
         medication.ClinicianNote = string.IsNullOrWhiteSpace(request.ClinicianNote) ? null : request.ClinicianNote.Trim();
-        medication.SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "PatientSelfReport" : request.SourceType.Trim();
-        medication.VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "SelfReported" : request.VerificationStatus.Trim();
-        medication.SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim();
+        medication.SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.PatientSelfReport : request.SourceType.Trim();
+        medication.VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.SelfReported : request.VerificationStatus.Trim();
+        medication.SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim();
         medication.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();

@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Domain.Entities;
 
 public class PatientTimelineEvent
@@ -14,7 +16,7 @@ public class PatientTimelineEvent
 
     public DateTimeOffset OccurredAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public string SourceType { get; set; } = "Manual";
+    public string SourceType { get; set; } = SourceTypes.Manual;
 
     public string? RelatedRecordType { get; set; }
 
@@ -22,7 +24,7 @@ public class PatientTimelineEvent
 
     public string Visibility { get; set; } = "Internal";
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

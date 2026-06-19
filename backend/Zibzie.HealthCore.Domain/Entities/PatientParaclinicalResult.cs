@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Domain.Entities;
 
 public class PatientParaclinicalResult
@@ -30,11 +32,11 @@ public class PatientParaclinicalResult
 
     public string? FollowUpNote { get; set; }
 
-    public string SourceType { get; set; } = "Manual";
+    public string SourceType { get; set; } = SourceTypes.Manual;
 
-    public string VerificationStatus { get; set; } = "Unverified";
+    public string VerificationStatus { get; set; } = VerificationStatuses.Unverified;
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

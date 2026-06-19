@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Reminders;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -79,17 +80,17 @@ public class PatientRemindersController : ControllerBase
 
         if (!includeDone)
         {
-            query = query.Where(x => x.Status != "Done");
+            query = query.Where(x => x.Status != ReminderStatuses.Done);
         }
 
         var reminders = await query
-            .OrderBy(x => x.Status == "Done" || x.Status == "Cancelled")
+            .OrderBy(x => x.Status == ReminderStatuses.Done || x.Status == ReminderStatuses.Cancelled)
             .ThenBy(x => x.DueAt)
             .ThenBy(x =>
-                x.Priority == "Urgent" ? 0 :
-                x.Priority == "High" ? 1 :
-                x.Priority == "Normal" ? 2 :
-                x.Priority == "Low" ? 3 : 4)
+                x.Priority == CommonPriorities.Urgent ? 0 :
+                x.Priority == CommonPriorities.High ? 1 :
+                x.Priority == CommonPriorities.Normal ? 2 :
+                x.Priority == CommonPriorities.Low ? 3 : 4)
             .ThenByDescending(x => x.CreatedAt)
             .Select(x => new PatientReminderDto
             {
@@ -157,7 +158,7 @@ public class PatientRemindersController : ControllerBase
         }
 
         var now = DateTimeOffset.UtcNow;
-        var status = string.IsNullOrWhiteSpace(request.Status) ? "Pending" : request.Status.Trim();
+        var status = string.IsNullOrWhiteSpace(request.Status) ? ReminderStatuses.Pending : request.Status.Trim();
 
         var reminder = new PatientReminder
         {
@@ -167,15 +168,15 @@ public class PatientRemindersController : ControllerBase
             Title = request.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
             DueAt = request.DueAt.Value.ToUniversalTime(),
-            CompletedAt = string.Equals(status, "Done", StringComparison.OrdinalIgnoreCase) ? now : null,
+            CompletedAt = string.Equals(status, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase) ? now : null,
             Status = status,
-            Priority = string.IsNullOrWhiteSpace(request.Priority) ? "Normal" : request.Priority.Trim(),
+            Priority = string.IsNullOrWhiteSpace(request.Priority) ? CommonPriorities.Normal : request.Priority.Trim(),
             Audience = string.IsNullOrWhiteSpace(request.Audience) ? "Internal" : request.Audience.Trim(),
             Channel = string.IsNullOrWhiteSpace(request.Channel) ? null : request.Channel.Trim(),
             RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
             RelatedRecordId = request.RelatedRecordId,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "Manual" : request.SourceType.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -183,12 +184,12 @@ public class PatientRemindersController : ControllerBase
         {
             Id = Guid.NewGuid(),
             PatientProfileId = patientId,
-            EventType = "Reminder",
+            EventType = TimelineEventTypes.Reminder,
             Title = "ثبت یادآور",
             Description = reminder.Title,
             OccurredAt = now,
-            SourceType = "System",
-            RelatedRecordType = "PatientReminder",
+            SourceType = SourceTypes.System,
+            RelatedRecordType = RecordTypes.PatientReminder,
             RelatedRecordId = reminder.Id,
             Visibility = "Internal",
             SensitivityLevel = reminder.SensitivityLevel,
@@ -278,8 +279,8 @@ public class PatientRemindersController : ControllerBase
 
             var normalizedStatus = request.Status.Trim();
             statusChangedToDone =
-                !string.Equals(reminder.Status, "Done", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(normalizedStatus, "Done", StringComparison.OrdinalIgnoreCase);
+                !string.Equals(reminder.Status, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(normalizedStatus, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase);
             reminder.Status = normalizedStatus;
         }
 

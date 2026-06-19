@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.MedicalHistory;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -88,9 +89,9 @@ public class AllergiesController : ControllerBase
             Severity = string.IsNullOrWhiteSpace(request.Severity) ? null : request.Severity.Trim(),
             ReactionDescription = string.IsNullOrWhiteSpace(request.ReactionDescription) ? null : request.ReactionDescription.Trim(),
             ClinicianNote = string.IsNullOrWhiteSpace(request.ClinicianNote) ? null : request.ClinicianNote.Trim(),
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "PatientSelfReport" : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "SelfReported" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.PatientSelfReport : request.SourceType.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.SelfReported : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -134,9 +135,9 @@ public class AllergiesController : ControllerBase
         allergy.Severity = string.IsNullOrWhiteSpace(request.Severity) ? null : request.Severity.Trim();
         allergy.ReactionDescription = string.IsNullOrWhiteSpace(request.ReactionDescription) ? null : request.ReactionDescription.Trim();
         allergy.ClinicianNote = string.IsNullOrWhiteSpace(request.ClinicianNote) ? null : request.ClinicianNote.Trim();
-        allergy.SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "PatientSelfReport" : request.SourceType.Trim();
-        allergy.VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "SelfReported" : request.VerificationStatus.Trim();
-        allergy.SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim();
+        allergy.SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.PatientSelfReport : request.SourceType.Trim();
+        allergy.VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.SelfReported : request.VerificationStatus.Trim();
+        allergy.SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim();
         allergy.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();

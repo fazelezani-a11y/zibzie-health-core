@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Domain.Entities;
 
 public class PatientReminder
@@ -16,9 +18,9 @@ public class PatientReminder
 
     public DateTimeOffset? CompletedAt { get; set; }
 
-    public string Status { get; set; } = "Pending";
+    public string Status { get; set; } = ReminderStatuses.Pending;
 
-    public string Priority { get; set; } = "Normal";
+    public string Priority { get; set; } = CommonPriorities.Normal;
 
     public string Audience { get; set; } = "Internal";
 
@@ -28,9 +30,9 @@ public class PatientReminder
 
     public Guid? RelatedRecordId { get; set; }
 
-    public string SourceType { get; set; } = "Manual";
+    public string SourceType { get; set; } = SourceTypes.Manual;
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

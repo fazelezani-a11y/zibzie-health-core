@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Measurements;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -184,11 +185,11 @@ public class PatientMeasurementsController : ControllerBase
             IsAbnormal = request.IsAbnormal,
             TargetMin = request.TargetMin,
             TargetMax = request.TargetMax,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "Manual" : request.SourceType.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
             RelatedRecordType = NormalizeOptional(request.RelatedRecordType),
             RelatedRecordId = request.RelatedRecordId,
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "Unverified" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -196,12 +197,12 @@ public class PatientMeasurementsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             PatientProfileId = patientId,
-            EventType = "Measurement",
+            EventType = TimelineEventTypes.Measurement,
             Title = "ثبت شاخص سلامت",
             Description = $"{measurement.DisplayName}: {measurement.Value.ToString(CultureInfo.InvariantCulture)} {measurement.Unit}",
             OccurredAt = measurement.MeasuredAt,
-            SourceType = "System",
-            RelatedRecordType = "PatientMeasurement",
+            SourceType = SourceTypes.System,
+            RelatedRecordType = RecordTypes.PatientMeasurement,
             RelatedRecordId = measurement.Id,
             Visibility = "Internal",
             SensitivityLevel = measurement.SensitivityLevel,

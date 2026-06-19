@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.ParaclinicalResults;
+using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -145,9 +146,9 @@ public class ParaclinicalResultsController : ControllerBase
             IsAbnormal = request.IsAbnormal,
             RequiresFollowUp = request.RequiresFollowUp,
             FollowUpNote = string.IsNullOrWhiteSpace(request.FollowUpNote) ? null : request.FollowUpNote.Trim(),
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "Manual" : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? "Unverified" : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? "Normal" : request.SensitivityLevel.Trim(),
+            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
+            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
+            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
             CreatedAt = now
         };
 
@@ -175,12 +176,12 @@ public class ParaclinicalResultsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             PatientProfileId = patientId,
-            EventType = "ParaclinicalResult",
+            EventType = TimelineEventTypes.ParaclinicalResult,
             Title = "ثبت نتیجه پاراکلینیک",
             Description = result.Title,
             OccurredAt = result.ResultDate ?? result.PerformedAt ?? now,
-            SourceType = "System",
-            RelatedRecordType = "PatientParaclinicalResult",
+            SourceType = SourceTypes.System,
+            RelatedRecordType = RecordTypes.PatientParaclinicalResult,
             RelatedRecordId = result.Id,
             Visibility = "Internal",
             SensitivityLevel = result.SensitivityLevel,

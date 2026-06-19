@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Domain.Entities;
 
 public class Condition
@@ -16,11 +18,11 @@ public class Condition
 
     public string? ClinicianNote { get; set; }
 
-    public string SourceType { get; set; } = "PatientSelfReport";
+    public string SourceType { get; set; } = SourceTypes.PatientSelfReport;
 
-    public string VerificationStatus { get; set; } = "SelfReported";
+    public string VerificationStatus { get; set; } = VerificationStatuses.SelfReported;
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -1,3 +1,5 @@
+using Zibzie.HealthCore.Domain.Common;
+
 namespace Zibzie.HealthCore.Application.Timeline;
 
 public class CreateTimelineEventRequest
@@ -10,7 +12,7 @@ public class CreateTimelineEventRequest
 
     public DateTimeOffset? OccurredAt { get; set; }
 
-    public string SourceType { get; set; } = "Manual";
+    public string SourceType { get; set; } = SourceTypes.Manual;
 
     public string? RelatedRecordType { get; set; }
 
@@ -18,5 +20,5 @@ public class CreateTimelineEventRequest
 
     public string Visibility { get; set; } = "Internal";
 
-    public string SensitivityLevel { get; set; } = "Normal";
+    public string SensitivityLevel { get; set; } = SensitivityLevels.Normal;
 }
