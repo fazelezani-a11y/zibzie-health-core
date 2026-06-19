@@ -1,14 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
+import Badge from "@/components/ui/Badge";
+import FormField from "@/components/ui/FormField";
+import MetaItem from "@/components/ui/MetaItem";
+import Notice from "@/components/ui/Notice";
+import SectionHeader from "@/components/ui/SectionHeader";
 import {
   createPatientDocument,
   getPatientDocuments,
   type CreatePatientDocumentPayload,
   type PatientDocument,
 } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 
 const timelineRefreshEventName = "zibzie:timeline-refresh";
 
@@ -48,39 +54,6 @@ const verificationStatusOptions = [
 ];
 const sensitivityLevelOptions = ["Normal", "Sensitive"];
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}
-
 function TextInput({
   label,
   value,
@@ -97,7 +70,7 @@ function TextInput({
   dir?: "ltr" | "rtl" | "auto";
 }) {
   return (
-    <Field label={label}>
+    <FormField label={label}>
       <input
         className="h-10 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
         dir={dir}
@@ -107,7 +80,7 @@ function TextInput({
         type={type}
         value={value}
       />
-    </Field>
+    </FormField>
   );
 }
 
@@ -123,7 +96,7 @@ function SelectInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <Field label={label}>
+    <FormField label={label}>
       <select
         className="h-10 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
         onChange={(event) => onChange(event.target.value)}
@@ -135,11 +108,11 @@ function SelectInput({
           </option>
         ))}
       </select>
-    </Field>
+    </FormField>
   );
 }
 
-function Notice({
+function FormNotice({
   error,
   success,
 }: {
@@ -163,23 +136,6 @@ function Notice({
   );
 }
 
-function DocumentMetaItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm font-semibold text-slate-800">
-        {value}
-      </dd>
-    </div>
-  );
-}
-
 function PatientDocumentCard({ document }: { document: PatientDocument }) {
   const documentDate = formatDate(document.documentDate);
 
@@ -196,26 +152,26 @@ function PatientDocumentCard({ document }: { document: PatientDocument }) {
             </p>
           ) : null}
         </div>
-        <span className="shrink-0 rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+        <Badge className="shrink-0" tone="info">
           {document.documentType}
-        </span>
+        </Badge>
       </div>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {documentDate ? (
-          <DocumentMetaItem label="تاریخ مدرک" value={documentDate} />
+          <MetaItem label="تاریخ مدرک" value={documentDate} />
         ) : null}
         {document.issuerName ? (
-          <DocumentMetaItem
+          <MetaItem
             label="صادرکننده / مرکز"
             value={document.issuerName}
           />
         ) : null}
         {document.fileName ? (
-          <DocumentMetaItem label="نام فایل" value={document.fileName} />
+          <MetaItem label="نام فایل" value={document.fileName} />
         ) : null}
         {document.fileUrl ? (
-          <DocumentMetaItem
+          <MetaItem
             label="لینک فایل"
             value={
               <a
@@ -229,15 +185,15 @@ function PatientDocumentCard({ document }: { document: PatientDocument }) {
             }
           />
         ) : null}
-        <DocumentMetaItem
+        <MetaItem
           label="وضعیت تأیید"
           value={document.verificationStatus}
         />
-        <DocumentMetaItem
+        <MetaItem
           label="سطح حساسیت"
           value={document.sensitivityLevel}
         />
-        <DocumentMetaItem label="منبع" value={document.sourceType} />
+        <MetaItem label="منبع" value={document.sourceType} />
       </dl>
     </article>
   );
@@ -305,7 +261,7 @@ function PatientDocumentCreateForm({
         ثبت مدرک پزشکی جدید
       </h3>
       <div className="mt-3">
-        <Notice error={errorMessage} success={successMessage} />
+        <FormNotice error={errorMessage} success={successMessage} />
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,13 +339,13 @@ function PatientDocumentCreateForm({
         />
       </div>
 
-      <Field label="توضیحات">
+      <FormField label="توضیحات">
         <textarea
           className="mt-1 min-h-20 resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
           onChange={(event) => updateForm("description", event.target.value)}
           value={form.description}
         />
-      </Field>
+      </FormField>
 
       <button
         className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
@@ -435,24 +391,22 @@ export default function PatientDocuments({ patientId }: { patientId: string }) {
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950">مدارک پزشکی</h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            متادیتا و ارجاع فایل‌های مرتبط با پرونده سلامت بیمار.
-          </p>
-        </div>
-        <button
-          className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-          disabled={isLoading}
-          onClick={() => {
-            void loadDocuments();
-          }}
-          type="button"
-        >
-          به‌روزرسانی
-        </button>
-      </div>
+      <SectionHeader
+        action={
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={isLoading}
+            onClick={() => {
+              void loadDocuments();
+            }}
+            type="button"
+          >
+            به‌روزرسانی
+          </button>
+        }
+        description="متادیتا و ارجاع فایل‌های مرتبط با پرونده سلامت بیمار."
+        title="مدارک پزشکی"
+      />
 
       <div className="mt-5">
         <PatientDocumentCreateForm
@@ -463,21 +417,17 @@ export default function PatientDocuments({ patientId }: { patientId: string }) {
 
       <div className="mt-5 space-y-3">
         {isLoading ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            در حال دریافت مدارک پزشکی...
-          </div>
+          <Notice variant="loading">در حال دریافت مدارک پزشکی...</Notice>
         ) : null}
 
         {!isLoading && errorMessage ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm leading-7 text-rose-900">
-            {errorMessage}
-          </div>
+          <Notice variant="error">{errorMessage}</Notice>
         ) : null}
 
         {!isLoading && !errorMessage && documents.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+          <Notice variant="empty">
             هنوز مدرک پزشکی برای این بیمار ثبت نشده است.
-          </div>
+          </Notice>
         ) : null}
 
         {!isLoading && !errorMessage
