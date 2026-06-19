@@ -9,10 +9,14 @@ namespace Zibzie.HealthCore.Infrastructure.CarePlans;
 public class CarePlanItemService : ICarePlanItemService
 {
     private readonly AppDbContext _dbContext;
+    private readonly ICarePlanDueReminderService _carePlanDueReminderService;
 
-    public CarePlanItemService(AppDbContext dbContext)
+    public CarePlanItemService(
+        AppDbContext dbContext,
+        ICarePlanDueReminderService carePlanDueReminderService)
     {
         _dbContext = dbContext;
+        _carePlanDueReminderService = carePlanDueReminderService;
     }
 
     public async Task<CarePlanItemDto?> CreateCarePlanItemAsync(
@@ -77,6 +81,7 @@ public class CarePlanItemService : ICarePlanItemService
 
         _dbContext.CarePlanItems.Add(item);
         _dbContext.PatientTimelineEvents.Add(timelineEvent);
+        await _carePlanDueReminderService.TryAddDueReminderForCarePlanItemAsync(item, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return ToDto(item);

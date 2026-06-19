@@ -36,6 +36,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPatientSummaryService, PatientSummaryService>();
 builder.Services.AddScoped<IPatientDocumentService, PatientDocumentService>();
 builder.Services.AddScoped<ICarePlanItemService, CarePlanItemService>();
+builder.Services.AddScoped<ICarePlanDueReminderService, CarePlanDueReminderService>();
 builder.Services.AddScoped<IPatientReminderService, PatientReminderService>();
 builder.Services.AddScoped<IPatientMeasurementService, PatientMeasurementService>();
 builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService>();
