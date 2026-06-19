@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.ParaclinicalResults;
-using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -11,10 +10,14 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class ParaclinicalResultsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IParaclinicalResultService _paraclinicalResultService;
 
-    public ParaclinicalResultsController(AppDbContext dbContext)
+    public ParaclinicalResultsController(
+        AppDbContext dbContext,
+        IParaclinicalResultService paraclinicalResultService)
     {
         _dbContext = dbContext;
+        _paraclinicalResultService = paraclinicalResultService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/paraclinical-results")]
@@ -93,10 +96,9 @@ public class ParaclinicalResultsController : ControllerBase
             });
         }
 
-        var patientExists = await _dbContext.PatientProfiles
-            .AnyAsync(x => x.Id == patientId && x.IsActive);
+        var createResult = await _paraclinicalResultService.CreateParaclinicalResultAsync(patientId, request);
 
-        if (!patientExists)
+        if (createResult.Status == CreateParaclinicalResultStatus.PatientNotFound)
         {
             return NotFound(new
             {
@@ -104,8 +106,7 @@ public class ParaclinicalResultsController : ControllerBase
             });
         }
 
-        if (request.LinkedDocumentId.HasValue &&
-            !await LinkedDocumentBelongsToPatientAsync(patientId, request.LinkedDocumentId.Value))
+        if (createResult.Status == CreateParaclinicalResultStatus.LinkedDocumentNotFound)
         {
             return BadRequest(new
             {
@@ -113,89 +114,20 @@ public class ParaclinicalResultsController : ControllerBase
             });
         }
 
-        var labItems = request.LabItems ?? new List<CreateLabResultItemRequest>();
-
-        for (var i = 0; i < labItems.Count; i++)
+        if (createResult.Status == CreateParaclinicalResultStatus.LabItemTestNameRequired)
         {
-            if (string.IsNullOrWhiteSpace(labItems[i].TestName))
+            return BadRequest(new
             {
-                return BadRequest(new
-                {
-                    message = "Lab item test name is required."
-                });
-            }
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        var resultDate = request.ResultDate?.ToUniversalTime();
-        var performedAt = request.PerformedAt?.ToUniversalTime();
-
-        var result = new PatientParaclinicalResult
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            ResultType = request.ResultType.Trim(),
-            Title = request.Title.Trim(),
-            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            PerformedAt = performedAt,
-            ResultDate = resultDate,
-            ProviderName = string.IsNullOrWhiteSpace(request.ProviderName) ? null : request.ProviderName.Trim(),
-            LinkedDocumentId = request.LinkedDocumentId,
-            Summary = string.IsNullOrWhiteSpace(request.Summary) ? null : request.Summary.Trim(),
-            Interpretation = string.IsNullOrWhiteSpace(request.Interpretation) ? null : request.Interpretation.Trim(),
-            IsAbnormal = request.IsAbnormal,
-            RequiresFollowUp = request.RequiresFollowUp,
-            FollowUpNote = string.IsNullOrWhiteSpace(request.FollowUpNote) ? null : request.FollowUpNote.Trim(),
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
-            CreatedAt = now
-        };
-
-        for (var i = 0; i < labItems.Count; i++)
-        {
-            var item = labItems[i];
-
-            result.LabItems.Add(new PatientLabResultItem
-            {
-                Id = Guid.NewGuid(),
-                PatientParaclinicalResultId = result.Id,
-                TestName = item.TestName.Trim(),
-                Value = string.IsNullOrWhiteSpace(item.Value) ? null : item.Value.Trim(),
-                NumericValue = item.NumericValue,
-                Unit = string.IsNullOrWhiteSpace(item.Unit) ? null : item.Unit.Trim(),
-                ReferenceRange = string.IsNullOrWhiteSpace(item.ReferenceRange) ? null : item.ReferenceRange.Trim(),
-                IsAbnormal = item.IsAbnormal,
-                Interpretation = string.IsNullOrWhiteSpace(item.Interpretation) ? null : item.Interpretation.Trim(),
-                DisplayOrder = item.DisplayOrder ?? i + 1,
-                CreatedAt = now
+                message = "Lab item test name is required."
             });
         }
 
-        var timelineEvent = new PatientTimelineEvent
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            EventType = TimelineEventTypes.ParaclinicalResult,
-            Title = "ثبت نتیجه پاراکلینیک",
-            Description = result.Title,
-            OccurredAt = result.ResultDate ?? result.PerformedAt ?? now,
-            SourceType = SourceTypes.System,
-            RelatedRecordType = RecordTypes.PatientParaclinicalResult,
-            RelatedRecordId = result.Id,
-            Visibility = VisibilityValues.Internal,
-            SensitivityLevel = result.SensitivityLevel,
-            CreatedAt = now
-        };
-
-        _dbContext.PatientParaclinicalResults.Add(result);
-        _dbContext.PatientTimelineEvents.Add(timelineEvent);
-        await _dbContext.SaveChangesAsync();
+        var dto = createResult.Result!;
 
         return CreatedAtAction(
             nameof(GetParaclinicalResult),
-            new { resultId = result.Id },
-            ToDto(result));
+            new { resultId = dto.Id },
+            dto);
     }
 
     [HttpGet("api/health-core/paraclinical-results/{resultId:guid}")]
