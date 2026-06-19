@@ -14,6 +14,7 @@ import {
 } from "./MedicalHistoryForms";
 import PatientCarePlan from "./PatientCarePlan";
 import PatientDocuments from "./PatientDocuments";
+import PatientMeasurements from "./PatientMeasurements";
 import PatientParaclinicalResults from "./PatientParaclinicalResults";
 import PatientReminders from "./PatientReminders";
 import PatientTimeline from "./PatientTimeline";
@@ -211,6 +212,8 @@ function PatientSummaryView({ summary }: { summary: PatientSummary }) {
       <PatientCarePlan patientId={summary.id} />
 
       <PatientReminders patientId={summary.id} />
+
+      <PatientMeasurements patientId={summary.id} />
 
       <section className="grid gap-4 lg:grid-cols-3">
         <ConditionsSection items={summary.conditions} patientId={summary.id} />
