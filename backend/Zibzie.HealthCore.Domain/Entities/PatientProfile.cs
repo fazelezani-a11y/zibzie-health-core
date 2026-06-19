@@ -47,4 +47,6 @@ public class PatientProfile
     public List<CarePlanItem> CarePlanItems { get; set; } = new();
 
     public List<PatientReminder> Reminders { get; set; } = new();
+
+    public List<PatientMeasurement> Measurements { get; set; } = new();
 }
