@@ -11,10 +11,14 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class CarePlanItemsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly ICarePlanItemService _carePlanItemService;
 
-    public CarePlanItemsController(AppDbContext dbContext)
+    public CarePlanItemsController(
+        AppDbContext dbContext,
+        ICarePlanItemService carePlanItemService)
     {
         _dbContext = dbContext;
+        _carePlanItemService = carePlanItemService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/care-plan")]
@@ -147,10 +151,9 @@ public class CarePlanItemsController : ControllerBase
             });
         }
 
-        var patientExists = await _dbContext.PatientProfiles
-            .AnyAsync(x => x.Id == patientId && x.IsActive);
+        var dto = await _carePlanItemService.CreateCarePlanItemAsync(patientId, request);
 
-        if (!patientExists)
+        if (dto is null)
         {
             return NotFound(new
             {
@@ -158,61 +161,10 @@ public class CarePlanItemsController : ControllerBase
             });
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var plannedAt = request.PlannedAt?.ToUniversalTime();
-        var dueAt = request.DueAt?.ToUniversalTime();
-        var status = string.IsNullOrWhiteSpace(request.Status) ? CarePlanStatuses.Planned : request.Status.Trim();
-
-        var item = new CarePlanItem
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            Category = request.Category.Trim(),
-            ItemType = request.ItemType.Trim(),
-            Title = request.Title.Trim(),
-            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim(),
-            RequestedBy = string.IsNullOrWhiteSpace(request.RequestedBy) ? null : request.RequestedBy.Trim(),
-            AssignedTo = string.IsNullOrWhiteSpace(request.AssignedTo) ? null : request.AssignedTo.Trim(),
-            PlannedAt = plannedAt,
-            DueAt = dueAt,
-            CompletedAt = string.Equals(status, CarePlanStatuses.Completed, StringComparison.OrdinalIgnoreCase) ? now : null,
-            Status = status,
-            Priority = string.IsNullOrWhiteSpace(request.Priority) ? CommonPriorities.Normal : request.Priority.Trim(),
-            ResultSummary = string.IsNullOrWhiteSpace(request.ResultSummary) ? null : request.ResultSummary.Trim(),
-            NextAction = string.IsNullOrWhiteSpace(request.NextAction) ? null : request.NextAction.Trim(),
-            RelatedRecordType = string.IsNullOrWhiteSpace(request.RelatedRecordType) ? null : request.RelatedRecordType.Trim(),
-            RelatedRecordId = request.RelatedRecordId,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
-            CreatedAt = now
-        };
-
-        var timelineEvent = new PatientTimelineEvent
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            EventType = TimelineEventTypes.CarePlan,
-            Title = "ثبت آیتم پلن مراقبتی",
-            Description = item.Title,
-            OccurredAt = item.PlannedAt ?? item.DueAt ?? now,
-            SourceType = SourceTypes.System,
-            RelatedRecordType = RecordTypes.CarePlanItem,
-            RelatedRecordId = item.Id,
-            Visibility = VisibilityValues.Internal,
-            SensitivityLevel = item.SensitivityLevel,
-            CreatedAt = now
-        };
-
-        _dbContext.CarePlanItems.Add(item);
-        _dbContext.PatientTimelineEvents.Add(timelineEvent);
-        await _dbContext.SaveChangesAsync();
-
         return CreatedAtAction(
             nameof(GetCarePlanItem),
-            new { itemId = item.Id },
-            ToDto(item));
+            new { itemId = dto.Id },
+            dto);
     }
 
     [HttpGet("api/health-core/care-plan-items/{itemId:guid}")]
