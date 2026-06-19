@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Documents;
-using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
@@ -11,10 +10,14 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class PatientDocumentsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IPatientDocumentService _patientDocumentService;
 
-    public PatientDocumentsController(AppDbContext dbContext)
+    public PatientDocumentsController(
+        AppDbContext dbContext,
+        IPatientDocumentService patientDocumentService)
     {
         _dbContext = dbContext;
+        _patientDocumentService = patientDocumentService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/documents")]
@@ -106,10 +109,9 @@ public class PatientDocumentsController : ControllerBase
             });
         }
 
-        var patientExists = await _dbContext.PatientProfiles
-            .AnyAsync(x => x.Id == patientId && x.IsActive);
+        var dto = await _patientDocumentService.CreatePatientDocumentAsync(patientId, request);
 
-        if (!patientExists)
+        if (dto is null)
         {
             return NotFound(new
             {
@@ -117,54 +119,9 @@ public class PatientDocumentsController : ControllerBase
             });
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var documentDate = request.DocumentDate?.ToUniversalTime();
-
-        var document = new PatientDocument
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            DocumentType = request.DocumentType.Trim(),
-            Title = request.Title.Trim(),
-            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            DocumentDate = documentDate,
-            IssuerName = string.IsNullOrWhiteSpace(request.IssuerName) ? null : request.IssuerName.Trim(),
-            FileName = string.IsNullOrWhiteSpace(request.FileName) ? null : request.FileName.Trim(),
-            FileUrl = string.IsNullOrWhiteSpace(request.FileUrl) ? null : request.FileUrl.Trim(),
-            FileReference = string.IsNullOrWhiteSpace(request.FileReference) ? null : request.FileReference.Trim(),
-            MimeType = string.IsNullOrWhiteSpace(request.MimeType) ? null : request.MimeType.Trim(),
-            FileSizeBytes = request.FileSizeBytes,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? SourceTypes.Manual : request.SourceType.Trim(),
-            VerificationStatus = string.IsNullOrWhiteSpace(request.VerificationStatus) ? VerificationStatuses.Unverified : request.VerificationStatus.Trim(),
-            SensitivityLevel = string.IsNullOrWhiteSpace(request.SensitivityLevel) ? SensitivityLevels.Normal : request.SensitivityLevel.Trim(),
-            CreatedAt = now
-        };
-
-        var timelineEvent = new PatientTimelineEvent
-        {
-            Id = Guid.NewGuid(),
-            PatientProfileId = patientId,
-            EventType = TimelineEventTypes.Document,
-            Title = "ثبت مدرک پزشکی",
-            Description = document.Title,
-            OccurredAt = document.DocumentDate ?? now,
-            SourceType = SourceTypes.System,
-            RelatedRecordType = RecordTypes.PatientDocument,
-            RelatedRecordId = document.Id,
-            Visibility = VisibilityValues.Internal,
-            SensitivityLevel = document.SensitivityLevel,
-            CreatedAt = now
-        };
-
-        _dbContext.PatientDocuments.Add(document);
-        _dbContext.PatientTimelineEvents.Add(timelineEvent);
-        await _dbContext.SaveChangesAsync();
-
-        var dto = ToDto(document);
-
         return CreatedAtAction(
             nameof(GetPatientDocument),
-            new { documentId = document.Id },
+            new { documentId = dto.Id },
             dto);
     }
 
