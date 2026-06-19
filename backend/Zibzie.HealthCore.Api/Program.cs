@@ -5,6 +5,13 @@ using Zibzie.HealthCore.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (OperatingSystem.IsWindows())
+{
+    builder.Logging.ClearProviders();
+    builder.Logging.AddConsole();
+    builder.Logging.AddDebug();
+}
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
