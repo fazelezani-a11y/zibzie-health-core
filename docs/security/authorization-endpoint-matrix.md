@@ -21,6 +21,12 @@ Current patient-record controllers:
 
 No access-management, export, share, download, or security admin endpoints exist yet.
 
+## Current Enforcement Status
+
+- Phase 84B2 protects Documents endpoints.
+- Phase 84C protects Paraclinical Results endpoints.
+- Medical history, care plan, reminders, measurements, patient summary/profile, and timeline are not protected yet.
+
 ## Request Context Gap
 
 The API currently has no real authentication/current-user infrastructure.

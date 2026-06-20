@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.ParaclinicalResults;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,13 +13,22 @@ public class ParaclinicalResultsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IParaclinicalResultService _paraclinicalResultService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public ParaclinicalResultsController(
         AppDbContext dbContext,
-        IParaclinicalResultService paraclinicalResultService)
+        IParaclinicalResultService paraclinicalResultService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _paraclinicalResultService = paraclinicalResultService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/paraclinical-results")]
@@ -28,6 +39,27 @@ public class ParaclinicalResultsController : ControllerBase
         [FromQuery] string? sensitivityLevel = null,
         [FromQuery] bool? requiresFollowUp = null)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewParaclinicalResults,
+            sensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogParaclinicalAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewParaclinicalResults,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -72,6 +104,15 @@ public class ParaclinicalResultsController : ControllerBase
             .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
 
+        await LogParaclinicalAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            AuditActionTypes.View,
+            HealthPermissions.ViewParaclinicalResults,
+            true,
+            accessDecision);
+
         return Ok(results.Select(ToDto).ToList());
     }
 
@@ -94,6 +135,27 @@ public class ParaclinicalResultsController : ControllerBase
             {
                 message = "Paraclinical result title is required."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditParaclinicalResults,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogParaclinicalAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditParaclinicalResults,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var createResult = await _paraclinicalResultService.CreateParaclinicalResultAsync(patientId, request);
@@ -124,6 +186,15 @@ public class ParaclinicalResultsController : ControllerBase
 
         var dto = createResult.Result!;
 
+        await LogParaclinicalAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            AuditActionTypes.Create,
+            HealthPermissions.EditParaclinicalResults,
+            true,
+            accessDecision);
+
         return CreatedAtAction(
             nameof(GetParaclinicalResult),
             new { resultId = dto.Id },
@@ -145,6 +216,36 @@ public class ParaclinicalResultsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(result.PatientProfileId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewParaclinicalResults,
+            result.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogParaclinicalAuditAsync(
+                requestContext,
+                result.PatientProfileId,
+                result.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewParaclinicalResults,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
+        await LogParaclinicalAuditAsync(
+            requestContext,
+            result.PatientProfileId,
+            result.Id,
+            AuditActionTypes.View,
+            HealthPermissions.ViewParaclinicalResults,
+            true,
+            accessDecision);
+
         return Ok(ToDto(result));
     }
 
@@ -163,6 +264,27 @@ public class ParaclinicalResultsController : ControllerBase
             {
                 message = "Paraclinical result not found."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(result.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditParaclinicalResults,
+            request.SensitivityLevel ?? result.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogParaclinicalAuditAsync(
+                requestContext,
+                result.PatientProfileId,
+                result.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditParaclinicalResults,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         if (request.ResultType is not null)
@@ -292,6 +414,15 @@ public class ParaclinicalResultsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogParaclinicalAuditAsync(
+            requestContext,
+            result.PatientProfileId,
+            result.Id,
+            AuditActionTypes.Update,
+            HealthPermissions.EditParaclinicalResults,
+            true,
+            accessDecision);
+
         return Ok(ToDto(result));
     }
 
@@ -309,6 +440,27 @@ public class ParaclinicalResultsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(result.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditParaclinicalResults,
+            result.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogParaclinicalAuditAsync(
+                requestContext,
+                result.PatientProfileId,
+                result.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditParaclinicalResults,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         result.IsDeleted = true;
@@ -317,7 +469,55 @@ public class ParaclinicalResultsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogParaclinicalAuditAsync(
+            requestContext,
+            result.PatientProfileId,
+            result.Id,
+            AuditActionTypes.Delete,
+            HealthPermissions.EditParaclinicalResults,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogParaclinicalAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid? patientId,
+        Guid? resultId,
+        string actionType,
+        string permission,
+        bool succeeded,
+        AccessDecision? accessDecision)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.ParaclinicalResult,
+            ResourceId = resultId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason ?? "Access denied.",
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private async Task<bool> LinkedDocumentBelongsToPatientAsync(
