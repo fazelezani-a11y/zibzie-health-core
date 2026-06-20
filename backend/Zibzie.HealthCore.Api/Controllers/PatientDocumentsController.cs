@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Documents;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,13 +13,22 @@ public class PatientDocumentsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IPatientDocumentService _patientDocumentService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public PatientDocumentsController(
         AppDbContext dbContext,
-        IPatientDocumentService patientDocumentService)
+        IPatientDocumentService patientDocumentService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _patientDocumentService = patientDocumentService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/documents")]
@@ -27,6 +38,27 @@ public class PatientDocumentsController : ControllerBase
         [FromQuery] string? verificationStatus = null,
         [FromQuery] string? sensitivityLevel = null)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewDocuments,
+            sensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogDocumentAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewDocuments,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -85,6 +117,15 @@ public class PatientDocumentsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogDocumentAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            AuditActionTypes.View,
+            HealthPermissions.ViewDocuments,
+            true,
+            accessDecision);
+
         return Ok(documents);
     }
 
@@ -109,6 +150,27 @@ public class PatientDocumentsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.UploadDocuments,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogDocumentAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.UploadDocuments,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var dto = await _patientDocumentService.CreatePatientDocumentAsync(patientId, request);
 
         if (dto is null)
@@ -118,6 +180,15 @@ public class PatientDocumentsController : ControllerBase
                 message = "Patient not found."
             });
         }
+
+        await LogDocumentAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            AuditActionTypes.Create,
+            HealthPermissions.UploadDocuments,
+            true,
+            accessDecision);
 
         return CreatedAtAction(
             nameof(GetPatientDocument),
@@ -139,6 +210,36 @@ public class PatientDocumentsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(document.PatientProfileId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewDocuments,
+            document.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogDocumentAuditAsync(
+                requestContext,
+                document.PatientProfileId,
+                document.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewDocuments,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
+        await LogDocumentAuditAsync(
+            requestContext,
+            document.PatientProfileId,
+            document.Id,
+            AuditActionTypes.View,
+            HealthPermissions.ViewDocuments,
+            true,
+            accessDecision);
+
         return Ok(ToDto(document));
     }
 
@@ -156,6 +257,27 @@ public class PatientDocumentsController : ControllerBase
             {
                 message = "Document not found."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(document.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditDocuments,
+            request.SensitivityLevel ?? document.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogDocumentAuditAsync(
+                requestContext,
+                document.PatientProfileId,
+                document.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditDocuments,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         if (request.DocumentType is not null)
@@ -267,6 +389,15 @@ public class PatientDocumentsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogDocumentAuditAsync(
+            requestContext,
+            document.PatientProfileId,
+            document.Id,
+            AuditActionTypes.Update,
+            HealthPermissions.EditDocuments,
+            true,
+            accessDecision);
+
         return Ok(ToDto(document));
     }
 
@@ -284,6 +415,27 @@ public class PatientDocumentsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(document.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.DeleteDocuments,
+            document.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogDocumentAuditAsync(
+                requestContext,
+                document.PatientProfileId,
+                document.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.DeleteDocuments,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         document.IsDeleted = true;
@@ -292,7 +444,55 @@ public class PatientDocumentsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogDocumentAuditAsync(
+            requestContext,
+            document.PatientProfileId,
+            document.Id,
+            AuditActionTypes.Delete,
+            HealthPermissions.DeleteDocuments,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogDocumentAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid? patientId,
+        Guid? documentId,
+        string actionType,
+        string permission,
+        bool succeeded,
+        AccessDecision? accessDecision)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.Document,
+            ResourceId = documentId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason ?? "Access denied.",
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static PatientDocumentDto ToDto(PatientDocument document)
