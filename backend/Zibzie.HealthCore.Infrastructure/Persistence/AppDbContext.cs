@@ -36,6 +36,8 @@ public class AppDbContext : DbContext
 
     public DbSet<PatientAccessGrant> PatientAccessGrants => Set<PatientAccessGrant>();
 
+    public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

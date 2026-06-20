@@ -43,6 +43,7 @@ builder.Services.AddScoped<IPatientReminderService, PatientReminderService>();
 builder.Services.AddScoped<IPatientMeasurementService, PatientMeasurementService>();
 builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService>();
 builder.Services.AddScoped<IHealthCoreAuthorizationService, HealthCoreAuthorizationService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 builder.Services.AddCors(options =>
 {
