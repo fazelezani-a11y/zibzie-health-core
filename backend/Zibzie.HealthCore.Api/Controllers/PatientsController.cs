@@ -229,6 +229,26 @@ public class PatientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PatientDetailsDto>> CreatePatient(CreatePatientRequest request)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = CreateDirectoryAuthorizationContext(requestContext);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.CreatePatient);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientProfileAuditAsync(
+                requestContext,
+                null,
+                null,
+                HealthPermissions.CreatePatient,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         if (string.IsNullOrWhiteSpace(request.FirstName))
         {
             return BadRequest(new { message = "First name is required." });
@@ -311,11 +331,41 @@ public class PatientsController : ControllerBase
             CreatedAt = patient.CreatedAt
         };
 
+        await LogPatientProfileAuditAsync(
+            requestContext,
+            patient.Id,
+            patient.Id,
+            HealthPermissions.CreatePatient,
+            AuditActionTypes.Create,
+            true,
+            accessDecision);
+
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, dto);
     }
-        [HttpPut("{id:guid}")]
+
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<PatientDetailsDto>> UpdatePatient(Guid id, UpdatePatientRequest request)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(id);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.EditPatientProfile);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientProfileAuditAsync(
+                requestContext,
+                id,
+                id,
+                HealthPermissions.EditPatientProfile,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         if (string.IsNullOrWhiteSpace(request.FirstName))
         {
             return BadRequest(new { message = "First name is required." });
@@ -413,12 +463,41 @@ public class PatientsController : ControllerBase
             CreatedAt = patient.CreatedAt
         };
 
+        await LogPatientProfileAuditAsync(
+            requestContext,
+            patient.Id,
+            patient.Id,
+            HealthPermissions.EditPatientProfile,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
+
         return Ok(dto);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeactivatePatient(Guid id)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(id);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.DeactivatePatient);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientProfileAuditAsync(
+                requestContext,
+                id,
+                id,
+                HealthPermissions.DeactivatePatient,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patient = await _dbContext.PatientProfiles
             .FirstOrDefaultAsync(x => x.Id == id && x.IsActive);
 
@@ -434,6 +513,15 @@ public class PatientsController : ControllerBase
         patient.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
+
+        await LogPatientProfileAuditAsync(
+            requestContext,
+            patient.Id,
+            patient.Id,
+            HealthPermissions.DeactivatePatient,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
 
         return NoContent();
     }

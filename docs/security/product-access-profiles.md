@@ -51,6 +51,14 @@ care coordination roles. Narrow logistics, receptionist, patient, family,
 HomeVisit, SecondOpinion specialist, and shared-provider roles were not broadened
 for global patient directory access.
 
+Phase 84H3 added patient write/lifecycle permissions conservatively. Internal
+admin roles receive `CreatePatient` and `DeactivatePatient` through existing
+all-permissions profiles. DigiCare case-manager and care-team-manager roles
+receive `CreatePatient` because they are operational care coordination roles.
+`DeactivatePatient` was not granted to DigiCare or other external product roles
+by default; soft deactivation remains an internal admin capability until the
+patient lifecycle workflow is specified.
+
 ## Next Phases
 
 - Persist patient-product-user access grants.

@@ -48,6 +48,10 @@ permissions such as `ViewPatientProfile`, `ViewPatientContactInfo`, and
 ## Patient Profile and Directory
 
 Phase 84H2 added `ViewPatientDirectory` for patient list/search reads.
+Phase 84H3 added patient write/lifecycle permissions:
+
+- `CreatePatient`
+- `DeactivatePatient`
 
 Existing patient-profile permissions remain:
 
@@ -57,9 +61,11 @@ Existing patient-profile permissions remain:
 - `EditPatientContactInfo`
 
 `ViewPatientDirectory` protects patient existence and directory-style lookup.
-`ViewPatientProfile` protects detail/profile reads. The current detail endpoint
-still returns contact fields all-or-nothing; contact-level redaction remains a
-future phase.
+`ViewPatientProfile` protects detail/profile reads. `CreatePatient` protects
+patient creation. `EditPatientProfile` protects patient updates for now.
+`DeactivatePatient` protects the current soft-deactivate endpoint. The current
+detail endpoint still returns contact fields all-or-nothing; contact-level
+redaction remains a future phase.
 
 ## Timeline
 
@@ -75,6 +81,6 @@ covered by separate audit/compliance permissions.
 
 ## Next Phases
 
-Later phases should continue applying endpoint enforcement incrementally. Patient
-create/update/deactivate permissions remain future work after the Phase 84H2
-read-only patient directory/profile enforcement.
+Later phases should continue applying endpoint enforcement incrementally. Future
+patient work should focus on DTO minimization, contact-level redaction, and
+grant-scoped directory filtering.

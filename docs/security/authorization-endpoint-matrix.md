@@ -35,7 +35,7 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84G completed security enforcement coverage audit.
 - Phase 84H completed Patient Profile / Patient Directory authorization strategy.
 - Phase 84H2 protects Patient Profile / Patient Directory read endpoints.
-- Standalone patient profile write enforcement is still pending for create, update, and deactivate.
+- Phase 84H3 protects Patient Profile write/admin endpoints: create, update, and soft deactivate.
 
 ## Request Context Gap
 
@@ -155,9 +155,9 @@ Patterns found:
 | Patients | `/api/health-core/patients` | GET | List/search patients | None per row | `ViewPatientDirectory` | Read | Current DTO still includes national code and mobile for allowed callers; future DTO minimization should split strong identifiers. | Product-scope filtering deferred | Always for denied; success audited with safe metadata | `View` | `PatientProfile` | Protected in Phase 84H2. Grant-scoped directory filtering remains future work. |
 | Patients | `/api/health-core/patients/{id}` | GET | Get patient details | Route | `ViewPatientProfile` | Read | Current DTO includes contact fields all-or-nothing; contact split/redaction deferred. | Yes except internal admin | Always | `View` | `PatientProfile` | Protected in Phase 84H2. Future contact-specific redaction may require `ViewPatientContactInfo`. |
 | Patients | `/api/health-core/patients/{patientId}/summary` | GET | Current backend summary | Route | `ViewPatientSummary` | Read | Current backend summary includes profile/contact plus conditions, allergies, and current medications. Frontend overview loads care plan/reminders/measurements/paraclinical separately. | Yes | Always for denied; audit successful reads as `View` with possible future aggregation | `View` | `PatientSummary` | Protected in Phase 84E5 with conservative all-or-nothing summary access. Partial section filtering/redaction is deferred. |
-| Patients | `/api/health-core/patients` | POST | Create patient | None until created | Future `CreatePatient` | Write | Contact identity data. | Maybe internal/admin profile | Always | `Create` | `PatientProfile` | Grant creation/bootstrap should be decided with patient creation workflow. |
-| Patients | `/api/health-core/patients/{id}` | PUT | Update patient/contact | Route | `EditPatientProfile` and possibly `EditPatientContactInfo` | Write | Contact identity data. | Yes | Always | `Update` | `PatientProfile` | Contact info should probably require contact-specific permission. |
-| Patients | `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Route | Future `DeactivatePatient` | Write | Whole patient record availability. | Yes/internal | Always | `Delete` or `Update` | `PatientProfile` | Current behavior is soft deactivation, not hard delete. |
+| Patients | `/api/health-core/patients` | POST | Create patient | None until created | `CreatePatient` | Write | Contact identity data. | Internal/admin now; bootstrap grants deferred | Always | `Create` | `PatientProfile` | Protected in Phase 84H3. Grant creation/bootstrap remains future work. |
+| Patients | `/api/health-core/patients/{id}` | PUT | Update patient/contact | Route | `EditPatientProfile` | Write | Contact identity data. | Yes except internal admin | Always | `Update` | `PatientProfile` | Protected in Phase 84H3. Contact-specific write split remains future work. |
+| Patients | `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Route | `DeactivatePatient` | Write | Whole patient record availability. | Yes/internal | Always | `Update` | `PatientProfile` | Protected in Phase 84H3. Current behavior is soft deactivation, not hard delete. |
 | Timeline | `/api/health-core/patients/{patientId}/timeline` | GET | List timeline | Route | `ViewTimeline` | Read | Baseline list check now; future sensitivity/visibility redaction may be needed. | Yes | Always for now; future aggregation may reduce UI polling volume | `View` | `TimelineEvent` | Protected in Phase 84F. Timeline is not AuditLog but may expose sensitive history. |
 | Timeline | `/api/health-core/patients/{patientId}/timeline` | POST | Create manual event | Route | `CreateTimelineEvent` | Write | Request sensitivity/visibility. | Yes | Always | `Create` | `TimelineEvent` | Protected in Phase 84F. Manual timeline creation remains a patient-facing history event, not an audit log entry. |
 | Timeline | `/api/health-core/timeline-events/{eventId}` | PUT | Update event | Load event | `EditTimelineEvent` | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `TimelineEvent` | Protected in Phase 84F. Must resolve patient id from event. |
@@ -215,8 +215,9 @@ No grant creation endpoint exists yet.
 
 Phase 84H completed the patient profile and directory authorization strategy.
 Phase 84H2 protects patient read/list/detail endpoints.
+Phase 84H3 protects patient create/update/deactivate endpoints.
 
-Recommended permissions for the next coding phases:
+Current patient permissions:
 
 - `ViewPatientDirectory` for list/search.
 - Existing `ViewPatientProfile` for basic detail/profile reads.
@@ -225,19 +226,17 @@ Recommended permissions for the next coding phases:
 - Existing `EditPatientProfile` and `EditPatientContactInfo` for updates.
 - `DeactivatePatient` for the current soft-deactivate `DELETE` endpoint.
 
-Write enforcement remains pending. The recommended rollout is:
+Remaining future refinements:
 
-- 84H3: protect write endpoints: create, update, deactivate.
 - Future: optional `SearchPatients` split, DTO minimization, and grant-scoped directory filtering.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84H3 Patient Profile write enforcement**.
+Recommended next step: **production identity and grant workflow hardening**, or the optional patient directory refinement phase if endpoint coverage remains the near-term priority.
 
 Keep the rollout narrow and module-by-module:
 
-- Add patient create/deactivate permissions.
-- Protect patient create, update, and deactivate.
-- Keep current admin behavior working through the InternalAdmin development fallback.
-- Audit successful and denied patient profile writes.
+- Add DTO minimization for patient directory/list results.
+- Add grant-scoped directory filtering for external products.
+- Consider a contact-specific read/write split for profile detail and update responses.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.

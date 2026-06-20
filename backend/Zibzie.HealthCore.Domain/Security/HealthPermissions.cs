@@ -4,11 +4,13 @@ public static class HealthPermissions
 {
     // Patient Profile
     public const string ViewPatientProfile = "ViewPatientProfile";
+    public const string CreatePatient = "CreatePatient";
     public const string EditPatientProfile = "EditPatientProfile";
     public const string ViewPatientContactInfo = "ViewPatientContactInfo";
     public const string EditPatientContactInfo = "EditPatientContactInfo";
     public const string ViewPatientSummary = "ViewPatientSummary";
     public const string ViewPatientDirectory = "ViewPatientDirectory";
+    public const string DeactivatePatient = "DeactivatePatient";
 
     // Medical History
     public const string ViewMedicalHistory = "ViewMedicalHistory";
@@ -84,11 +86,13 @@ public static class HealthPermissions
     public static readonly IReadOnlyCollection<string> All = new[]
     {
         ViewPatientProfile,
+        CreatePatient,
         EditPatientProfile,
         ViewPatientContactInfo,
         EditPatientContactInfo,
         ViewPatientSummary,
         ViewPatientDirectory,
+        DeactivatePatient,
         ViewMedicalHistory,
         EditMedicalHistory,
         ViewSensitiveMedicalHistory,
@@ -158,6 +162,7 @@ public static class HealthPermissions
 
     public static readonly IReadOnlyCollection<string> ClinicalWritePermissions = new[]
     {
+        CreatePatient,
         EditPatientProfile,
         EditPatientContactInfo,
         EditMedicalHistory,
@@ -190,6 +195,7 @@ public static class HealthPermissions
         VerifyCarePlanItem,
         ViewAuditLog,
         ExportAuditLog,
+        DeactivatePatient,
         ManageAccess,
         ManageConsent,
         GrantPatientAccess,

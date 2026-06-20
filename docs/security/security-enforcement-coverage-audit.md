@@ -17,7 +17,7 @@ Protected endpoint groups:
 - Patient summary
 - Timeline
 
-Phase 84H2 protected patient list/search and patient detail reads. The main remaining unprotected implemented API surface is now patient profile writes in `PatientsController`: create, update, and delete/deactivate.
+Phase 84H2 protected patient list/search and patient detail reads. Phase 84H3 protected patient create, update, and soft deactivation. All current patient-record controller groups now have endpoint-level authorization and audit logging.
 
 No AuditLog read/admin endpoints are currently implemented. No access grant creation/revocation workflows are currently implemented.
 
@@ -37,9 +37,9 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 | `PatientsController` | `GET /api/health-core/patients/{patientId}/summary` | Protected with authorization + audit | Uses `HealthPermissions.ViewPatientSummary` and `AuditResourceTypes.PatientSummary`. All-or-nothing summary behavior is preserved. |
 | `PatientsController` | Patient list/search | Protected with authorization + audit | Uses `ViewPatientDirectory` and `AuditResourceTypes.PatientProfile`. DTO minimization and grant-scoped directory filtering are deferred. |
 | `PatientsController` | Patient detail/profile | Protected with authorization + audit | Uses `ViewPatientProfile` and `AuditResourceTypes.PatientProfile`. Contact-level redaction is deferred. |
-| `PatientsController` | Patient create | Unprotected and risky | Needs bootstrap/assignment decision and audit create. |
-| `PatientsController` | Patient update | Unprotected and risky | Should require profile/contact edit permissions and audit update. |
-| `PatientsController` | Patient delete/deactivate | Unprotected and risky | Should require a narrow patient lifecycle permission or an agreed existing edit/manage permission and audit delete/update. |
+| `PatientsController` | Patient create | Protected with authorization + audit | Uses `CreatePatient` and `AuditResourceTypes.PatientProfile`. Grant bootstrap remains deferred. |
+| `PatientsController` | Patient update | Protected with authorization + audit | Uses `EditPatientProfile` and `AuditResourceTypes.PatientProfile`. Contact-specific split is deferred. |
+| `PatientsController` | Patient delete/deactivate | Protected with authorization + audit | Uses `DeactivatePatient` and `AuditResourceTypes.PatientProfile`. Endpoint remains soft deactivation. |
 
 ## 3. Protected endpoint coverage
 
@@ -56,6 +56,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 | Patient summary | Yes | `ViewPatientSummary` | Yes | Yes | `PatientSummary` | Yes |
 | Timeline | Yes | `ViewTimeline`, `CreateTimelineEvent`, `EditTimelineEvent`, `DeleteTimelineEvent` | Yes | Yes | `TimelineEvent` | Yes |
 | Patient directory/profile reads | Yes | `ViewPatientDirectory`, `ViewPatientProfile` | Yes | Yes | `PatientProfile` | Yes |
+| Patient profile writes | Yes | `CreatePatient`, `EditPatientProfile`, `DeactivatePatient` | Yes | Yes | `PatientProfile` | Yes |
 
 ## 4. Permission catalog consistency findings
 
@@ -66,7 +67,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 - Administrative permissions include audit, access management, export/share, security settings, restricted data, and emergency access.
 - No obvious typo or constant mismatch was found between controller usage and permission constants.
 - Some delete actions intentionally reuse an edit-style permission where no narrower delete permission exists, such as measurements using `EditMeasurement`. Documents and timeline have explicit delete permissions.
-- Patient profile write/lifecycle permissions remain incomplete for create and soft deactivate. Before protecting create/deactivate, add or choose dedicated permissions.
+- Patient profile write/lifecycle permissions now include `CreatePatient` and `DeactivatePatient`. Contact-specific write splitting remains future work.
 
 ## 5. Product profile consistency findings
 
@@ -93,7 +94,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 - Real production JWT or service-to-service authentication is not implemented. The current development/header fallback remains temporary and not production-safe.
 - PatientAccessGrant creation, revocation, and assignment workflows are not implemented.
-- Patient profile create/update/deactivate endpoints are not yet protected. Patient list/detail reads are protected as of Phase 84H2.
+- Patient profile create/update/deactivate endpoints are protected as of Phase 84H3. Directory DTO minimization and grant-scoped filtering remain future work.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
 - Sensitivity and visibility filtering can be improved for mixed list endpoints and timeline events.
 - AuditLog read/admin/reporting endpoints are not implemented. If exposed later, they must be strictly admin-only and audited.
@@ -105,7 +106,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 1. Replace development/header fallback with real JWT or service-to-service authentication before production use.
 2. Implement PatientAccessGrant creation, revocation, assignment, and emergency-access workflows with audit logging.
-3. Protect standalone patient profile write endpoints: create, update, and soft deactivate.
+3. Add grant creation/revocation workflows and apply grant-scoped directory filtering.
 4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.
 5. Implement partial Patient Summary filtering/redaction so product-specific roles do not receive unauthorized section data.
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
@@ -115,6 +116,6 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 ## 9. Recommended next phase
 
-The next endpoint phase should focus on `PatientsController` standalone patient profile write endpoints. Add patient create/deactivate permissions, then protect create, update, and soft deactivate with audit logging.
+All current implemented patient-record endpoint groups are now protected at the endpoint layer. The next security phase should focus on production identity and grant workflow hardening, or on patient-directory DTO minimization and grant-scoped filtering if endpoint refinement remains the near-term priority.
 
 In parallel, production readiness should prioritize real identity integration and PatientAccessGrant workflows, because the current development fallback is intentionally temporary.
