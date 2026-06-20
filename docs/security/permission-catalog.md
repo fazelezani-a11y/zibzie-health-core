@@ -3,8 +3,10 @@
 Health Core permissions are centralized as stable backend constants under
 `Zibzie.HealthCore.Domain.Security`.
 
-This phase adds the catalog only. It does not enforce permissions on endpoints,
-change controller behavior, add database tables, or introduce migrations.
+Phase 79 added the catalog only. Later phases now use these constants for
+endpoint enforcement across the current patient-record API surface. The catalog
+itself remains a stable set of policy identifiers; it does not create database
+tables or migrations.
 
 ## Purpose
 

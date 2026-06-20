@@ -1,8 +1,10 @@
 # Health Core Authorization Service
 
-Phase 82 adds the first Health Core authorization decision service.
+Phase 82 added the first Health Core authorization decision service.
 
-The service is a decision engine only. It is registered in dependency injection, but controllers and endpoints do not enforce it yet.
+The service is the central authorization decision engine. It is registered in
+dependency injection and is now used by protected endpoint groups across the
+current patient-record API surface.
 
 ## Inputs
 
@@ -61,15 +63,15 @@ It requires the role profile to include `EmergencyAccess` and an active grant wi
 
 ## Not Implemented Yet
 
-- No controller or endpoint enforcement.
 - No authorization attributes.
 - No frontend behavior changes.
-- No security audit log writes.
 - No emergency break-glass workflow.
 - No policy-based ASP.NET Core authorization integration.
+- No production JWT/service identity integration.
 
 ## Future Integration
 
-Phase 84 should apply this service to high-risk endpoints first, such as documents, paraclinical results, medical history, care plan, and patient summary.
-
-Audit logging should be added before or alongside endpoint enforcement so allowed and denied access decisions become compliance evidence.
+Phase 84 applied this service to current high-risk endpoint groups and patient
+profile endpoints. Future work should replace development request-context
+fallbacks with production identity, add grant-management workflows, and improve
+sensitivity/redaction behavior.
