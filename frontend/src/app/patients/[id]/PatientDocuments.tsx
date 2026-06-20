@@ -14,7 +14,7 @@ import {
   type CreatePatientDocumentPayload,
   type PatientDocument,
 } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import {
   documentTypeOptions,
   selectPlaceholder,
@@ -127,65 +127,154 @@ function FormNotice({
   );
 }
 
+function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function formatFileSize(value: number | null) {
+  if (value === null) {
+    return null;
+  }
+
+  if (value >= 1024 * 1024) {
+    return `${new Intl.NumberFormat("fa-IR", {
+      maximumFractionDigits: 1,
+    }).format(value / (1024 * 1024))} MB`;
+  }
+
+  if (value >= 1024) {
+    return `${new Intl.NumberFormat("fa-IR", {
+      maximumFractionDigits: 1,
+    }).format(value / 1024)} KB`;
+  }
+
+  return `${new Intl.NumberFormat("fa-IR").format(value)} B`;
+}
+
 function PatientDocumentCard({ document }: { document: PatientDocument }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const documentDate = formatDate(document.documentDate);
+  const createdAt = formatDateTime(document.createdAt);
+  const updatedAt = formatDateTime(document.updatedAt);
+  const documentTypeLabel = getOptionLabel(
+    documentTypeOptions,
+    document.documentType,
+  );
+  const sourceTypeLabel = getOptionLabel(sourceTypeOptions, document.sourceType);
+  const verificationStatusLabel = getOptionLabel(
+    verificationStatusOptions,
+    document.verificationStatus,
+  );
+  const sensitivityLevelLabel = getOptionLabel(
+    sensitivityLevelOptions,
+    document.sensitivityLevel,
+  );
+  const fileSize = formatFileSize(document.fileSizeBytes);
+  const secondaryParts = [
+    documentDate ? `تاریخ: ${documentDate}` : null,
+    document.issuerName ? `مرکز: ${document.issuerName}` : null,
+  ].filter(Boolean);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-md border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-base font-bold text-slate-950">
-            {document.title}
-          </h3>
-          {document.description ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-bold text-slate-950">
+              {document.title}
+            </h3>
+            {documentTypeLabel ? (
+              <Badge className="shrink-0" tone="info">
+                {documentTypeLabel}
+              </Badge>
+            ) : null}
+          </div>
+          {secondaryParts.length > 0 ? (
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              {document.description}
+              {secondaryParts.join(" · ")}
             </p>
           ) : null}
         </div>
-        <Badge className="shrink-0" tone="info">
-          {document.documentType}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          {document.fileUrl ? (
+            <a
+              className="inline-flex h-9 items-center justify-center rounded-md border border-teal-200 px-3 text-xs font-semibold text-teal-700 transition hover:bg-teal-50"
+              href={document.fileUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              مشاهده فایل
+            </a>
+          ) : null}
+          <button
+            className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={() => setIsExpanded((current) => !current)}
+            type="button"
+          >
+            {isExpanded ? "بستن جزئیات" : "جزئیات"}
+          </button>
+        </div>
       </div>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {documentDate ? (
-          <MetaItem label="تاریخ مدرک" value={documentDate} />
-        ) : null}
-        {document.issuerName ? (
-          <MetaItem
-            label="صادرکننده / مرکز"
-            value={document.issuerName}
-          />
-        ) : null}
-        {document.fileName ? (
-          <MetaItem label="نام فایل" value={document.fileName} />
-        ) : null}
-        {document.fileUrl ? (
-          <MetaItem
-            label="لینک فایل"
-            value={
-              <a
-                className="break-all text-teal-700 transition hover:text-teal-900"
-                href={document.fileUrl}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {document.fileUrl}
-              </a>
-            }
-          />
-        ) : null}
-        <MetaItem
-          label="وضعیت تأیید"
-          value={document.verificationStatus}
-        />
-        <MetaItem
-          label="سطح حساسیت"
-          value={document.sensitivityLevel}
-        />
-        <MetaItem label="منبع" value={document.sourceType} />
-      </dl>
+      {isExpanded ? (
+        <dl className="mt-4 grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-3">
+          {document.description ? (
+            <MetaItem label="توضیحات" value={document.description} />
+          ) : null}
+          <MetaItem label="نوع مدرک" value={documentTypeLabel} />
+          {documentTypeLabel !== document.documentType ? (
+            <MetaItem label="مقدار خام نوع مدرک" value={document.documentType} />
+          ) : null}
+          {documentDate ? (
+            <MetaItem label="تاریخ مدرک" value={documentDate} />
+          ) : null}
+          {document.issuerName ? (
+            <MetaItem
+              label="صادرکننده / مرکز"
+              value={document.issuerName}
+            />
+          ) : null}
+          {document.fileName ? (
+            <MetaItem label="نام فایل" value={document.fileName} />
+          ) : null}
+          {document.fileReference ? (
+            <MetaItem
+              label="شناسه / رفرنس فایل"
+              value={<span dir="ltr">{document.fileReference}</span>}
+            />
+          ) : null}
+          {document.mimeType ? (
+            <MetaItem label="نوع فایل" value={document.mimeType} />
+          ) : null}
+          {fileSize ? <MetaItem label="حجم فایل" value={fileSize} /> : null}
+          {document.fileUrl ? (
+            <MetaItem
+              label="لینک فایل"
+              value={
+                <a
+                  className="break-all text-teal-700 transition hover:text-teal-900"
+                  href={document.fileUrl}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {document.fileUrl}
+                </a>
+              }
+            />
+          ) : null}
+          <MetaItem label="منبع" value={sourceTypeLabel} />
+          <MetaItem label="وضعیت تأیید" value={verificationStatusLabel} />
+          <MetaItem label="سطح حساسیت" value={sensitivityLevelLabel} />
+          {createdAt ? <MetaItem label="زمان ایجاد" value={createdAt} /> : null}
+          {updatedAt ? (
+            <MetaItem label="آخرین به‌روزرسانی" value={updatedAt} />
+          ) : null}
+        </dl>
+      ) : null}
     </article>
   );
 }
@@ -351,6 +440,7 @@ function PatientDocumentCreateForm({
 
 export default function PatientDocuments({ patientId }: { patientId: string }) {
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -384,27 +474,29 @@ export default function PatientDocuments({ patientId }: { patientId: string }) {
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <SectionHeader
         action={
-          <button
-            className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-            disabled={isLoading}
-            onClick={() => {
-              void loadDocuments();
-            }}
-            type="button"
-          >
-            به‌روزرسانی
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              disabled={isLoading}
+              onClick={() => {
+                void loadDocuments();
+              }}
+              type="button"
+            >
+              به‌روزرسانی
+            </button>
+            <button
+              className="inline-flex h-10 items-center justify-center rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+              onClick={() => setIsCreateOpen((current) => !current)}
+              type="button"
+            >
+              {isCreateOpen ? "بستن فرم" : "افزودن مدرک"}
+            </button>
+          </div>
         }
-        description="متادیتا و ارجاع فایل‌های مرتبط با پرونده سلامت بیمار."
+        description="فایل‌ها، گزارش‌ها و مدارک مرتبط با پرونده سلامت بیمار."
         title="مدارک پزشکی"
       />
-
-      <div className="mt-5">
-        <PatientDocumentCreateForm
-          onCreated={loadDocuments}
-          patientId={patientId}
-        />
-      </div>
 
       <div className="mt-5 space-y-3">
         {isLoading ? (
@@ -417,7 +509,7 @@ export default function PatientDocuments({ patientId }: { patientId: string }) {
 
         {!isLoading && !errorMessage && documents.length === 0 ? (
           <Notice variant="empty">
-            هنوز مدرک پزشکی برای این بیمار ثبت نشده است.
+            هنوز مدرکی ثبت نشده است.
           </Notice>
         ) : null}
 
@@ -427,6 +519,15 @@ export default function PatientDocuments({ patientId }: { patientId: string }) {
             ))
           : null}
       </div>
+
+      {isCreateOpen ? (
+        <div className="mt-5">
+          <PatientDocumentCreateForm
+            onCreated={loadDocuments}
+            patientId={patientId}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -85,6 +85,14 @@ function formatBoolean(value: boolean | null) {
   return value ? "بله" : "خیر";
 }
 
+function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
 function hasFilledLabItem(item: CreateLabResultItemPayload) {
   return Object.values(item).some((value) => value.trim().length > 0);
 }
@@ -259,66 +267,134 @@ function LabItemCard({ item }: { item: LabResultItem }) {
 }
 
 function ParaclinicalResultCard({ result }: { result: ParaclinicalResult }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showLabItems, setShowLabItems] = useState(false);
   const performedAt = formatDateTime(result.performedAt);
   const resultDate = formatDateTime(result.resultDate);
+  const createdAt = formatDateTime(result.createdAt);
+  const updatedAt = formatDateTime(result.updatedAt);
+  const resultTypeLabel = getOptionLabel(resultTypeOptions, result.resultType);
+  const sourceTypeLabel = getOptionLabel(sourceTypeOptions, result.sourceType);
+  const verificationStatusLabel = getOptionLabel(
+    verificationStatusOptions,
+    result.verificationStatus,
+  );
+  const sensitivityLevelLabel = getOptionLabel(
+    sensitivityLevelOptions,
+    result.sensitivityLevel,
+  );
+  const dateParts = [
+    resultDate ? `نتیجه: ${resultDate}` : null,
+    performedAt ? `انجام: ${performedAt}` : null,
+    result.providerName ? `مرکز: ${result.providerName}` : null,
+  ].filter(Boolean);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-md border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-base font-bold text-slate-950">{result.title}</h3>
-          {result.description ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-bold text-slate-950">
+              {result.title}
+            </h3>
+            {resultTypeLabel ? (
+              <span className="rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+                {resultTypeLabel}
+              </span>
+            ) : null}
+            {result.isAbnormal ? (
+              <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                غیرطبیعی
+              </span>
+            ) : null}
+            {result.requiresFollowUp ? (
+              <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                نیازمند پیگیری
+              </span>
+            ) : null}
+          </div>
+          {dateParts.length > 0 ? (
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              {result.description}
+              {dateParts.join(" · ")}
+            </p>
+          ) : null}
+          {result.summary ? (
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              {result.summary}
             </p>
           ) : null}
         </div>
-        <span className="shrink-0 rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
-          {result.resultType}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {result.labItems.length > 0 ? (
+            <button
+              className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              onClick={() => setShowLabItems((current) => !current)}
+              type="button"
+            >
+              {showLabItems
+                ? "بستن آیتم‌های آزمایش"
+                : `مشاهده آیتم‌های آزمایش (${new Intl.NumberFormat("fa-IR").format(
+                    result.labItems.length,
+                  )})`}
+            </button>
+          ) : null}
+          <button
+            className="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={() => setIsExpanded((current) => !current)}
+            type="button"
+          >
+            {isExpanded ? "بستن جزئیات" : "جزئیات"}
+          </button>
+        </div>
       </div>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {performedAt ? <MetaItem label="تاریخ انجام" value={performedAt} /> : null}
-        {resultDate ? <MetaItem label="تاریخ نتیجه" value={resultDate} /> : null}
-        {result.providerName ? (
-          <MetaItem label="مرکز / ارائه‌دهنده" value={result.providerName} />
-        ) : null}
-        {result.isAbnormal !== null ? (
-          <MetaItem label="غیرطبیعی" value={formatBoolean(result.isAbnormal)} />
-        ) : null}
-        <MetaItem
-          label="نیازمند پیگیری"
-          value={formatBoolean(result.requiresFollowUp)}
-        />
-        <MetaItem label="وضعیت تأیید" value={result.verificationStatus} />
-        <MetaItem label="سطح حساسیت" value={result.sensitivityLevel} />
-        <MetaItem label="منبع" value={result.sourceType} />
-        {result.linkedDocumentId ? (
+      {isExpanded ? (
+        <dl className="mt-4 grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-3">
+          {result.description ? (
+            <MetaItem label="توضیحات" value={result.description} />
+          ) : null}
+          {result.summary ? (
+            <MetaItem label="خلاصه نتیجه" value={result.summary} />
+          ) : null}
+          {result.interpretation ? (
+            <MetaItem label="تفسیر" value={result.interpretation} />
+          ) : null}
+          {result.followUpNote ? (
+            <MetaItem label="توضیح پیگیری" value={result.followUpNote} />
+          ) : null}
+          <MetaItem label="نوع نتیجه" value={resultTypeLabel} />
+          {resultTypeLabel !== result.resultType ? (
+            <MetaItem label="مقدار خام نوع نتیجه" value={result.resultType} />
+          ) : null}
+          {performedAt ? <MetaItem label="تاریخ انجام" value={performedAt} /> : null}
+          {resultDate ? <MetaItem label="تاریخ نتیجه" value={resultDate} /> : null}
+          {result.providerName ? (
+            <MetaItem label="مرکز / ارائه‌دهنده" value={result.providerName} />
+          ) : null}
+          {result.isAbnormal !== null ? (
+            <MetaItem label="غیرطبیعی" value={formatBoolean(result.isAbnormal)} />
+          ) : null}
           <MetaItem
-            label="شناسه مدرک مرتبط"
-            value={<span dir="ltr">{result.linkedDocumentId}</span>}
+            label="نیازمند پیگیری"
+            value={formatBoolean(result.requiresFollowUp)}
           />
-        ) : null}
-      </dl>
-
-      {result.summary ? (
-        <p className="mt-4 text-sm leading-7 text-slate-600">
-          خلاصه نتیجه: {result.summary}
-        </p>
-      ) : null}
-      {result.interpretation ? (
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          تفسیر: {result.interpretation}
-        </p>
-      ) : null}
-      {result.followUpNote ? (
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          توضیح پیگیری: {result.followUpNote}
-        </p>
+          {result.linkedDocumentId ? (
+            <MetaItem
+              label="شناسه مدرک مرتبط"
+              value={<span dir="ltr">{result.linkedDocumentId}</span>}
+            />
+          ) : null}
+          <MetaItem label="منبع" value={sourceTypeLabel} />
+          <MetaItem label="وضعیت تأیید" value={verificationStatusLabel} />
+          <MetaItem label="سطح حساسیت" value={sensitivityLevelLabel} />
+          {createdAt ? <MetaItem label="زمان ایجاد" value={createdAt} /> : null}
+          {updatedAt ? (
+            <MetaItem label="آخرین به‌روزرسانی" value={updatedAt} />
+          ) : null}
+        </dl>
       ) : null}
 
-      {result.labItems.length > 0 ? (
+      {showLabItems && result.labItems.length > 0 ? (
         <div className="mt-4 border-t border-slate-100 pt-4">
           <h4 className="text-sm font-bold text-slate-950">آیتم‌های آزمایش</h4>
           <div className="mt-3 space-y-3">
@@ -675,6 +751,7 @@ export default function PatientParaclinicalResults({
   patientId: string;
 }) {
   const [results, setResults] = useState<ParaclinicalResult[]>([]);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -712,27 +789,28 @@ export default function PatientParaclinicalResults({
             نتایج پاراکلینیک
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            ساختار پایه برای نتایج آزمایش، تصویربرداری، پاتولوژی و سایر
-            بررسی‌های پاراکلینیک.
+            آزمایش‌ها، تصویربرداری‌ها، پاتولوژی و سایر شواهد پاراکلینیک بیمار.
           </p>
         </div>
-        <button
-          className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-          disabled={isLoading}
-          onClick={() => {
-            void loadResults();
-          }}
-          type="button"
-        >
-          به‌روزرسانی
-        </button>
-      </div>
-
-      <div className="mt-5">
-        <ParaclinicalResultCreateForm
-          onCreated={loadResults}
-          patientId={patientId}
-        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={isLoading}
+            onClick={() => {
+              void loadResults();
+            }}
+            type="button"
+          >
+            به‌روزرسانی
+          </button>
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+            onClick={() => setIsCreateOpen((current) => !current)}
+            type="button"
+          >
+            {isCreateOpen ? "بستن فرم" : "ثبت نتیجه پاراکلینیک"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-5 space-y-3">
@@ -750,7 +828,7 @@ export default function PatientParaclinicalResults({
 
         {!isLoading && !errorMessage && results.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-            هنوز نتیجه پاراکلینیکی برای این بیمار ثبت نشده است.
+            هنوز نتیجه‌ای ثبت نشده است.
           </div>
         ) : null}
 
@@ -760,6 +838,15 @@ export default function PatientParaclinicalResults({
             ))
           : null}
       </div>
+
+      {isCreateOpen ? (
+        <div className="mt-5">
+          <ParaclinicalResultCreateForm
+            onCreated={loadResults}
+            patientId={patientId}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
