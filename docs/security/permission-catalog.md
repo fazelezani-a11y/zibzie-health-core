@@ -35,6 +35,16 @@ the raw permission keys used by backend policy code.
 - `AuthorizationReasons`: access reason identifiers such as `ActiveCare`,
   `PatientShared`, and `Emergency`.
 
+## Patient Summary
+
+Phase 84E5 added `ViewPatientSummary` for the patient summary endpoint.
+
+`ViewPatientSummary` is a baseline summary permission. The current protected
+summary remains all-or-nothing and keeps the existing response shape for allowed
+callers. Future partial summary filtering should still check section-level
+permissions such as `ViewPatientProfile`, `ViewPatientContactInfo`, and
+`ViewMedicalHistory`.
+
 ## Next Phases
 
 Later phases should map products and roles to these permissions, then introduce a

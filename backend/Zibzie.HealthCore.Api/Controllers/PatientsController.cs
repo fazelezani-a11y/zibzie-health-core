@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Patients;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -12,13 +14,22 @@ public class PatientsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IPatientSummaryService _patientSummaryService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public PatientsController(
         AppDbContext dbContext,
-        IPatientSummaryService patientSummaryService)
+        IPatientSummaryService patientSummaryService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _patientSummaryService = patientSummaryService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet]
@@ -114,6 +125,24 @@ public class PatientsController : ControllerBase
     [HttpGet("{patientId:guid}/summary")]
     public async Task<ActionResult<PatientSummaryDto>> GetPatientSummary(Guid patientId)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.ViewPatientSummary);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientSummaryAuditAsync(
+                requestContext,
+                patientId,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var dto = await _patientSummaryService.GetPatientSummaryAsync(patientId);
 
         if (dto is null)
@@ -123,6 +152,13 @@ public class PatientsController : ControllerBase
                 message = "Patient not found."
             });
         }
+
+        await LogPatientSummaryAuditAsync(
+            requestContext,
+            patientId,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
 
         return Ok(dto);
     }
@@ -337,5 +373,41 @@ public class PatientsController : ControllerBase
         await _dbContext.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private async Task LogPatientSummaryAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid patientId,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.PatientSummary,
+            Permission = HealthPermissions.ViewPatientSummary,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 }

@@ -31,6 +31,11 @@ Some roles are intentionally narrow until product workflows are fully specified:
 - Second Opinion access is scoped to invited cases.
 - Personal Health Record family and shared-provider roles rely on explicit sharing grants before real access is allowed.
 
+Phase 84E5 added `ViewPatientSummary` only to roles that already have the
+current summary's required shape: patient profile/contact access plus medical
+history read access. Narrow logistics, receptionist, auditor, and shared-viewer
+roles were not broadened for the current all-or-nothing summary.
+
 ## Next Phases
 
 - Persist patient-product-user access grants.
