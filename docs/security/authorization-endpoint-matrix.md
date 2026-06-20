@@ -29,7 +29,8 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84E1 protects Care Plan endpoints.
 - Phase 84E2 protects Reminder endpoints.
 - Phase 84E3 protects Measurement endpoints.
-- Patient summary/profile and timeline are not protected yet.
+- Phase 84E4 completed Patient Summary authorization strategy.
+- Patient summary/profile and timeline enforcement is still pending.
 
 ## Request Context Gap
 
@@ -144,7 +145,7 @@ Patterns found:
 |---|---|---:|---|---|---|---|---|---|---|---|---|---|
 | Patients | `/api/health-core/patients` | GET | List/search patients | None per row | `ViewPatientProfile` | Read | Contact info may require `ViewPatientContactInfo`. | TBD | Summary/sampled | `View` | `PatientProfile` | Needs scoped list strategy: assigned patients, organization patients, own record, etc. |
 | Patients | `/api/health-core/patients/{id}` | GET | Get patient details | Route | `ViewPatientProfile` plus `ViewPatientContactInfo` for contact fields | Read | Demographics/contact info. | Yes | Always or summary | `View` | `PatientProfile` | Could split contact permission later. |
-| Patients | `/api/health-core/patients/{patientId}/summary` | GET | Aggregated summary | Route | Composite permissions or staged summary permission | Read | Aggregates medical history, documents/results, care plan, reminders, measurements. | Yes | Consider summary audit | `View` | `PatientSummary` | Highest integration complexity; may need section-aware redaction. |
+| Patients | `/api/health-core/patients/{patientId}/summary` | GET | Current backend summary | Route | Future `ViewPatientSummary` plus current underlying permissions: `ViewPatientProfile`, `ViewPatientContactInfo`, `ViewMedicalHistory` | Read | Current backend summary includes profile/contact plus conditions, allergies, and current medications. Frontend overview loads care plan/reminders/measurements/paraclinical separately. | Yes | Always for denied; audit successful reads as `View` with possible future aggregation | `View` | `PatientSummary` | Strategy completed in Phase 84E4. Enforcement pending. Recommended first enforcement is conservative all-or-nothing; later add explicit section redaction. |
 | Patients | `/api/health-core/patients` | POST | Create patient | None until created | `EditPatientProfile` | Write | Contact identity data. | Maybe internal/admin profile | Always | `Create` | `PatientProfile` | Grant creation/bootstrap should be decided with patient creation workflow. |
 | Patients | `/api/health-core/patients/{id}` | PUT | Update patient/contact | Route | `EditPatientProfile` and possibly `EditPatientContactInfo` | Write | Contact identity data. | Yes | Always | `Update` | `PatientProfile` | Contact info should probably require contact-specific permission. |
 | Patients | `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Route | Future admin/delete permission or `EditPatientProfile` | Write | Whole patient record availability. | Yes/internal | Always | `Delete` | `PatientProfile` | High-risk operational action; consider separate permission later. |
@@ -203,11 +204,14 @@ No grant creation endpoint exists yet.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84F Patient Summary, Timeline, and Patient Profile enforcement planning**.
+Recommended next step: **84E5 Patient Summary authorization foundation**.
 
 Keep the rollout narrow and module-by-module:
 
-- Plan Patient Summary carefully because it aggregates protected sections and may require redaction.
-- Protect Timeline separately because it is patient/care-team-facing history, not AuditLog.
-- Protect Patient Profile/contact info with profile/contact-specific permissions.
+- Add `ViewPatientSummary` before enforcing summary access.
+- Protect only `GET /api/health-core/patients/{patientId}/summary` first.
+- Preserve the current summary response shape for allowed callers.
+- Use conservative current-summary permission checks until an explicit redaction DTO exists.
+- Protect Timeline separately later because it is patient/care-team-facing history, not AuditLog.
+- Protect Patient Profile/contact info with profile/contact-specific permissions in a separate phase.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.
