@@ -17,7 +17,7 @@ Protected endpoint groups:
 - Patient summary
 - Timeline
 
-The main remaining unprotected implemented API surface is standalone patient profile management in `PatientsController`: patient list/search, patient detail, create, update, and delete/deactivate. This is risky because those endpoints expose or modify patient identity, contact, and lifecycle data, but the patient list/search scope strategy needs care before enforcement.
+The main remaining unprotected implemented API surface is standalone patient profile management in `PatientsController`: patient list/search, patient detail, create, update, and delete/deactivate. This is risky because those endpoints expose or modify patient identity, contact, and lifecycle data, but the patient list/search scope strategy needs care before enforcement. Phase 84H added the patient profile and directory authorization strategy; enforcement remains pending.
 
 No AuditLog read/admin endpoints are currently implemented. No access grant creation/revocation workflows are currently implemented.
 
@@ -92,7 +92,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 - Real production JWT or service-to-service authentication is not implemented. The current development/header fallback remains temporary and not production-safe.
 - PatientAccessGrant creation, revocation, and assignment workflows are not implemented.
-- Standalone patient profile endpoints are not yet protected.
+- Standalone patient profile endpoints are not yet protected. Phase 84H strategy is complete; read/write enforcement is pending.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
 - Sensitivity and visibility filtering can be improved for mixed list endpoints and timeline events.
 - AuditLog read/admin/reporting endpoints are not implemented. If exposed later, they must be strictly admin-only and audited.
@@ -104,7 +104,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 1. Replace development/header fallback with real JWT or service-to-service authentication before production use.
 2. Implement PatientAccessGrant creation, revocation, assignment, and emergency-access workflows with audit logging.
-3. Protect standalone patient profile endpoints, starting with a careful patient list/search scope strategy.
+3. Protect standalone patient profile endpoints, following the Phase 84H strategy and starting with patient list/search and detail/profile reads.
 4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.
 5. Implement partial Patient Summary filtering/redaction so product-specific roles do not receive unauthorized section data.
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
@@ -114,6 +114,6 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 ## 9. Recommended next phase
 
-The next endpoint phase should focus on `PatientsController` standalone patient profile endpoints. Start with a short strategy pass for patient list/search because list endpoints can leak patient existence and assignment boundaries. Then protect patient detail, create, update, and delete/deactivate with patient-profile/contact permissions and audit logging.
+The next endpoint phase should focus on `PatientsController` standalone patient profile read endpoints. Add patient-directory permissions, then protect list/search and detail/profile reads with audit logging. Write endpoints should follow in a separate phase for create, update, and deactivate.
 
 In parallel, production readiness should prioritize real identity integration and PatientAccessGrant workflows, because the current development fallback is intentionally temporary.
