@@ -43,6 +43,14 @@ they already have broad care-record operational access. Narrow logistics,
 receptionist, patient, family, shared-provider, and read-only auditor roles were
 not broadened for Timeline writes.
 
+Phase 84H2 added `ViewPatientDirectory` conservatively. Internal admin roles
+receive it through the existing all-permissions profiles so the local admin panel
+continues to work with the development fallback. DigiCare case-manager and
+care-team-manager roles also receive directory access because they are operational
+care coordination roles. Narrow logistics, receptionist, patient, family,
+HomeVisit, SecondOpinion specialist, and shared-provider roles were not broadened
+for global patient directory access.
+
 ## Next Phases
 
 - Persist patient-product-user access grants.

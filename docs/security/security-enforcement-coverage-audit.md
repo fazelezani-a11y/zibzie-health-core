@@ -17,7 +17,7 @@ Protected endpoint groups:
 - Patient summary
 - Timeline
 
-The main remaining unprotected implemented API surface is standalone patient profile management in `PatientsController`: patient list/search, patient detail, create, update, and delete/deactivate. This is risky because those endpoints expose or modify patient identity, contact, and lifecycle data, but the patient list/search scope strategy needs care before enforcement. Phase 84H added the patient profile and directory authorization strategy; enforcement remains pending.
+Phase 84H2 protected patient list/search and patient detail reads. The main remaining unprotected implemented API surface is now patient profile writes in `PatientsController`: create, update, and delete/deactivate.
 
 No AuditLog read/admin endpoints are currently implemented. No access grant creation/revocation workflows are currently implemented.
 
@@ -35,8 +35,8 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 | `PatientMeasurementsController` | Patient measurements list/create/detail/update/delete/trend-style routes where implemented | Protected with authorization + audit | Uses measurement permissions and `AuditResourceTypes.Measurement`. Graph behavior is unchanged. |
 | `TimelineEventsController` | Patient timeline list/create/detail/update/delete where implemented | Protected with authorization + audit | Uses timeline permissions and `AuditResourceTypes.TimelineEvent`. Timeline remains separate from AuditLog. |
 | `PatientsController` | `GET /api/health-core/patients/{patientId}/summary` | Protected with authorization + audit | Uses `HealthPermissions.ViewPatientSummary` and `AuditResourceTypes.PatientSummary`. All-or-nothing summary behavior is preserved. |
-| `PatientsController` | Patient list/search | Unprotected and risky | Needs scoped list/search strategy before enforcement. Should not leak patients outside grants/scope. |
-| `PatientsController` | Patient detail/profile | Unprotected and risky | Should require patient-profile/contact permissions and audit views. |
+| `PatientsController` | Patient list/search | Protected with authorization + audit | Uses `ViewPatientDirectory` and `AuditResourceTypes.PatientProfile`. DTO minimization and grant-scoped directory filtering are deferred. |
+| `PatientsController` | Patient detail/profile | Protected with authorization + audit | Uses `ViewPatientProfile` and `AuditResourceTypes.PatientProfile`. Contact-level redaction is deferred. |
 | `PatientsController` | Patient create | Unprotected and risky | Needs bootstrap/assignment decision and audit create. |
 | `PatientsController` | Patient update | Unprotected and risky | Should require profile/contact edit permissions and audit update. |
 | `PatientsController` | Patient delete/deactivate | Unprotected and risky | Should require a narrow patient lifecycle permission or an agreed existing edit/manage permission and audit delete/update. |
@@ -55,6 +55,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 | Measurements | Yes | `ViewMeasurements`, `CreateMeasurement`, `EditMeasurement` | Yes | Yes | `Measurement` | Yes |
 | Patient summary | Yes | `ViewPatientSummary` | Yes | Yes | `PatientSummary` | Yes |
 | Timeline | Yes | `ViewTimeline`, `CreateTimelineEvent`, `EditTimelineEvent`, `DeleteTimelineEvent` | Yes | Yes | `TimelineEvent` | Yes |
+| Patient directory/profile reads | Yes | `ViewPatientDirectory`, `ViewPatientProfile` | Yes | Yes | `PatientProfile` | Yes |
 
 ## 4. Permission catalog consistency findings
 
@@ -65,7 +66,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 - Administrative permissions include audit, access management, export/share, security settings, restricted data, and emergency access.
 - No obvious typo or constant mismatch was found between controller usage and permission constants.
 - Some delete actions intentionally reuse an edit-style permission where no narrower delete permission exists, such as measurements using `EditMeasurement`. Documents and timeline have explicit delete permissions.
-- Patient profile lifecycle permissions remain incomplete for standalone patient endpoints. Before protecting delete/deactivate, decide whether to add a dedicated permission or use an existing manage/edit permission.
+- Patient profile write/lifecycle permissions remain incomplete for create and soft deactivate. Before protecting create/deactivate, add or choose dedicated permissions.
 
 ## 5. Product profile consistency findings
 
@@ -92,7 +93,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 - Real production JWT or service-to-service authentication is not implemented. The current development/header fallback remains temporary and not production-safe.
 - PatientAccessGrant creation, revocation, and assignment workflows are not implemented.
-- Standalone patient profile endpoints are not yet protected. Phase 84H strategy is complete; read/write enforcement is pending.
+- Patient profile create/update/deactivate endpoints are not yet protected. Patient list/detail reads are protected as of Phase 84H2.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
 - Sensitivity and visibility filtering can be improved for mixed list endpoints and timeline events.
 - AuditLog read/admin/reporting endpoints are not implemented. If exposed later, they must be strictly admin-only and audited.
@@ -104,7 +105,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 1. Replace development/header fallback with real JWT or service-to-service authentication before production use.
 2. Implement PatientAccessGrant creation, revocation, assignment, and emergency-access workflows with audit logging.
-3. Protect standalone patient profile endpoints, following the Phase 84H strategy and starting with patient list/search and detail/profile reads.
+3. Protect standalone patient profile write endpoints: create, update, and soft deactivate.
 4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.
 5. Implement partial Patient Summary filtering/redaction so product-specific roles do not receive unauthorized section data.
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
@@ -114,6 +115,6 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 ## 9. Recommended next phase
 
-The next endpoint phase should focus on `PatientsController` standalone patient profile read endpoints. Add patient-directory permissions, then protect list/search and detail/profile reads with audit logging. Write endpoints should follow in a separate phase for create, update, and deactivate.
+The next endpoint phase should focus on `PatientsController` standalone patient profile write endpoints. Add patient create/deactivate permissions, then protect create, update, and soft deactivate with audit logging.
 
 In parallel, production readiness should prioritize real identity integration and PatientAccessGrant workflows, because the current development fallback is intentionally temporary.

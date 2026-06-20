@@ -34,7 +34,8 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84F protects Timeline endpoints.
 - Phase 84G completed security enforcement coverage audit.
 - Phase 84H completed Patient Profile / Patient Directory authorization strategy.
-- Standalone patient profile enforcement is still pending and should be split into read and write phases.
+- Phase 84H2 protects Patient Profile / Patient Directory read endpoints.
+- Standalone patient profile write enforcement is still pending for create, update, and deactivate.
 
 ## Request Context Gap
 
@@ -151,8 +152,8 @@ Patterns found:
 
 | Area | Controller / Route | Method | Action | PatientId source | Required permission | Type | Sensitivity | Grant? | Audit? | Audit action | Audit resource | Notes / risks |
 |---|---|---:|---|---|---|---|---|---|---|---|---|---|
-| Patients | `/api/health-core/patients` | GET | List/search patients | None per row | Future `ViewPatientDirectory`; optional `SearchPatients` for strong-identifier search | Read | Contact info and strong identifiers require stronger permission such as `ViewPatientContactInfo`. | TBD | Summary/sampled | `View` | `PatientProfile` or future `PatientDirectory` | Strategy completed in Phase 84H. Needs scoped list strategy: assigned patients, organization patients, own record, etc. |
-| Patients | `/api/health-core/patients/{id}` | GET | Get patient details | Route | `ViewPatientProfile` plus `ViewPatientContactInfo` for contact fields | Read | Demographics/contact info. | Yes | Always or summary | `View` | `PatientProfile` | Could split contact permission later. |
+| Patients | `/api/health-core/patients` | GET | List/search patients | None per row | `ViewPatientDirectory` | Read | Current DTO still includes national code and mobile for allowed callers; future DTO minimization should split strong identifiers. | Product-scope filtering deferred | Always for denied; success audited with safe metadata | `View` | `PatientProfile` | Protected in Phase 84H2. Grant-scoped directory filtering remains future work. |
+| Patients | `/api/health-core/patients/{id}` | GET | Get patient details | Route | `ViewPatientProfile` | Read | Current DTO includes contact fields all-or-nothing; contact split/redaction deferred. | Yes except internal admin | Always | `View` | `PatientProfile` | Protected in Phase 84H2. Future contact-specific redaction may require `ViewPatientContactInfo`. |
 | Patients | `/api/health-core/patients/{patientId}/summary` | GET | Current backend summary | Route | `ViewPatientSummary` | Read | Current backend summary includes profile/contact plus conditions, allergies, and current medications. Frontend overview loads care plan/reminders/measurements/paraclinical separately. | Yes | Always for denied; audit successful reads as `View` with possible future aggregation | `View` | `PatientSummary` | Protected in Phase 84E5 with conservative all-or-nothing summary access. Partial section filtering/redaction is deferred. |
 | Patients | `/api/health-core/patients` | POST | Create patient | None until created | Future `CreatePatient` | Write | Contact identity data. | Maybe internal/admin profile | Always | `Create` | `PatientProfile` | Grant creation/bootstrap should be decided with patient creation workflow. |
 | Patients | `/api/health-core/patients/{id}` | PUT | Update patient/contact | Route | `EditPatientProfile` and possibly `EditPatientContactInfo` | Write | Contact identity data. | Yes | Always | `Update` | `PatientProfile` | Contact info should probably require contact-specific permission. |
@@ -213,29 +214,30 @@ No grant creation endpoint exists yet.
 ## Patient Profile / Directory Strategy Status
 
 Phase 84H completed the patient profile and directory authorization strategy.
+Phase 84H2 protects patient read/list/detail endpoints.
 
 Recommended permissions for the next coding phases:
 
-- `ViewPatientDirectory` and optionally `SearchPatients` for list/search.
+- `ViewPatientDirectory` for list/search.
 - Existing `ViewPatientProfile` for basic detail/profile reads.
 - Existing `ViewPatientContactInfo` for phone, email, address, and emergency contact fields.
 - `CreatePatient` for patient creation.
 - Existing `EditPatientProfile` and `EditPatientContactInfo` for updates.
 - `DeactivatePatient` for the current soft-deactivate `DELETE` endpoint.
 
-Enforcement remains pending. The recommended rollout is:
+Write enforcement remains pending. The recommended rollout is:
 
-- 84H2: protect read endpoints: list/search and detail/profile.
 - 84H3: protect write endpoints: create, update, deactivate.
+- Future: optional `SearchPatients` split, DTO minimization, and grant-scoped directory filtering.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84H2 Patient Profile read enforcement**.
+Recommended next step: **84H3 Patient Profile write enforcement**.
 
 Keep the rollout narrow and module-by-module:
 
-- Add patient-directory permissions.
-- Protect patient list/search and detail/profile reads.
+- Add patient create/deactivate permissions.
+- Protect patient create, update, and deactivate.
 - Keep current admin behavior working through the InternalAdmin development fallback.
-- Audit successful and denied patient directory/profile reads.
+- Audit successful and denied patient profile writes.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.

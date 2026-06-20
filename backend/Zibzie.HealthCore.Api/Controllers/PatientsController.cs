@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Zibzie.HealthCore.Application.Patients;
 using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Entities;
@@ -12,6 +13,8 @@ namespace Zibzie.HealthCore.Api.Controllers;
 [Route("api/health-core/patients")]
 public class PatientsController : ControllerBase
 {
+    private static readonly Guid DirectoryAuthorizationPatientId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
     private readonly AppDbContext _dbContext;
     private readonly IPatientSummaryService _patientSummaryService;
     private readonly IHealthCoreAuthorizationService _authorizationService;
@@ -48,6 +51,27 @@ public class PatientsController : ControllerBase
             pageSize = 20;
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = CreateDirectoryAuthorizationContext(requestContext);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.ViewPatientDirectory);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientProfileAuditAsync(
+                requestContext,
+                null,
+                null,
+                HealthPermissions.ViewPatientDirectory,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision,
+                CreateDirectoryAuditMetadata(page, pageSize, search));
+
+            return AccessDenied();
+        }
+
         var query = _dbContext.PatientProfiles
             .Include(x => x.ContactInfo)
             .Where(x => x.IsActive)
@@ -79,12 +103,42 @@ public class PatientsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogPatientProfileAuditAsync(
+            requestContext,
+            null,
+            null,
+            HealthPermissions.ViewPatientDirectory,
+            AuditActionTypes.View,
+            true,
+            accessDecision,
+            CreateDirectoryAuditMetadata(page, pageSize, search));
+
         return Ok(patients);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PatientDetailsDto>> GetPatientById(Guid id)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(id);
+        var accessDecision = await _authorizationService.HasPermissionAsync(
+            authorizationContext,
+            HealthPermissions.ViewPatientProfile);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogPatientProfileAuditAsync(
+                requestContext,
+                id,
+                id,
+                HealthPermissions.ViewPatientProfile,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patient = await _dbContext.PatientProfiles
             .Include(x => x.ContactInfo)
             .FirstOrDefaultAsync(x => x.Id == id && x.IsActive);
@@ -118,6 +172,15 @@ public class PatientsController : ControllerBase
             IsActive = patient.IsActive,
             CreatedAt = patient.CreatedAt
         };
+
+        await LogPatientProfileAuditAsync(
+            requestContext,
+            id,
+            id,
+            HealthPermissions.ViewPatientProfile,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
 
         return Ok(dto);
     }
@@ -400,6 +463,62 @@ public class PatientsController : ControllerBase
             CorrelationId = requestContext.CorrelationId,
             RequestPath = requestContext.RequestPath,
             HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private async Task LogPatientProfileAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid? patientId,
+        Guid? resourceId,
+        string permission,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null,
+        string? metadataJson = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.PatientProfile,
+            ResourceId = resourceId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod,
+            MetadataJson = metadataJson
+        });
+    }
+
+    private static HealthCoreAuthorizationContext CreateDirectoryAuthorizationContext(
+        HealthCoreRequestContext requestContext)
+    {
+        return new HealthCoreAuthorizationContext
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = DirectoryAuthorizationPatientId,
+            ProductCode = requestContext.ProductCode ?? string.Empty,
+            ProductRole = requestContext.ProductRole ?? string.Empty
+        };
+    }
+
+    private static string CreateDirectoryAuditMetadata(int page, int pageSize, string? search)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            page,
+            pageSize,
+            hasSearch = !string.IsNullOrWhiteSpace(search)
         });
     }
 

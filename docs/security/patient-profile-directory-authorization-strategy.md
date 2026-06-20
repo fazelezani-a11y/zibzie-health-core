@@ -48,11 +48,11 @@ Frontend usage found:
 
 | Data bucket | Current fields | Sensitivity risk | Roles/products that may need it | Recommended permission | Should appear in list/search? |
 | --- | --- | --- | --- | --- | --- |
-| Patient directory metadata | patient id, display/full name, active status | Medium. Reveals patient existence and current availability. | InternalAdmin, assigned DigiCare care team, scoped operational products. | Future `ViewPatientDirectory` or `SearchPatients`. | Yes, but only in scoped results. |
+| Patient directory metadata | patient id, display/full name, active status | Medium. Reveals patient existence and current availability. | InternalAdmin, assigned DigiCare care team, scoped operational products. | `ViewPatientDirectory`; future `SearchPatients` if exact strong-identifier search is split. | Yes, but only in scoped results. |
 | Identity profile | first name, last name, birth date, gender, blood type | Medium to high. Identity and demographic data can identify a person. | InternalAdmin, assigned care team, active clinical contexts, patient owner. | Existing `ViewPatientProfile`. | Name/status maybe yes; birth date/blood type only if needed. |
 | Strong identifiers | national code, mobile number, email | High. Can uniquely identify or contact the person. | InternalAdmin, assigned case/care managers, authorized care providers, patient owner. | `ViewPatientContactInfo` plus future directory/search permission for searching. | No by default. Only with stronger permission or exact scoped context. |
 | Contact/location | home address, work address, emergency contact name/phone | High. Location and emergency contact data create privacy and safety risk. | InternalAdmin, active care operations, HomeVisit visit-scoped staff, patient owner. | Existing `ViewPatientContactInfo`. | No. Should not be in broad directory results. |
-| Administrative state | active/inactive, created/updated metadata | Medium. Reveals lifecycle and operational state. | InternalAdmin, HealthCoreAdmin, support/operations as needed. | Future `ViewPatientDirectory` for read, future `DeactivatePatient` for state change. | Active status yes for authorized directory; timestamps usually detail/admin only. |
+| Administrative state | active/inactive, created/updated metadata | Medium. Reveals lifecycle and operational state. | InternalAdmin, HealthCoreAdmin, support/operations as needed. | `ViewPatientDirectory` for read, future `DeactivatePatient` for state change. | Active status yes for authorized directory; timestamps usually detail/admin only. |
 
 ## 4. Patient existence leakage risk
 
@@ -78,18 +78,20 @@ Existing relevant permissions:
 - `EditPatientContactInfo`
 - `ViewPatientSummary`
 
-Permissions checked and currently missing:
+Permissions checked during Phase 84H:
 
 - `ViewPatients`
 - `SearchPatients`
-- `ViewPatientDirectory`
 - `CreatePatient`
 - `DeactivatePatient`
 - `DeletePatient`
 
-Recommended additions in the next coding phase:
+Phase 84H2 added:
 
 - `ViewPatientDirectory`: allows using patient list/search, subject to product scope and grants.
+
+Recommended additions in a later coding phase:
+
 - `SearchPatients`: optional narrower permission if exact national-code/mobile/email search should be separated from ordinary assigned-directory listing.
 - `CreatePatient`: allows creating a patient profile and initial contact info.
 - `DeactivatePatient`: allows soft-deactivating a patient.
@@ -194,7 +196,7 @@ Denied attempts:
 
 84H2: Add patient profile/directory permissions and protect read endpoints
 
-- Add `ViewPatientDirectory` and/or `SearchPatients`.
+- Add `ViewPatientDirectory`.
 - Protect `GET /api/health-core/patients`.
 - Protect `GET /api/health-core/patients/{id}`.
 - Preserve current DTOs initially if needed to avoid frontend breakage.

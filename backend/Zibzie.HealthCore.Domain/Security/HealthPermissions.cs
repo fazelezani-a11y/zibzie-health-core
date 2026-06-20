@@ -8,6 +8,7 @@ public static class HealthPermissions
     public const string ViewPatientContactInfo = "ViewPatientContactInfo";
     public const string EditPatientContactInfo = "EditPatientContactInfo";
     public const string ViewPatientSummary = "ViewPatientSummary";
+    public const string ViewPatientDirectory = "ViewPatientDirectory";
 
     // Medical History
     public const string ViewMedicalHistory = "ViewMedicalHistory";
@@ -87,6 +88,7 @@ public static class HealthPermissions
         ViewPatientContactInfo,
         EditPatientContactInfo,
         ViewPatientSummary,
+        ViewPatientDirectory,
         ViewMedicalHistory,
         EditMedicalHistory,
         ViewSensitiveMedicalHistory,
@@ -141,6 +143,7 @@ public static class HealthPermissions
         ViewPatientProfile,
         ViewPatientContactInfo,
         ViewPatientSummary,
+        ViewPatientDirectory,
         ViewMedicalHistory,
         ViewSensitiveMedicalHistory,
         ViewDocuments,
