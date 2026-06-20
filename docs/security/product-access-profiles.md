@@ -36,6 +36,13 @@ current summary's required shape: patient profile/contact access plus medical
 history read access. Narrow logistics, receptionist, auditor, and shared-viewer
 roles were not broadened for the current all-or-nothing summary.
 
+Phase 84F added Timeline write permissions conservatively. Internal admin roles
+can manage Timeline through the existing all-permissions profiles. DigiCare
+clinical and care-team-manager roles received limited Timeline management where
+they already have broad care-record operational access. Narrow logistics,
+receptionist, patient, family, shared-provider, and read-only auditor roles were
+not broadened for Timeline writes.
+
 ## Next Phases
 
 - Persist patient-product-user access grants.

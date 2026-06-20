@@ -31,7 +31,8 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84E3 protects Measurement endpoints.
 - Phase 84E4 completed Patient Summary authorization strategy.
 - Phase 84E5 protects Patient Summary endpoint.
-- Standalone patient profile and timeline enforcement is still pending.
+- Phase 84F protects Timeline endpoints.
+- Standalone patient profile enforcement is still pending.
 
 ## Request Context Gap
 
@@ -150,10 +151,10 @@ Patterns found:
 | Patients | `/api/health-core/patients` | POST | Create patient | None until created | `EditPatientProfile` | Write | Contact identity data. | Maybe internal/admin profile | Always | `Create` | `PatientProfile` | Grant creation/bootstrap should be decided with patient creation workflow. |
 | Patients | `/api/health-core/patients/{id}` | PUT | Update patient/contact | Route | `EditPatientProfile` and possibly `EditPatientContactInfo` | Write | Contact identity data. | Yes | Always | `Update` | `PatientProfile` | Contact info should probably require contact-specific permission. |
 | Patients | `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Route | Future admin/delete permission or `EditPatientProfile` | Write | Whole patient record availability. | Yes/internal | Always | `Delete` | `PatientProfile` | High-risk operational action; consider separate permission later. |
-| Timeline | `/api/health-core/patients/{patientId}/timeline` | GET | List timeline | Route | `ViewTimeline` | Read | Event sensitivity and internal visibility. | Yes | Summary or always for internal/restricted | `View` | `TimelineEvent` | Timeline is not AuditLog but may expose sensitive history. |
-| Timeline | `/api/health-core/patients/{patientId}/timeline` | POST | Create manual event | Route | Future create timeline permission or `EditMedicalHistory`/module-specific permission | Write | Request sensitivity/visibility. | Yes | Always | `Create` | `TimelineEvent` | Consider restricting manual timeline creation in admin UI. |
-| Timeline | `/api/health-core/timeline-events/{eventId}` | PUT | Update event | Load event | Future edit timeline permission | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `TimelineEvent` | No timeline write permission exists yet. |
-| Timeline | `/api/health-core/timeline-events/{eventId}` | DELETE | Soft-delete event | Load event | Future edit/delete timeline permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `TimelineEvent` | Avoid confusing timeline deletion with audit deletion. |
+| Timeline | `/api/health-core/patients/{patientId}/timeline` | GET | List timeline | Route | `ViewTimeline` | Read | Baseline list check now; future sensitivity/visibility redaction may be needed. | Yes | Always for now; future aggregation may reduce UI polling volume | `View` | `TimelineEvent` | Protected in Phase 84F. Timeline is not AuditLog but may expose sensitive history. |
+| Timeline | `/api/health-core/patients/{patientId}/timeline` | POST | Create manual event | Route | `CreateTimelineEvent` | Write | Request sensitivity/visibility. | Yes | Always | `Create` | `TimelineEvent` | Protected in Phase 84F. Manual timeline creation remains a patient-facing history event, not an audit log entry. |
+| Timeline | `/api/health-core/timeline-events/{eventId}` | PUT | Update event | Load event | `EditTimelineEvent` | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `TimelineEvent` | Protected in Phase 84F. Must resolve patient id from event. |
+| Timeline | `/api/health-core/timeline-events/{eventId}` | DELETE | Soft-delete event | Load event | `DeleteTimelineEvent` | Write | Entity sensitivity. | Yes | Always | `Delete` | `TimelineEvent` | Protected in Phase 84F. Avoid confusing timeline deletion with audit deletion. |
 
 ### 84G: Future Access Management
 
@@ -205,11 +206,10 @@ No grant creation endpoint exists yet.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84F Timeline and Patient Profile enforcement planning**.
+Recommended next step: **84G Patient Profile enforcement planning**.
 
 Keep the rollout narrow and module-by-module:
 
-- Protect Timeline separately because it is patient/care-team-facing history, not AuditLog.
 - Protect Patient Profile/contact info with profile/contact-specific permissions in a separate phase.
 - Plan patient list/search scope carefully before enforcing list endpoints.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.

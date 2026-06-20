@@ -53,6 +53,9 @@ public static class HealthPermissions
 
     // Timeline
     public const string ViewTimeline = "ViewTimeline";
+    public const string CreateTimelineEvent = "CreateTimelineEvent";
+    public const string EditTimelineEvent = "EditTimelineEvent";
+    public const string DeleteTimelineEvent = "DeleteTimelineEvent";
 
     // Audit / Compliance
     public const string ViewAuditLog = "ViewAuditLog";
@@ -115,6 +118,9 @@ public static class HealthPermissions
         ViewAbnormalMeasurements,
         ManagePriorityMeasurements,
         ViewTimeline,
+        CreateTimelineEvent,
+        EditTimelineEvent,
+        DeleteTimelineEvent,
         ViewAuditLog,
         ExportAuditLog,
         ManageAccess,
@@ -167,6 +173,9 @@ public static class HealthPermissions
         CreateMeasurement,
         EditMeasurement,
         ManagePriorityMeasurements,
+        CreateTimelineEvent,
+        EditTimelineEvent,
+        DeleteTimelineEvent,
     };
 
     public static readonly IReadOnlyCollection<string> AdministrativePermissions = new[]

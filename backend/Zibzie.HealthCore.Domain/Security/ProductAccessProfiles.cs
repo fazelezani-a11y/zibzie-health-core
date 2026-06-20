@@ -32,6 +32,8 @@ public static class ProductAccessProfiles
         HealthPermissions.EditMeasurement,
         HealthPermissions.ViewAbnormalMeasurements,
         HealthPermissions.ViewTimeline,
+        HealthPermissions.CreateTimelineEvent,
+        HealthPermissions.EditTimelineEvent,
     };
 
     private static readonly IReadOnlyCollection<string> DigiCareLifestyleSpecialistPermissions = new[]
@@ -109,6 +111,8 @@ public static class ProductAccessProfiles
                 HealthPermissions.CreateReminder,
                 HealthPermissions.EditReminder,
                 HealthPermissions.ViewTimeline,
+                HealthPermissions.CreateTimelineEvent,
+                HealthPermissions.EditTimelineEvent,
                 HealthPermissions.SharePatientRecord),
             Role(
                 ProductCodes.DigiCare,
@@ -135,6 +139,9 @@ public static class ProductAccessProfiles
                 HealthPermissions.CompleteReminder,
                 HealthPermissions.CancelReminder,
                 HealthPermissions.ViewTimeline,
+                HealthPermissions.CreateTimelineEvent,
+                HealthPermissions.EditTimelineEvent,
+                HealthPermissions.DeleteTimelineEvent,
                 HealthPermissions.ManageAccess,
                 HealthPermissions.GrantPatientAccess,
                 HealthPermissions.RevokePatientAccess,

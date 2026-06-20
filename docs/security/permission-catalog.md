@@ -45,6 +45,18 @@ callers. Future partial summary filtering should still check section-level
 permissions such as `ViewPatientProfile`, `ViewPatientContactInfo`, and
 `ViewMedicalHistory`.
 
+## Timeline
+
+Phase 84F added Timeline write permissions:
+
+- `CreateTimelineEvent`
+- `EditTimelineEvent`
+- `DeleteTimelineEvent`
+
+`ViewTimeline` already existed. Timeline permissions protect patient/care-team
+visible timeline history. They do not grant access to `AuditLog`, which remains
+covered by separate audit/compliance permissions.
+
 ## Next Phases
 
 Later phases should map products and roles to these permissions, then introduce a

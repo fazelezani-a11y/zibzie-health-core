@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Application.Timeline;
 using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,10 +13,20 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class TimelineEventsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
-    public TimelineEventsController(AppDbContext dbContext)
+    public TimelineEventsController(
+        AppDbContext dbContext,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/timeline")]
@@ -23,6 +35,26 @@ public class TimelineEventsController : ControllerBase
         [FromQuery] string? eventType = null,
         [FromQuery] bool includeInternal = true)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewTimeline);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogTimelineAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.ViewTimeline,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -69,6 +101,15 @@ public class TimelineEventsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogTimelineAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            HealthPermissions.ViewTimeline,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(events);
     }
 
@@ -91,6 +132,27 @@ public class TimelineEventsController : ControllerBase
             {
                 message = "Timeline event title is required."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.CreateTimelineEvent,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogTimelineAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.CreateTimelineEvent,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var patientExists = await _dbContext.PatientProfiles
@@ -127,6 +189,15 @@ public class TimelineEventsController : ControllerBase
 
         var dto = ToDto(timelineEvent);
 
+        await LogTimelineAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            HealthPermissions.CreateTimelineEvent,
+            AuditActionTypes.Create,
+            true,
+            accessDecision);
+
         return CreatedAtAction(
             nameof(GetPatientTimeline),
             new { patientId },
@@ -147,6 +218,27 @@ public class TimelineEventsController : ControllerBase
             {
                 message = "Timeline event not found."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(timelineEvent.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditTimelineEvent,
+            request.SensitivityLevel ?? timelineEvent.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogTimelineAuditAsync(
+                requestContext,
+                timelineEvent.PatientProfileId,
+                timelineEvent.Id,
+                HealthPermissions.EditTimelineEvent,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         if (request.EventType is not null)
@@ -238,6 +330,15 @@ public class TimelineEventsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogTimelineAuditAsync(
+            requestContext,
+            timelineEvent.PatientProfileId,
+            timelineEvent.Id,
+            HealthPermissions.EditTimelineEvent,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
+
         return Ok(ToDto(timelineEvent));
     }
 
@@ -255,6 +356,27 @@ public class TimelineEventsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(timelineEvent.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.DeleteTimelineEvent,
+            timelineEvent.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogTimelineAuditAsync(
+                requestContext,
+                timelineEvent.PatientProfileId,
+                timelineEvent.Id,
+                HealthPermissions.DeleteTimelineEvent,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         timelineEvent.IsDeleted = true;
@@ -263,7 +385,55 @@ public class TimelineEventsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogTimelineAuditAsync(
+            requestContext,
+            timelineEvent.PatientProfileId,
+            timelineEvent.Id,
+            HealthPermissions.DeleteTimelineEvent,
+            AuditActionTypes.Delete,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogTimelineAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid patientId,
+        Guid? eventId,
+        string permission,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.TimelineEvent,
+            ResourceId = eventId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static TimelineEventDto ToDto(PatientTimelineEvent timelineEvent)
