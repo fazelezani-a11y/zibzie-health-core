@@ -28,9 +28,9 @@ Audit entries can record:
 - optional structured metadata as JSON text
 - creation timestamp
 
-## Foundation Only
+## Current Implementation Status
 
-This phase creates:
+Phase 83 created:
 
 - domain constants for audit action/resource types
 - `AuditLogEntry`
@@ -39,7 +39,9 @@ This phase creates:
 - `AuditLogService`
 - focused service tests
 
-Controllers and endpoints do not write audit logs yet.
+Later endpoint enforcement phases now write audit logs for protected endpoint groups,
+including successful access and denied access events. Endpoint groups that have not yet
+been protected should follow the same pattern when enforcement is added.
 
 ## Future High-Risk Actions to Audit
 
