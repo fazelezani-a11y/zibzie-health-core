@@ -28,7 +28,8 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84D protects current Medical History endpoints: Conditions, Allergies, and Medications.
 - Phase 84E1 protects Care Plan endpoints.
 - Phase 84E2 protects Reminder endpoints.
-- Measurements, patient summary/profile, and timeline are not protected yet.
+- Phase 84E3 protects Measurement endpoints.
+- Patient summary/profile and timeline are not protected yet.
 
 ## Request Context Gap
 
@@ -131,11 +132,11 @@ Patterns found:
 | Reminders | `/api/health-core/reminders/{reminderId}` | GET | Get reminder | Load reminder | `ViewReminders` | Read | Entity sensitivity. | Yes | Always | `View` | `Reminder` | Protected in Phase 84E2. Must resolve patient id from reminder. |
 | Reminders | `/api/health-core/reminders/{reminderId}` | PUT | Update/complete/cancel reminder | Load reminder | `EditReminder`, `CompleteReminder`, or `CancelReminder` by status change | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `Reminder` | Protected in Phase 84E2 with status-specific permission selection. |
 | Reminders | `/api/health-core/reminders/{reminderId}` | DELETE | Soft-delete reminder | Load reminder | `EditReminder` or future delete permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `Reminder` | Protected in Phase 84E2. No dedicated delete permission yet. |
-| Measurements | `/api/health-core/patients/{patientId}/measurements` | GET | List measurements | Route | `ViewMeasurements` | Read | Check per-record sensitivity; abnormal filter may require `ViewAbnormalMeasurements`. | Yes | Summary or always for restricted/abnormal | `View` | `Measurement` | Trends can reveal sensitive state. |
-| Measurements | `/api/health-core/patients/{patientId}/measurements` | POST | Create measurement | Route | `CreateMeasurement` | Write | Request sensitivity; abnormal flag should audit. | Yes | Always | `Create` | `Measurement` | Future lab-generated measurements should audit system source. |
-| Measurements | `/api/health-core/measurements/{measurementId}` | GET | Get measurement | Load measurement | `ViewMeasurements` | Read | Entity sensitivity; abnormal may require `ViewAbnormalMeasurements`. | Yes | Summary or always for restricted/abnormal | `View` | `Measurement` | Must resolve patient id from measurement. |
-| Measurements | `/api/health-core/measurements/{measurementId}` | PUT | Update measurement | Load measurement | `EditMeasurement` | Write | Existing/requested sensitivity; abnormal/target changes. | Yes | Always | `Update` | `Measurement` | Priority pin management may later use `ManagePriorityMeasurements`. |
-| Measurements | `/api/health-core/measurements/{measurementId}` | DELETE | Soft-delete measurement | Load measurement | `EditMeasurement` or future delete permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `Measurement` | No dedicated delete permission yet. |
+| Measurements | `/api/health-core/patients/{patientId}/measurements` | GET | List measurements | Route | `ViewMeasurements` | Read | Optional query sensitivity now; future mixed-sensitivity redaction may be needed. | Yes | Always for now; future aggregation may reduce graph polling volume | `View` | `Measurement` | Protected in Phase 84E3. Trends can reveal sensitive state. |
+| Measurements | `/api/health-core/patients/{patientId}/measurements` | POST | Create measurement | Route | `CreateMeasurement` | Write | Request sensitivity; abnormal flag should audit. | Yes | Always | `Create` | `Measurement` | Protected in Phase 84E3. Future lab-generated measurements should audit system source. |
+| Measurements | `/api/health-core/measurements/{measurementId}` | GET | Get measurement | Load measurement | `ViewMeasurements` | Read | Entity sensitivity; abnormal may require `ViewAbnormalMeasurements` in future specialized endpoints. | Yes | Always | `View` | `Measurement` | Protected in Phase 84E3. Must resolve patient id from measurement. |
+| Measurements | `/api/health-core/measurements/{measurementId}` | PUT | Update measurement | Load measurement | `EditMeasurement` | Write | Existing/requested sensitivity; abnormal/target changes. | Yes | Always | `Update` | `Measurement` | Protected in Phase 84E3. Priority pin management may later use `ManagePriorityMeasurements`. |
+| Measurements | `/api/health-core/measurements/{measurementId}` | DELETE | Soft-delete measurement | Load measurement | `EditMeasurement` or future delete permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `Measurement` | Protected in Phase 84E3. No dedicated delete permission yet. |
 
 ### 84F: Patient Profile, Summary, Timeline
 
@@ -202,9 +203,11 @@ No grant creation endpoint exists yet.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84E3 Measurements enforcement and audit logging**.
+Recommended next step: **84F Patient Summary, Timeline, and Patient Profile enforcement planning**.
 
 Keep the rollout narrow and module-by-module:
 
-- Protect Measurements next, including abnormal/restricted measurement considerations.
+- Plan Patient Summary carefully because it aggregates protected sections and may require redaction.
+- Protect Timeline separately because it is patient/care-team-facing history, not AuditLog.
+- Protect Patient Profile/contact info with profile/contact-specific permissions.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.

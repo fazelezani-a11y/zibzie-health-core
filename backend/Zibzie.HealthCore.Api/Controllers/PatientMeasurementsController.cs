@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Measurements;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,13 +13,22 @@ public class PatientMeasurementsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IPatientMeasurementService _patientMeasurementService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public PatientMeasurementsController(
         AppDbContext dbContext,
-        IPatientMeasurementService patientMeasurementService)
+        IPatientMeasurementService patientMeasurementService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _patientMeasurementService = patientMeasurementService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/measurements")]
@@ -32,6 +43,27 @@ public class PatientMeasurementsController : ControllerBase
         [FromQuery] string? relatedRecordType = null,
         [FromQuery] Guid? relatedRecordId = null)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewMeasurements,
+            sensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogMeasurementAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.ViewMeasurements,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -122,6 +154,15 @@ public class PatientMeasurementsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogMeasurementAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            HealthPermissions.ViewMeasurements,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(measurements);
     }
 
@@ -154,6 +195,27 @@ public class PatientMeasurementsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.CreateMeasurement,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogMeasurementAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.CreateMeasurement,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var dto = await _patientMeasurementService.CreatePatientMeasurementAsync(patientId, request);
 
         if (dto is null)
@@ -163,6 +225,15 @@ public class PatientMeasurementsController : ControllerBase
                 message = "Patient not found."
             });
         }
+
+        await LogMeasurementAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            HealthPermissions.CreateMeasurement,
+            AuditActionTypes.Create,
+            true,
+            accessDecision);
 
         return CreatedAtAction(
             nameof(GetPatientMeasurement),
@@ -184,6 +255,36 @@ public class PatientMeasurementsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(measurement.PatientProfileId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewMeasurements,
+            measurement.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogMeasurementAuditAsync(
+                requestContext,
+                measurement.PatientProfileId,
+                measurement.Id,
+                HealthPermissions.ViewMeasurements,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
+        await LogMeasurementAuditAsync(
+            requestContext,
+            measurement.PatientProfileId,
+            measurement.Id,
+            HealthPermissions.ViewMeasurements,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(ToDto(measurement));
     }
 
@@ -201,6 +302,27 @@ public class PatientMeasurementsController : ControllerBase
             {
                 message = "Measurement not found."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(measurement.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMeasurement,
+            request.SensitivityLevel ?? measurement.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogMeasurementAuditAsync(
+                requestContext,
+                measurement.PatientProfileId,
+                measurement.Id,
+                HealthPermissions.EditMeasurement,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         if (request.MeasurementType is not null)
@@ -339,6 +461,15 @@ public class PatientMeasurementsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogMeasurementAuditAsync(
+            requestContext,
+            measurement.PatientProfileId,
+            measurement.Id,
+            HealthPermissions.EditMeasurement,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
+
         return Ok(ToDto(measurement));
     }
 
@@ -356,6 +487,27 @@ public class PatientMeasurementsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(measurement.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMeasurement,
+            measurement.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogMeasurementAuditAsync(
+                requestContext,
+                measurement.PatientProfileId,
+                measurement.Id,
+                HealthPermissions.EditMeasurement,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         measurement.IsDeleted = true;
@@ -364,7 +516,55 @@ public class PatientMeasurementsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogMeasurementAuditAsync(
+            requestContext,
+            measurement.PatientProfileId,
+            measurement.Id,
+            HealthPermissions.EditMeasurement,
+            AuditActionTypes.Delete,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogMeasurementAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid patientId,
+        Guid? measurementId,
+        string permission,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.Measurement,
+            ResourceId = measurementId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static string? NormalizeOptional(string? value)
