@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Zibzie.HealthCore.Api\Zibzie.HealthCore.Api.csproj" />
     <ProjectReference Include="..\Zibzie.HealthCore.Application\Zibzie.HealthCore.Application.csproj" />
     <ProjectReference Include="..\Zibzie.HealthCore.Domain\Zibzie.HealthCore.Domain.csproj" />
     <ProjectReference Include="..\Zibzie.HealthCore.Infrastructure\Zibzie.HealthCore.Infrastructure.csproj" />

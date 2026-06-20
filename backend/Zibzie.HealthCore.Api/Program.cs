@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zibzie.HealthCore.Api.Security;
 using Zibzie.HealthCore.Application.CarePlans;
 using Zibzie.HealthCore.Application.Documents;
 using Zibzie.HealthCore.Application.Measurements;
@@ -28,6 +29,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -44,6 +46,7 @@ builder.Services.AddScoped<IPatientMeasurementService, PatientMeasurementService
 builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService>();
 builder.Services.AddScoped<IHealthCoreAuthorizationService, HealthCoreAuthorizationService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IHealthCoreRequestContextProvider, HttpHealthCoreRequestContextProvider>();
 
 builder.Services.AddCors(options =>
 {
