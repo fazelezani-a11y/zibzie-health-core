@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.Reminders;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -12,13 +14,22 @@ public class PatientRemindersController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IPatientReminderService _patientReminderService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public PatientRemindersController(
         AppDbContext dbContext,
-        IPatientReminderService patientReminderService)
+        IPatientReminderService patientReminderService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _patientReminderService = patientReminderService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/reminders")]
@@ -32,6 +43,26 @@ public class PatientRemindersController : ControllerBase
         [FromQuery] DateTimeOffset? dueAfter = null,
         [FromQuery] bool includeDone = true)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewReminders);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogReminderAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.ViewReminders,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -118,6 +149,15 @@ public class PatientRemindersController : ControllerBase
             })
             .ToListAsync();
 
+        await LogReminderAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            HealthPermissions.ViewReminders,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(reminders);
     }
 
@@ -150,6 +190,27 @@ public class PatientRemindersController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.CreateReminder,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogReminderAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.CreateReminder,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var dto = await _patientReminderService.CreatePatientReminderAsync(patientId, request);
 
         if (dto is null)
@@ -159,6 +220,15 @@ public class PatientRemindersController : ControllerBase
                 message = "Patient not found."
             });
         }
+
+        await LogReminderAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            HealthPermissions.CreateReminder,
+            AuditActionTypes.Create,
+            true,
+            accessDecision);
 
         return CreatedAtAction(
             nameof(GetPatientReminder),
@@ -180,6 +250,36 @@ public class PatientRemindersController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(reminder.PatientProfileId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewReminders,
+            reminder.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogReminderAuditAsync(
+                requestContext,
+                reminder.PatientProfileId,
+                reminder.Id,
+                HealthPermissions.ViewReminders,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
+        await LogReminderAuditAsync(
+            requestContext,
+            reminder.PatientProfileId,
+            reminder.Id,
+            HealthPermissions.ViewReminders,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(ToDto(reminder));
     }
 
@@ -197,6 +297,28 @@ public class PatientRemindersController : ControllerBase
             {
                 message = "Reminder not found."
             });
+        }
+
+        var permission = GetReminderUpdatePermission(request.Status);
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(reminder.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            permission,
+            request.SensitivityLevel ?? reminder.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogReminderAuditAsync(
+                requestContext,
+                reminder.PatientProfileId,
+                reminder.Id,
+                permission,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var statusChangedToDone = false;
@@ -337,6 +459,15 @@ public class PatientRemindersController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogReminderAuditAsync(
+            requestContext,
+            reminder.PatientProfileId,
+            reminder.Id,
+            permission,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
+
         return Ok(ToDto(reminder));
     }
 
@@ -354,6 +485,27 @@ public class PatientRemindersController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(reminder.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditReminder,
+            reminder.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogReminderAuditAsync(
+                requestContext,
+                reminder.PatientProfileId,
+                reminder.Id,
+                HealthPermissions.EditReminder,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         reminder.IsDeleted = true;
@@ -362,7 +514,77 @@ public class PatientRemindersController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogReminderAuditAsync(
+            requestContext,
+            reminder.PatientProfileId,
+            reminder.Id,
+            HealthPermissions.EditReminder,
+            AuditActionTypes.Delete,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogReminderAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid patientId,
+        Guid? reminderId,
+        string permission,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.Reminder,
+            ResourceId = reminderId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private static string GetReminderUpdatePermission(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return HealthPermissions.EditReminder;
+        }
+
+        var normalizedStatus = status.Trim();
+
+        if (string.Equals(normalizedStatus, ReminderStatuses.Done, StringComparison.OrdinalIgnoreCase))
+        {
+            return HealthPermissions.CompleteReminder;
+        }
+
+        if (string.Equals(normalizedStatus, ReminderStatuses.Cancelled, StringComparison.OrdinalIgnoreCase))
+        {
+            return HealthPermissions.CancelReminder;
+        }
+
+        return HealthPermissions.EditReminder;
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static PatientReminderDto ToDto(PatientReminder reminder)
