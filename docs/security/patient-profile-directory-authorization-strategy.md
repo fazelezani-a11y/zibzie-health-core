@@ -31,12 +31,12 @@ Base route: `/api/health-core/patients`
 
 | Route | Method | Current action | Current response/request behavior | Current enforcement |
 | --- | --- | --- | --- | --- |
-| `/api/health-core/patients?search=&page=&pageSize=` | GET | List/search active patients | Searches first name, last name, national code, and mobile number. Returns id, full name, birth date, national code, mobile number, active status. | Unprotected |
-| `/api/health-core/patients/{id}` | GET | Get patient detail/profile | Returns first/last/full name, birth date, national code, gender, blood type, marital status, education, occupation, mobile, email, emergency contact, home/work address, active status, created date. | Unprotected |
+| `/api/health-core/patients?search=&page=&pageSize=` | GET | List/search active patients | Searches first name, last name, national code, and mobile number. Returns id, full name, birth date, national code, mobile number, active status. | Protected in Phase 84H2 |
+| `/api/health-core/patients/{id}` | GET | Get patient detail/profile | Returns first/last/full name, birth date, national code, gender, blood type, marital status, education, occupation, mobile, email, emergency contact, home/work address, active status, created date. | Protected in Phase 84H2 |
 | `/api/health-core/patients/{patientId}/summary` | GET | Get patient summary | Returns profile/contact summary plus conditions, allergies, and current medications. | Protected in Phase 84E5 |
-| `/api/health-core/patients` | POST | Create patient | Creates `PatientProfile` and `ContactInfo`. Mobile number is required and checked for duplicates. | Unprotected |
-| `/api/health-core/patients/{id}` | PUT | Update patient | Updates profile and contact fields, including mobile duplicate check. | Unprotected |
-| `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Soft-deactivates patient by setting `IsActive = false`. | Unprotected |
+| `/api/health-core/patients` | POST | Create patient | Creates `PatientProfile` and `ContactInfo`. Mobile number is required and checked for duplicates. | Protected in Phase 84H3 |
+| `/api/health-core/patients/{id}` | PUT | Update patient | Updates profile and contact fields, including mobile duplicate check. | Protected in Phase 84H3 |
+| `/api/health-core/patients/{id}` | DELETE | Deactivate patient | Soft-deactivates patient by setting `IsActive = false`. | Protected in Phase 84H3 |
 
 Frontend usage found:
 
@@ -52,7 +52,7 @@ Frontend usage found:
 | Identity profile | first name, last name, birth date, gender, blood type | Medium to high. Identity and demographic data can identify a person. | InternalAdmin, assigned care team, active clinical contexts, patient owner. | Existing `ViewPatientProfile`. | Name/status maybe yes; birth date/blood type only if needed. |
 | Strong identifiers | national code, mobile number, email | High. Can uniquely identify or contact the person. | InternalAdmin, assigned case/care managers, authorized care providers, patient owner. | `ViewPatientContactInfo` plus future directory/search permission for searching. | No by default. Only with stronger permission or exact scoped context. |
 | Contact/location | home address, work address, emergency contact name/phone | High. Location and emergency contact data create privacy and safety risk. | InternalAdmin, active care operations, HomeVisit visit-scoped staff, patient owner. | Existing `ViewPatientContactInfo`. | No. Should not be in broad directory results. |
-| Administrative state | active/inactive, created/updated metadata | Medium. Reveals lifecycle and operational state. | InternalAdmin, HealthCoreAdmin, support/operations as needed. | `ViewPatientDirectory` for read, future `DeactivatePatient` for state change. | Active status yes for authorized directory; timestamps usually detail/admin only. |
+| Administrative state | active/inactive, created/updated metadata | Medium. Reveals lifecycle and operational state. | InternalAdmin, HealthCoreAdmin, support/operations as needed. | `ViewPatientDirectory` for read, `DeactivatePatient` for state change. | Active status yes for authorized directory; timestamps usually detail/admin only. |
 
 ## 4. Patient existence leakage risk
 
@@ -231,7 +231,7 @@ Denied attempts:
 - Should `PatientListItemDto` remain as-is for internal admin and a new minimal external directory DTO be added later?
 - How will a newly created patient receive initial `PatientAccessGrant` rows?
 - Should patient create be allowed only for InternalAdmin/HealthCoreAdmin at first, or also for DigiCare case managers?
-- Should soft deactivation require `DeactivatePatient`, `ManageAccess`, or a future patient lifecycle permission?
+- Should future patient lifecycle workflows add more granular permissions beyond the current `DeactivatePatient` soft-deactivation permission?
 - How should patient owner/family/shared-provider profile editing be modeled when patient-facing products integrate?
 - Should AuditLog use a future `PatientDirectory` resource type for list/search, or continue using `PatientProfile`?
 - What identity provider and production claims will replace the current development fallback?
