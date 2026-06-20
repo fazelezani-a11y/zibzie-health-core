@@ -11,6 +11,14 @@ import {
   type LabResultItem,
   type ParaclinicalResult,
 } from "@/lib/api";
+import {
+  paraclinicalResultTypeOptions as resultTypeOptions,
+  selectPlaceholder,
+  sensitivityLevelOptions,
+  sourceTypeOptions,
+  verificationStatusOptions,
+  type HealthOption,
+} from "@/lib/health-options";
 
 const timelineRefreshEventName = "zibzie:timeline-refresh";
 
@@ -43,14 +51,6 @@ const emptyForm: CreateParaclinicalResultPayload = {
   labItems: [],
 };
 
-const resultTypeOptions = ["Lab", "Imaging", "Pathology", "ECG", "Endoscopy", "Other"];
-const sourceTypeOptions = ["Manual", "ClinicianEntered", "System"];
-const verificationStatusOptions = [
-  "Unverified",
-  "PatientReported",
-  "ClinicianVerified",
-];
-const sensitivityLevelOptions = ["Normal", "Sensitive"];
 const abnormalOptions = [
   { label: "ثبت نشده", value: "" },
   { label: "بله", value: "true" },
@@ -139,11 +139,13 @@ function SelectInput({
   value,
   options,
   onChange,
+  allowEmpty = false,
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: HealthOption[];
   onChange: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
   return (
     <Field label={label}>
@@ -152,9 +154,10 @@ function SelectInput({
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
+        {allowEmpty ? <option value="">{selectPlaceholder}</option> : null}
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

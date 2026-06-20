@@ -3,12 +3,26 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Badge from "@/components/ui/Badge";
+import Notice from "@/components/ui/Notice";
 import {
   createPatientMeasurement,
   getPatientMeasurements,
   type CreatePatientMeasurementPayload,
   type PatientMeasurement,
 } from "@/lib/api";
+import {
+  defaultPriorityMeasurementTypes,
+  labMeasurementTypes,
+  lifestyleMeasurementTypes,
+  measurementSourceTypeOptions as sourceTypeOptions,
+  measurementTypeOptions,
+  measurementVerificationStatusOptions as verificationStatusOptions,
+  selectPlaceholder,
+  sensitivityLevelOptions,
+  vitalSignMeasurementTypes,
+  type HealthOption,
+} from "@/lib/health-options";
 
 const timelineRefreshEventName = "zibzie:timeline-refresh";
 
@@ -32,48 +46,43 @@ const emptyForm: CreatePatientMeasurementPayload = {
   sensitivityLevel: "Normal",
 };
 
-const measurementTypeOptions = [
-  "Weight",
-  "Height",
-  "BMI",
-  "BloodPressureSystolic",
-  "BloodPressureDiastolic",
-  "HeartRate",
-  "Temperature",
-  "SpO2",
-  "FastingBloodGlucose",
-  "RandomBloodGlucose",
-  "HbA1c",
-  "LDL",
-  "HDL",
-  "Triglycerides",
-  "Creatinine",
-  "eGFR",
-  "Other",
-];
-
-const sourceTypeOptions = [
-  "Manual",
-  "LabResult",
-  "Device",
-  "ParaclinicalResult",
-  "System",
-];
-
-const verificationStatusOptions = [
-  "Unverified",
-  "PatientReported",
-  "ClinicianVerified",
-  "DeviceImported",
-  "SystemGenerated",
-];
-
-const sensitivityLevelOptions = ["Normal", "Sensitive"];
-
-const abnormalOptions = [
+const abnormalOptions: HealthOption[] = [
   { label: "ثبت نشده", value: "" },
   { label: "بله", value: "true" },
   { label: "خیر", value: "false" },
+];
+
+type MeasurementFilterId =
+  | "all"
+  | "priority"
+  | "vitals"
+  | "lab"
+  | "lifestyle"
+  | "abnormal";
+
+type MeasurementGroup = {
+  measurementType: string;
+  label: string;
+  unit: string;
+  latest: PatientMeasurement;
+  points: PatientMeasurement[];
+};
+
+const primaryMeasurementFilters: Array<{ id: MeasurementFilterId; label: string }> = [
+  { id: "all", label: "همه" },
+  { id: "priority", label: "اولویت‌دار" },
+  { id: "abnormal", label: "غیرطبیعی" },
+  { id: "vitals", label: "علائم حیاتی" },
+  { id: "lab", label: "آزمایشگاهی" },
+];
+
+const advancedMeasurementFilters: Array<{ id: MeasurementFilterId; label: string }> = [
+  { id: "lifestyle", label: "سبک زندگی" },
+];
+
+const measurementFilters = [
+  ...primaryMeasurementFilters,
+  ...advancedMeasurementFilters,
 ];
 
 function formatDateTime(value: string | null) {
@@ -112,6 +121,32 @@ function formatBoolean(value: boolean | null) {
 
 function valueWithUnit(measurement: PatientMeasurement) {
   return `${formatNumber(measurement.value)} ${measurement.unit}`;
+}
+
+function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
+  if (!value?.trim()) {
+    return "ثبت نشده";
+  }
+
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function getMeasurementTypeLabel(value: string, displayName?: string | null) {
+  if (displayName?.trim()) {
+    return displayName;
+  }
+
+  return getOptionLabel(measurementTypeOptions, value);
+}
+
+function formatTargetRange(measurement: PatientMeasurement) {
+  if (measurement.targetMin === null && measurement.targetMax === null) {
+    return null;
+  }
+
+  return `${measurement.targetMin !== null ? formatNumber(measurement.targetMin) : "ثبت نشده"} تا ${
+    measurement.targetMax !== null ? formatNumber(measurement.targetMax) : "ثبت نشده"
+  }`;
 }
 
 function Field({
@@ -164,11 +199,13 @@ function SelectInput({
   value,
   options,
   onChange,
+  allowEmpty = false,
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: HealthOption[];
   onChange: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
   return (
     <Field label={label}>
@@ -177,9 +214,10 @@ function SelectInput({
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
+        {allowEmpty ? <option value="">{selectPlaceholder}</option> : null}
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -213,50 +251,22 @@ function BooleanSelect({
   );
 }
 
-function Notice({
+function FormNotice({
   error,
   success,
 }: {
   error: string | null;
   success: string | null;
 }) {
-  if (!error && !success) {
-    return null;
+  if (error) {
+    return <Notice variant="error">{error}</Notice>;
   }
 
-  return (
-    <div
-      className={`rounded-md border p-3 text-sm leading-7 ${
-        error
-          ? "border-rose-200 bg-rose-50 text-rose-900"
-          : "border-emerald-200 bg-emerald-50 text-emerald-900"
-      }`}
-    >
-      {error ?? success}
-    </div>
-  );
-}
+  if (success) {
+    return <Notice variant="success">{success}</Notice>;
+  }
 
-function Badge({
-  children,
-  tone = "slate",
-}: {
-  children: ReactNode;
-  tone?: "slate" | "teal" | "rose" | "amber" | "emerald";
-}) {
-  const toneClass = {
-    slate: "bg-slate-100 text-slate-700",
-    teal: "bg-teal-50 text-teal-800",
-    rose: "bg-rose-50 text-rose-800",
-    amber: "bg-amber-50 text-amber-800",
-    emerald: "bg-emerald-50 text-emerald-800",
-  }[tone];
-
-  return (
-    <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${toneClass}`}>
-      {children}
-    </span>
-  );
+  return null;
 }
 
 function MetaItem({
@@ -286,17 +296,9 @@ function sortByMeasuredAtAscending(measurements: PatientMeasurement[]) {
   });
 }
 
-type MeasurementTrendGroup = {
-  measurementType: string;
-  displayName: string;
-  unit: string;
-  latest: PatientMeasurement;
-  points: PatientMeasurement[];
-};
-
-function getMeasurementTrendGroups(
+function getMeasurementGroups(
   measurements: PatientMeasurement[],
-): MeasurementTrendGroup[] {
+): MeasurementGroup[] {
   const grouped = measurements.reduce<Record<string, PatientMeasurement[]>>(
     (groups, measurement) => ({
       ...groups,
@@ -315,15 +317,15 @@ function getMeasurementTrendGroups(
 
       return {
         measurementType,
-        displayName: latest?.displayName ?? measurementType,
+        label: getMeasurementTypeLabel(measurementType, latest?.displayName),
         unit: latest?.unit ?? "",
         latest,
         points,
       };
     })
     .filter(
-      (group): group is MeasurementTrendGroup =>
-        Boolean(group.latest) && group.points.length >= 2,
+      (group): group is MeasurementGroup =>
+        Boolean(group.latest) && group.points.length > 0,
     )
     .sort((first, second) => {
       const firstAbnormal = first.latest.isAbnormal ? 1 : 0;
@@ -333,47 +335,59 @@ function getMeasurementTrendGroups(
     });
 }
 
-function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
+function measurementMatchesFilter(
+  group: MeasurementGroup,
+  filter: MeasurementFilterId,
+  priorityMeasurementTypes: string[],
+) {
+  switch (filter) {
+    case "all":
+      return true;
+    case "priority":
+      return priorityMeasurementTypes.includes(group.measurementType);
+    case "vitals":
+      return vitalSignMeasurementTypes.includes(group.measurementType);
+    case "lab":
+      return labMeasurementTypes.includes(group.measurementType);
+    case "lifestyle":
+      return lifestyleMeasurementTypes.includes(group.measurementType);
+    case "abnormal":
+      return group.points.some((measurement) => measurement.isAbnormal === true);
+  }
+}
+
+function Sparkline({ group }: { group: MeasurementGroup }) {
   const width = 180;
   const height = 54;
   const values = group.points.map((point) => point.value);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const range = maxValue - minValue || 1;
-  const linePoints = group.points
-    .map((point, index) => {
-      const x =
-        group.points.length === 1
-          ? 0
-          : (index / (group.points.length - 1)) * width;
-      const y = 6 + ((maxValue - point.value) / range) * (height - 12);
+  const chartPoints = group.points.map((point, index) => {
+    const x =
+      group.points.length === 1
+        ? width / 2
+        : (index / (group.points.length - 1)) * width;
+    const y = 6 + ((maxValue - point.value) / range) * (height - 12);
 
-      return `${x},${y}`;
-    })
-    .join(" ");
+    return {
+      id: point.id,
+      isAbnormal: point.isAbnormal,
+      x,
+      y,
+    };
+  });
+  const linePoints = chartPoints.map((point) => `${point.x},${point.y}`).join(" ");
 
   return (
-    <article className="rounded-md border border-slate-200 bg-white p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-950">
-            {group.displayName}
-          </h3>
-          <p className="mt-1 text-xs text-slate-500">
-            {formatNumber(group.points.length)} داده
-          </p>
-        </div>
-        <Badge tone={group.latest.isAbnormal ? "rose" : "teal"}>
-          {formatNumber(group.latest.value)} {group.unit}
-        </Badge>
-      </div>
-      <svg
-        aria-label={`روند ${group.displayName}`}
-        className="mt-3 h-14 w-full rounded-md bg-slate-50"
-        preserveAspectRatio="none"
-        role="img"
-        viewBox={`0 0 ${width} ${height}`}
-      >
+    <svg
+      aria-label={`روند ${group.label}`}
+      className="h-14 w-full rounded-md bg-slate-50"
+      preserveAspectRatio="none"
+      role="img"
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      {group.points.length >= 2 ? (
         <polyline
           fill="none"
           points={linePoints}
@@ -382,85 +396,111 @@ function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
           strokeLinejoin="round"
           strokeWidth="3"
         />
-        {group.points.map((point, index) => {
-          const x =
-            group.points.length === 1
-              ? 0
-              : (index / (group.points.length - 1)) * width;
-          const y = 6 + ((maxValue - point.value) / range) * (height - 12);
+      ) : null}
+      {chartPoints.map((point) => (
+        <circle
+          cx={point.x}
+          cy={point.y}
+          fill={point.isAbnormal ? "#e11d48" : "#0f766e"}
+          key={point.id}
+          r="3.5"
+        />
+      ))}
+    </svg>
+  );
+}
 
-          return (
-            <circle
-              cx={x}
-              cy={y}
-              fill={point.isAbnormal ? "#e11d48" : "#0f766e"}
-              key={point.id}
-              r="3.5"
-            />
-          );
-        })}
-      </svg>
+function MeasurementGroupCard({
+  group,
+  isPriority,
+  onSelect,
+  onTogglePriority,
+}: {
+  group: MeasurementGroup;
+  isPriority: boolean;
+  onSelect: (measurementType: string) => void;
+  onTogglePriority: (measurementType: string) => void;
+}) {
+  const latestMeasuredAt = formatDateTime(group.latest.measuredAt);
+  const targetRange = formatTargetRange(group.latest);
+  const hasTrend = group.points.length >= 2;
+
+  return (
+    <article className="rounded-md border border-slate-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-950">{group.label}</h3>
+            {isPriority ? <Badge tone="info">اولویت</Badge> : null}
+            {group.latest.isAbnormal ? <Badge tone="danger">غیرطبیعی</Badge> : null}
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {formatNumber(group.points.length)} داده · آخرین ثبت:{" "}
+            {latestMeasuredAt ?? group.latest.measuredAt}
+          </p>
+        </div>
+        <div className="text-left">
+          <p className="text-lg font-bold text-teal-800">
+            {formatNumber(group.latest.value)}
+          </p>
+          <p className="text-xs font-medium text-slate-500">{group.unit}</p>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <Sparkline group={group} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs leading-6 text-slate-500">
+          {hasTrend ? "روند قابل مشاهده است." : "برای روند، داده بیشتری لازم است."}
+          {targetRange ? <span> هدف: {targetRange}</span> : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="h-8 rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={() => onSelect(group.measurementType)}
+            type="button"
+          >
+            نمایش روند
+          </button>
+          <button
+            className={`h-8 rounded-md border px-3 text-xs font-semibold transition ${
+              isPriority
+                ? "border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+            onClick={() => onTogglePriority(group.measurementType)}
+            type="button"
+          >
+            {isPriority ? "حذف از نمای کلی" : "نمایش در نمای کلی"}
+          </button>
+        </div>
+      </div>
     </article>
   );
 }
 
-function MeasurementQuickTrends({
-  groups,
-}: {
-  groups: MeasurementTrendGroup[];
-}) {
-  return (
-    <section className="rounded-md border border-slate-200 bg-slate-50 p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-base font-bold text-slate-950">
-            روندهای سریع شاخص‌ها
-          </h3>
-          <p className="mt-1 text-sm leading-7 text-slate-600">
-            خلاصه کوچک از شاخص‌هایی که حداقل دو داده ثبت‌شده دارند.
-          </p>
-        </div>
-        {groups.length > 0 ? (
-          <Badge tone="teal">{formatNumber(groups.length)} نمودار</Badge>
-        ) : null}
-      </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {groups.length > 0 ? (
-          groups.map((group) => (
-            <MiniTrendCard group={group} key={group.measurementType} />
-          ))
-        ) : (
-          <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm leading-7 text-slate-600 sm:col-span-2 xl:col-span-3">
-            برای نمایش نمودار سریع، حداقل دو اندازه‌گیری از یک نوع لازم است.
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 function MeasurementTrend({
-  measurementType,
-  measurements,
+  group,
 }: {
-  measurementType: string | null;
-  measurements: PatientMeasurement[];
+  group: MeasurementGroup | null;
 }) {
-  if (!measurementType) {
+  if (!group) {
     return (
-      <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+      <Notice variant="empty">
         برای نمایش روند، ابتدا یک نوع شاخص انتخاب کنید.
-      </div>
+      </Notice>
     );
   }
 
-  const points = sortByMeasuredAtAscending(measurements);
+  const points = group.points;
 
   if (points.length < 2) {
     return (
-      <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-        برای نمایش روند {measurementType} حداقل دو اندازه‌گیری لازم است.
-      </div>
+      <Notice variant="empty">
+        برای نمایش روند {group.label} حداقل دو اندازه‌گیری لازم است.
+      </Notice>
     );
   }
 
@@ -481,8 +521,7 @@ function MeasurementTrend({
     const x =
       paddingX +
       (points.length === 1 ? 0 : (index / (points.length - 1)) * plotWidth);
-    const y =
-      paddingTop + ((maxValue - point.value) / range) * plotHeight;
+    const y = paddingTop + ((maxValue - point.value) / range) * plotHeight;
 
     return {
       measurement: point,
@@ -496,25 +535,25 @@ function MeasurementTrend({
     .join(" ");
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-bold text-slate-950">
-            روند {measurementType}
+            روند {group.label}
           </h3>
           <p className="mt-1 text-sm leading-7 text-slate-600">
             آخرین مقدار: {valueWithUnit(latest)} در{" "}
             {formatDateTime(latest.measuredAt) ?? latest.measuredAt}
           </p>
         </div>
-        <Badge tone={latest.isAbnormal ? "rose" : "teal"}>
+        <Badge tone={latest.isAbnormal ? "danger" : "info"}>
           {latest.displayName}: {valueWithUnit(latest)}
         </Badge>
       </div>
 
       <div className="mt-4 overflow-x-auto">
         <svg
-          aria-label={`روند ${measurementType}`}
+          aria-label={`روند ${group.label}`}
           className="h-56 min-w-[640px] rounded-md bg-white"
           role="img"
           viewBox={`0 0 ${width} ${height}`}
@@ -556,7 +595,7 @@ function MeasurementTrend({
           <polyline
             fill="none"
             points={linePoints}
-            stroke="#0f766e"
+            stroke={latest.isAbnormal ? "#e11d48" : "#0f766e"}
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="3"
@@ -615,74 +654,99 @@ function MeasurementCard({
 }: {
   measurement: PatientMeasurement;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const measuredAt = formatDateTime(measurement.measuredAt);
-  const targetRange =
-    measurement.targetMin !== null || measurement.targetMax !== null
-      ? `${measurement.targetMin !== null ? formatNumber(measurement.targetMin) : "ثبت نشده"} تا ${
-          measurement.targetMax !== null
-            ? formatNumber(measurement.targetMax)
-            : "ثبت نشده"
-        }`
-      : null;
+  const targetRange = formatTargetRange(measurement);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+      <div
+        className={`mb-3 h-1 rounded-full ${
+          measurement.isAbnormal ? "bg-rose-300" : "bg-teal-200"
+        }`}
+      />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-base font-bold text-slate-950">
             {measurement.displayName}
           </h3>
-          <p className="mt-2 text-lg font-bold text-teal-800">
-            {valueWithUnit(measurement)}
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            {getMeasurementTypeLabel(measurement.measurementType)} ·{" "}
+            {measuredAt ?? measurement.measuredAt}
+            {targetRange ? ` · هدف: ${targetRange}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Badge tone="teal">{measurement.measurementType}</Badge>
-          {measurement.isAbnormal !== null ? (
-            <Badge tone={measurement.isAbnormal ? "rose" : "emerald"}>
-              {measurement.isAbnormal ? "غیرطبیعی" : "طبیعی"}
-            </Badge>
+          <Badge tone={measurement.isAbnormal ? "danger" : "info"}>
+            {valueWithUnit(measurement)}
+          </Badge>
+          {measurement.isAbnormal ? (
+            <Badge tone="danger">غیرطبیعی</Badge>
           ) : null}
+          <button
+            className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={() => setIsExpanded((current) => !current)}
+            type="button"
+          >
+            {isExpanded ? "بستن جزئیات" : "جزئیات"}
+          </button>
         </div>
       </div>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetaItem label="زمان اندازه‌گیری" value={measuredAt ?? measurement.measuredAt} />
-        {measurement.method ? (
-          <MetaItem label="روش اندازه‌گیری" value={measurement.method} />
-        ) : null}
-        {measurement.bodySite ? (
-          <MetaItem label="محل اندازه‌گیری" value={measurement.bodySite} />
-        ) : null}
-        {measurement.context ? (
-          <MetaItem label="زمینه / توضیح" value={measurement.context} />
-        ) : null}
-        {measurement.referenceRange ? (
-          <MetaItem label="محدوده مرجع" value={measurement.referenceRange} />
-        ) : null}
-        {measurement.isAbnormal !== null ? (
+      {isExpanded ? (
+        <dl className="mt-4 grid gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 sm:grid-cols-2 lg:grid-cols-4">
+          <MetaItem label="زمان اندازه‌گیری" value={measuredAt ?? measurement.measuredAt} />
+          {measurement.method ? (
+            <MetaItem label="روش اندازه‌گیری" value={measurement.method} />
+          ) : null}
+          {measurement.bodySite ? (
+            <MetaItem label="محل اندازه‌گیری" value={measurement.bodySite} />
+          ) : null}
+          {measurement.context ? (
+            <MetaItem label="زمینه / توضیح" value={measurement.context} />
+          ) : null}
+          {measurement.referenceRange ? (
+            <MetaItem label="محدوده مرجع" value={measurement.referenceRange} />
+          ) : null}
+          {measurement.isAbnormal !== null ? (
+            <MetaItem
+              label="غیرطبیعی"
+              value={formatBoolean(measurement.isAbnormal)}
+            />
+          ) : null}
+          {targetRange ? <MetaItem label="هدف" value={targetRange} /> : null}
           <MetaItem
-            label="غیرطبیعی"
-            value={formatBoolean(measurement.isAbnormal)}
+            label="منبع"
+            value={getOptionLabel(sourceTypeOptions, measurement.sourceType)}
           />
-        ) : null}
-        {targetRange ? <MetaItem label="هدف" value={targetRange} /> : null}
-        <MetaItem label="منبع" value={measurement.sourceType} />
-        <MetaItem label="وضعیت تأیید" value={measurement.verificationStatus} />
-        <MetaItem label="سطح حساسیت" value={measurement.sensitivityLevel} />
-        {measurement.relatedRecordType ? (
           <MetaItem
-            label="نوع رکورد مرتبط"
-            value={measurement.relatedRecordType}
+            label="وضعیت تأیید"
+            value={getOptionLabel(
+              verificationStatusOptions,
+              measurement.verificationStatus,
+            )}
           />
-        ) : null}
-        {measurement.relatedRecordId ? (
           <MetaItem
-            label="شناسه رکورد مرتبط"
-            value={<span dir="ltr">{measurement.relatedRecordId}</span>}
+            label="سطح حساسیت"
+            value={getOptionLabel(
+              sensitivityLevelOptions,
+              measurement.sensitivityLevel,
+            )}
           />
-        ) : null}
-      </dl>
+          {measurement.relatedRecordType ? (
+            <MetaItem
+              label="نوع رکورد مرتبط"
+              value={measurement.relatedRecordType}
+            />
+          ) : null}
+          {measurement.relatedRecordId ? (
+            <MetaItem
+              label="شناسه رکورد مرتبط"
+              value={<span dir="ltr">{measurement.relatedRecordId}</span>}
+            />
+          ) : null}
+        </dl>
+      ) : null}
     </article>
   );
 }
@@ -695,8 +759,7 @@ function MeasurementCreateForm({
   onCreated: (measurementType: string) => Promise<void>;
 }) {
   const router = useRouter();
-  const [form, setForm] =
-    useState<CreatePatientMeasurementPayload>(emptyForm);
+  const [form, setForm] = useState<CreatePatientMeasurementPayload>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -751,14 +814,14 @@ function MeasurementCreateForm({
 
   return (
     <form
-      className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+      className="rounded-md border border-slate-200 bg-slate-50 p-4"
       onSubmit={handleSubmit}
     >
       <h3 className="text-base font-bold text-slate-950">
         ثبت شاخص سلامت جدید
       </h3>
       <div className="mt-3">
-        <Notice error={errorMessage} success={successMessage} />
+        <FormNotice error={errorMessage} success={successMessage} />
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -880,13 +943,25 @@ function MeasurementCreateForm({
 
 export default function PatientMeasurements({
   patientId,
+  priorityMeasurementTypes,
+  onPriorityMeasurementTypesChange,
 }: {
   patientId: string;
+  priorityMeasurementTypes?: string[];
+  onPriorityMeasurementTypesChange?: (measurementTypes: string[]) => void;
 }) {
   const [measurements, setMeasurements] = useState<PatientMeasurement[]>([]);
-  const [measurementTypeFilter, setMeasurementTypeFilter] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<MeasurementFilterId>("all");
+  const [selectedMeasurementType, setSelectedMeasurementType] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [localPriorityMeasurementTypes, setLocalPriorityMeasurementTypes] =
+    useState<string[]>(defaultPriorityMeasurementTypes);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const activePriorityMeasurementTypes =
+    priorityMeasurementTypes ?? localPriorityMeasurementTypes;
 
   const loadMeasurements = useCallback(async () => {
     setIsLoading(true);
@@ -915,154 +990,278 @@ export default function PatientMeasurements({
   }, [loadMeasurements]);
 
   const availableMeasurementTypes = useMemo(() => {
-    const knownTypes = measurements.map(
-      (measurement) => measurement.measurementType,
+    const configuredValues = new Set(
+      measurementTypeOptions.map((option) => option.value),
     );
+    const customTypes = measurements
+      .map((measurement) => measurement.measurementType)
+      .filter((measurementType) => !configuredValues.has(measurementType));
 
-    return Array.from(new Set([...measurementTypeOptions, ...knownTypes]));
+    return [
+      ...measurementTypeOptions,
+      ...Array.from(new Set(customTypes)).map((measurementType) => ({
+        value: measurementType,
+        label: measurementType,
+      })),
+    ];
   }, [measurements]);
 
+  const measurementGroups = useMemo(
+    () => getMeasurementGroups(measurements),
+    [measurements],
+  );
+
+  const selectedGroup = useMemo(() => {
+    const selectedType =
+      selectedMeasurementType || measurementGroups[0]?.measurementType || "";
+
+    return (
+      measurementGroups.find((group) => group.measurementType === selectedType) ??
+      null
+    );
+  }, [measurementGroups, selectedMeasurementType]);
+
+  const filteredGroups = useMemo(
+    () =>
+      measurementGroups
+        .filter((group) =>
+          measurementMatchesFilter(
+            group,
+            selectedFilter,
+            activePriorityMeasurementTypes,
+          ),
+        )
+        .sort((first, second) => {
+          const firstPriority = activePriorityMeasurementTypes.includes(
+            first.measurementType,
+          )
+            ? 1
+            : 0;
+          const secondPriority = activePriorityMeasurementTypes.includes(
+            second.measurementType,
+          )
+            ? 1
+            : 0;
+
+          return secondPriority - firstPriority;
+        }),
+    [activePriorityMeasurementTypes, measurementGroups, selectedFilter],
+  );
+  const activeFilterDefinition = measurementFilters.find(
+    (filter) => filter.id === selectedFilter,
+  );
+
   const visibleMeasurements = useMemo(() => {
-    if (!measurementTypeFilter) {
+    if (!selectedMeasurementType) {
       return measurements;
     }
 
     return measurements.filter(
-      (measurement) => measurement.measurementType === measurementTypeFilter,
+      (measurement) => measurement.measurementType === selectedMeasurementType,
     );
-  }, [measurementTypeFilter, measurements]);
+  }, [measurements, selectedMeasurementType]);
 
-  const trendMeasurementType = useMemo(() => {
-    if (measurementTypeFilter) {
-      return measurementTypeFilter;
+  function setPriorityTypes(nextTypes: string[]) {
+    if (onPriorityMeasurementTypesChange) {
+      onPriorityMeasurementTypesChange(nextTypes);
+      return;
     }
 
-    const countsByType = measurements.reduce<Record<string, number>>(
-      (counts, measurement) => ({
-        ...counts,
-        [measurement.measurementType]:
-          (counts[measurement.measurementType] ?? 0) + 1,
-      }),
-      {},
-    );
+    setLocalPriorityMeasurementTypes(nextTypes);
+  }
 
-    return (
-      Object.entries(countsByType).find(([, count]) => count >= 2)?.[0] ??
-      measurements[0]?.measurementType ??
-      null
-    );
-  }, [measurementTypeFilter, measurements]);
+  function togglePriorityMeasurementType(measurementType: string) {
+    const nextTypes = activePriorityMeasurementTypes.includes(measurementType)
+      ? activePriorityMeasurementTypes.filter((type) => type !== measurementType)
+      : [...activePriorityMeasurementTypes, measurementType];
 
-  const trendMeasurements = useMemo(() => {
-    if (!trendMeasurementType) {
-      return [];
-    }
-
-    return measurements.filter(
-      (measurement) => measurement.measurementType === trendMeasurementType,
-    );
-  }, [measurements, trendMeasurementType]);
-
-  const quickTrendGroups = useMemo(
-    () => getMeasurementTrendGroups(measurements).slice(0, 3),
-    [measurements],
-  );
+    setPriorityTypes(nextTypes);
+  }
 
   async function handleCreated(createdMeasurementType: string) {
-    setMeasurementTypeFilter(createdMeasurementType);
+    setSelectedMeasurementType(createdMeasurementType);
     await loadMeasurements();
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-950">
-            شاخص‌های سلامت و نمودارها
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            ثبت دستی داده‌های قابل ترند برای پیگیری طولی، تصمیم‌های مراقبتی و
-            اتصال‌های آینده به آزمایش، دستگاه و اتوماسیون.
+          <p className="text-sm leading-7 text-slate-600">
+            مرکز پیگیری شاخص‌های سلامت، روندهای قابل مشاهده و مقدارهای قابل اتصال
+            به آزمایش، دستگاه و اتوماسیون در نسخه‌های بعدی.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={isLoading}
+            onClick={() => {
+              void loadMeasurements();
+            }}
+            type="button"
+          >
+            به‌روزرسانی
+          </button>
+          <button
+            className="inline-flex h-9 items-center justify-center rounded-md bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+            onClick={() => setIsCreateOpen((current) => !current)}
+            type="button"
+          >
+            {isCreateOpen ? "بستن فرم" : "ثبت مقدار جدید"}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-600">
+        نتایج آزمایش قابل روندگیری در نسخه‌های بعدی به شاخص‌ها متصل می‌شوند.
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
         <button
-          className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-          disabled={isLoading}
-          onClick={() => {
-            void loadMeasurements();
-          }}
+          className="rounded-md border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-700 transition hover:bg-slate-50"
+          onClick={() => setShowAdvancedFilters((current) => !current)}
           type="button"
         >
-          به‌روزرسانی
+          {showAdvancedFilters ? "بستن فیلتر پیشرفته" : "فیلتر پیشرفته"}
         </button>
+        {selectedFilter !== "all" ? (
+          <>
+            <span className="font-medium text-slate-500">
+              فیلتر فعال است: {activeFilterDefinition?.label}
+            </span>
+            <button
+              className="font-semibold text-teal-700 transition hover:text-teal-900"
+              onClick={() => setSelectedFilter("all")}
+              type="button"
+            >
+              حذف فیلتر
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      {showAdvancedFilters ? (
+        <div className="mt-2 flex flex-wrap gap-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+          {measurementFilters.map((filter) => {
+            const isActive = filter.id === selectedFilter;
+            const count = measurementGroups.filter((group) =>
+              measurementMatchesFilter(
+                group,
+                filter.id,
+                activePriorityMeasurementTypes,
+              ),
+            ).length;
+
+            return (
+              <button
+                className={`rounded-md border px-3 py-2 text-xs font-semibold transition ${
+                  isActive
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+                key={filter.id}
+                onClick={() => setSelectedFilter(filter.id)}
+                type="button"
+              >
+                {filter.label}
+                <span
+                  className={`mr-2 rounded-md px-1.5 py-0.5 ${
+                    isActive ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {formatNumber(count)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        {filteredGroups.length > 0 ? (
+          filteredGroups.map((group) => (
+            <MeasurementGroupCard
+              group={group}
+              isPriority={activePriorityMeasurementTypes.includes(
+                group.measurementType,
+              )}
+              key={group.measurementType}
+              onSelect={setSelectedMeasurementType}
+              onTogglePriority={togglePriorityMeasurementType}
+            />
+          ))
+        ) : (
+          <div className="lg:col-span-2 xl:col-span-3">
+            <Notice variant="empty">
+              در این فیلتر شاخصی برای نمایش وجود ندارد.
+            </Notice>
+          </div>
+        )}
       </div>
 
       <div className="mt-5">
-        <MeasurementQuickTrends groups={quickTrendGroups} />
+        <MeasurementTrend group={selectedGroup} />
       </div>
 
-      <div className="mt-5">
-        <MeasurementCreateForm
-          onCreated={handleCreated}
-          patientId={patientId}
-        />
-      </div>
+      {isCreateOpen ? (
+        <div className="mt-5">
+          <MeasurementCreateForm
+            onCreated={handleCreated}
+            patientId={patientId}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,18rem)_1fr]">
-        <Field label="فیلتر نوع شاخص">
+        <Field label="فیلتر فهرست ثبت‌ها">
           <select
             className="h-10 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-            onChange={(event) => setMeasurementTypeFilter(event.target.value)}
-            value={measurementTypeFilter}
+            onChange={(event) => setSelectedMeasurementType(event.target.value)}
+            value={selectedMeasurementType}
           >
             <option value="">همه شاخص‌ها</option>
             {availableMeasurementTypes.map((option) => (
-              <option key={option} value={option}>
-                {option}
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
         </Field>
-        <MeasurementTrend
-          measurementType={trendMeasurementType}
-          measurements={trendMeasurements}
-        />
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-7 text-slate-600">
+          برای محدود کردن فهرست، یک نوع شاخص را انتخاب کنید.
+        </div>
       </div>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-4 space-y-3">
         {isLoading ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <Notice variant="loading">
             در حال دریافت شاخص‌های سلامت...
-          </div>
+          </Notice>
         ) : null}
 
         {!isLoading && errorMessage ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm leading-7 text-rose-900">
-            {errorMessage}
-          </div>
+          <Notice variant="error">{errorMessage}</Notice>
         ) : null}
 
         {!isLoading && !errorMessage && measurements.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+          <Notice variant="empty">
             هنوز شاخص سلامت قابل نمایش برای این بیمار ثبت نشده است.
-          </div>
+          </Notice>
         ) : null}
 
         {!isLoading &&
         !errorMessage &&
         measurements.length > 0 &&
         visibleMeasurements.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+          <Notice variant="empty">
             شاخصی با این نوع برای بیمار پیدا نشد.
-          </div>
+          </Notice>
         ) : null}
 
         {!isLoading && !errorMessage
           ? visibleMeasurements.map((measurement) => (
-              <MeasurementCard
-                key={measurement.id}
-                measurement={measurement}
-              />
+              <MeasurementCard key={measurement.id} measurement={measurement} />
             ))
           : null}
       </div>

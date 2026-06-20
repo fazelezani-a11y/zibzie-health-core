@@ -10,25 +10,17 @@ import {
   getPatientMeasurements,
   getPatientParaclinicalResults,
   getPatientReminders,
-  type AllergySummary,
   type CarePlanItem,
-  type ConditionSummary,
-  type MedicationSummary,
   type ParaclinicalResult,
   type PatientMeasurement,
   type PatientReminder,
   type PatientSummary,
 } from "@/lib/api";
 import { formatDate, formatDateTime, formatNullable } from "@/lib/format";
-import {
-  AllergyCreateForm,
-  ConditionCreateForm,
-  MedicationCreateForm,
-} from "./MedicalHistoryForms";
+import { defaultPriorityMeasurementTypes } from "@/lib/health-options";
+import MedicalHistoryForms from "./MedicalHistoryForms";
 import PatientCarePlan from "./PatientCarePlan";
-import PatientDocuments from "./PatientDocuments";
 import PatientMeasurements from "./PatientMeasurements";
-import PatientParaclinicalResults from "./PatientParaclinicalResults";
 import PatientReminders from "./PatientReminders";
 import PatientTimeline from "./PatientTimeline";
 
@@ -63,6 +55,7 @@ type SummaryItem = {
   title: string;
   description?: string | null;
   meta?: string | null;
+  targetSection?: SectionId;
   tone?: BadgeTone;
 };
 
@@ -149,6 +142,18 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("fa-IR", {
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatMeasurementTargetRange(measurement: PatientMeasurement) {
+  if (measurement.targetMin === null && measurement.targetMax === null) {
+    return null;
+  }
+
+  return `${measurement.targetMin !== null ? formatNumber(measurement.targetMin) : "ثبت نشده"} تا ${
+    measurement.targetMax !== null
+      ? formatNumber(measurement.targetMax)
+      : "ثبت نشده"
+  }`;
 }
 
 function formatBirthDate(value: string | null | undefined) {
@@ -294,38 +299,16 @@ function InfoItem({
   );
 }
 
-function SummaryCard({
-  title,
-  value,
-  description,
-  tone = "default",
-}: {
-  title: string;
-  value: string | number;
-  description: string;
-  tone?: BadgeTone;
-}) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-slate-500">{title}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-950">{value}</p>
-        </div>
-        <Badge tone={tone}>{description}</Badge>
-      </div>
-    </div>
-  );
-}
-
 function SummaryCarouselCard({
   title,
   items,
   emptyText,
+  onNavigate,
 }: {
   title: string;
   items: SummaryItem[];
   emptyText: string;
+  onNavigate?: (section: SectionId) => void;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const safeActiveIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
@@ -350,7 +333,7 @@ function SummaryCarouselCard({
         <div>
           <h3 className="text-base font-bold text-slate-950">{title}</h3>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            {title} · {formatCount(items.length)} مورد
+            {formatCount(items.length)} مورد
           </p>
         </div>
         {hasMultipleItems ? (
@@ -363,6 +346,29 @@ function SummaryCarouselCard({
       <div className="mt-4">
         {items.length === 0 || !activeItem ? (
           <Notice variant="empty">{emptyText}</Notice>
+        ) : activeItem.targetSection ? (
+          <button
+            className="min-h-32 w-full rounded-md border border-slate-100 bg-slate-50 p-3 text-right transition hover:border-teal-200 hover:bg-teal-50/40"
+            onClick={() => onNavigate?.(activeItem.targetSection!)}
+            type="button"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <h4 className="text-sm font-bold text-slate-950">
+                {activeItem.title}
+              </h4>
+              {activeItem.meta ? (
+                <Badge tone={activeItem.tone}>{activeItem.meta}</Badge>
+              ) : null}
+            </div>
+            {activeItem.description ? (
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                {activeItem.description}
+              </p>
+            ) : null}
+            <span className="mt-3 inline-flex text-xs font-semibold text-teal-700">
+              مشاهده بخش مرتبط
+            </span>
+          </button>
         ) : (
           <article className="min-h-32 rounded-md border border-slate-100 bg-slate-50 p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -420,13 +426,20 @@ function SummaryCarouselCard({
   );
 }
 
-function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
+function MiniTrendCard({
+  group,
+  onClick,
+}: {
+  group: MeasurementTrendGroup;
+  onClick?: () => void;
+}) {
   const width = 180;
   const height = 54;
   const values = group.points.map((point) => point.value);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const range = maxValue - minValue || 1;
+  const targetRange = formatMeasurementTargetRange(group.latest);
   const linePoints = group.points
     .map((point, index) => {
       const x =
@@ -439,20 +452,24 @@ function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
     })
     .join(" ");
 
-  return (
-    <article className="rounded-md border border-slate-200 bg-white p-3">
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="text-sm font-bold text-slate-950">
             {group.displayName}
           </h4>
           <p className="mt-1 text-xs text-slate-500">
-            {formatCount(group.points.length)} داده
+            {formatCount(group.points.length)} داده · آخرین ثبت:{" "}
+            {formatDateTime(group.latest.measuredAt) ?? group.latest.measuredAt}
           </p>
         </div>
-        <Badge tone={group.latest.isAbnormal ? "danger" : "info"}>
-          {formatNumber(group.latest.value)} {group.unit}
-        </Badge>
+        <div className="flex flex-col items-end gap-1">
+          <Badge tone={group.latest.isAbnormal ? "danger" : "info"}>
+            {formatNumber(group.latest.value)} {group.unit}
+          </Badge>
+          {group.latest.isAbnormal ? <Badge tone="danger">غیرطبیعی</Badge> : null}
+        </div>
       </div>
       <svg
         aria-label={`روند ${group.displayName}`}
@@ -487,14 +504,42 @@ function MiniTrendCard({ group }: { group: MeasurementTrendGroup }) {
           );
         })}
       </svg>
-      <p className="mt-2 text-xs text-slate-500">
-        آخرین ثبت: {formatDateTime(group.latest.measuredAt) ?? group.latest.measuredAt}
-      </p>
+      {targetRange ? (
+        <p className="mt-2 text-xs leading-6 text-slate-500">
+          هدف: {targetRange}
+        </p>
+      ) : null}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        className="w-full rounded-md border border-slate-200 bg-white p-3 text-right transition hover:border-teal-200 hover:bg-teal-50/40"
+        onClick={onClick}
+        type="button"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <article className="rounded-md border border-slate-200 bg-white p-3">
+      {content}
     </article>
   );
 }
 
-function OverviewSection({ summary }: { summary: PatientSummary }) {
+function OverviewSection({
+  onNavigateToSection,
+  summary,
+  priorityMeasurementTypes,
+}: {
+  onNavigateToSection: (section: SectionId) => void;
+  summary: PatientSummary;
+  priorityMeasurementTypes: string[];
+}) {
   const [overviewData, setOverviewData] =
     useState<OverviewData>(emptyOverviewData);
 
@@ -572,6 +617,7 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
           item.status,
         )}`,
         meta: "پلن مراقبتی",
+        targetSection: "care-plan",
         tone: isPastDue(item.dueAt) ? "danger" : "info",
         dueAt: item.dueAt,
       }),
@@ -584,6 +630,7 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
           reminder.status,
         )}`,
         meta: "یادآور",
+        targetSection: "reminders",
         tone: isPastDue(reminder.dueAt) ? "danger" : "warning",
         dueAt: reminder.dueAt,
       }),
@@ -597,19 +644,14 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
 
       return firstTime - secondTime;
     })
-    .map(({ id, title, description, meta, tone }) => ({
+    .map(({ id, title, description, meta, targetSection, tone }) => ({
       id,
       title,
       description,
       meta,
+      targetSection,
       tone,
     }));
-  const overdueCarePlanCount = openCarePlanItems.filter((item) =>
-    isPastDue(item.dueAt),
-  ).length;
-  const overdueReminderCount = openReminders.filter((reminder) =>
-    isPastDue(reminder.dueAt),
-  ).length;
   const attentionResults = byMostRecentClinicalDate(
     overviewData.paraclinicalResults.filter(
       (result) =>
@@ -618,9 +660,17 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
         result.labItems.some((item) => item.isAbnormal),
     ),
   );
-  const measurementTrendGroups = getMeasurementTrendGroups(
+  const allMeasurementTrendGroups = getMeasurementTrendGroups(
     overviewData.measurements,
-  ).slice(0, 4);
+  );
+  const measurementTrendGroups =
+    priorityMeasurementTypes.length === 0
+      ? []
+      : allMeasurementTrendGroups
+          .filter((group) =>
+            priorityMeasurementTypes.includes(group.measurementType),
+          )
+          .slice(0, 4);
 
   return (
     <div className="space-y-5">
@@ -654,33 +704,6 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
         <Notice variant="info">{overviewData.errorMessage}</Notice>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          description="فعال"
-          title="بیماری‌ها"
-          value={formatCount(activeConditions.length)}
-        />
-        <SummaryCard
-          description="مهم"
-          title="آلرژی‌ها"
-          tone={importantAllergies.length > 0 ? "warning" : "muted"}
-          value={formatCount(importantAllergies.length)}
-        />
-        <SummaryCard
-          description="فعلی"
-          title="داروها"
-          value={formatCount(summary.currentMedications.length)}
-        />
-        <SummaryCard
-          description="نیازمند توجه"
-          title="موارد سررسید گذشته"
-          tone={
-            overdueCarePlanCount + overdueReminderCount > 0 ? "danger" : "muted"
-          }
-          value={formatCount(overdueCarePlanCount + overdueReminderCount)}
-        />
-      </section>
-
       <section className="grid gap-4 xl:grid-cols-3">
         <SummaryCarouselCard
           emptyText="بیماری فعالی در خلاصه پرونده ثبت نشده است."
@@ -692,7 +715,9 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
               condition.startedYear !== null && condition.startedYear !== undefined
                 ? `شروع: ${condition.startedYear}`
                 : null,
+            targetSection: "medical-history",
           }))}
+          onNavigate={onNavigateToSection}
           title="بیماری‌های فعال"
         />
         <SummaryCarouselCard
@@ -702,8 +727,10 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
             title: allergy.allergen,
             description: `نوع: ${formatMissing(allergy.allergyType)}`,
             meta: allergy.severity,
+            targetSection: "medical-history",
             tone: allergy.severity === "Severe" ? "danger" : "warning",
           }))}
+          onNavigate={onNavigateToSection}
           title="آلرژی‌های مهم"
         />
         <SummaryCarouselCard
@@ -715,7 +742,9 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
               medication.frequency,
             )}`,
             meta: medication.route,
+            targetSection: "medical-history",
           }))}
+          onNavigate={onNavigateToSection}
           title="داروهای فعلی"
         />
       </section>
@@ -724,6 +753,7 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
         <SummaryCarouselCard
           emptyText="اقدام یا یادآور باز زمان‌دار پیدا نشد."
           items={upcomingItems}
+          onNavigate={onNavigateToSection}
           title="اقدام‌ها و یادآورهای بعدی"
         />
         <SummaryCarouselCard
@@ -736,8 +766,10 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
               "ثبت نشده"
             }`,
             meta: result.isAbnormal ? "غیرطبیعی" : "نیازمند پیگیری",
+            targetSection: "medical-history",
             tone: result.isAbnormal ? "danger" : "warning",
           }))}
+          onNavigate={onNavigateToSection}
           title="نتایج نیازمند توجه"
         />
         <section className="rounded-md border border-slate-200 bg-white p-4">
@@ -747,21 +779,25 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
                 شاخص‌ها و نمودارهای سریع
               </h3>
               <p className="mt-1 text-xs font-medium text-slate-500">
-                {formatCount(measurementTrendGroups.length)} روند قابل نمایش
+                {formatCount(measurementTrendGroups.length)} روند اولویت‌دار
               </p>
             </div>
             {measurementTrendGroups.length > 0 ? (
-              <Badge tone="info">نمودار کوچک</Badge>
+              <Badge tone="info">نمای کلی</Badge>
             ) : null}
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {measurementTrendGroups.length > 0 ? (
               measurementTrendGroups.map((group) => (
-                <MiniTrendCard group={group} key={group.measurementType} />
+                <MiniTrendCard
+                  group={group}
+                  key={group.measurementType}
+                  onClick={() => onNavigateToSection("measurements")}
+                />
               ))
             ) : (
               <Notice variant="empty">
-                برای نمایش نمودار کوچک، حداقل دو اندازه‌گیری از یک نوع لازم است.
+                برای شاخص‌های اولویت‌دار هنوز روند قابل نمایش وجود ندارد.
               </Notice>
             )}
           </div>
@@ -771,137 +807,8 @@ function OverviewSection({ summary }: { summary: PatientSummary }) {
   );
 }
 
-function EmptySection({ text }: { text: string }) {
-  return <Notice variant="empty">{text}</Notice>;
-}
-
-function ConditionsSection({
-  items,
-  patientId,
-}: {
-  items: ConditionSummary[];
-  patientId: string;
-}) {
-  return (
-    <section className="rounded-md border border-slate-200 bg-white p-4">
-      <h2 className="text-lg font-bold text-slate-950">بیماری‌ها</h2>
-      <div className="mt-4 space-y-3">
-        {items.length === 0 ? (
-          <EmptySection text="بیماری فعالی برای این بیمار ثبت نشده است." />
-        ) : (
-          items.map((condition) => (
-            <article
-              className="rounded-md border border-slate-100 bg-slate-50 p-3"
-              key={condition.id}
-            >
-              <h3 className="font-semibold text-slate-950">{condition.name}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                وضعیت: {formatMissing(condition.status)}
-              </p>
-              <p className="text-sm leading-7 text-slate-600">
-                سال شروع: {formatMissing(condition.startedYear)}
-              </p>
-            </article>
-          ))
-        )}
-      </div>
-      <ConditionCreateForm patientId={patientId} />
-    </section>
-  );
-}
-
-function AllergiesSection({
-  items,
-  patientId,
-}: {
-  items: AllergySummary[];
-  patientId: string;
-}) {
-  return (
-    <section className="rounded-md border border-slate-200 bg-white p-4">
-      <h2 className="text-lg font-bold text-slate-950">آلرژی‌ها</h2>
-      <div className="mt-4 space-y-3">
-        {items.length === 0 ? (
-          <EmptySection text="آلرژی ثبت‌شده‌ای برای این بیمار وجود ندارد." />
-        ) : (
-          items.map((allergy) => (
-            <article
-              className="rounded-md border border-slate-100 bg-slate-50 p-3"
-              key={allergy.id}
-            >
-              <h3 className="font-semibold text-slate-950">{allergy.allergen}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                نوع: {formatMissing(allergy.allergyType)}
-              </p>
-              <p className="text-sm leading-7 text-slate-600">
-                شدت: {formatMissing(allergy.severity)}
-              </p>
-            </article>
-          ))
-        )}
-      </div>
-      <AllergyCreateForm patientId={patientId} />
-    </section>
-  );
-}
-
-function MedicationsSection({
-  items,
-  patientId,
-}: {
-  items: MedicationSummary[];
-  patientId: string;
-}) {
-  return (
-    <section className="rounded-md border border-slate-200 bg-white p-4">
-      <h2 className="text-lg font-bold text-slate-950">داروهای فعلی</h2>
-      <div className="mt-4 space-y-3">
-        {items.length === 0 ? (
-          <EmptySection text="داروی فعلی برای این بیمار ثبت نشده است." />
-        ) : (
-          items.map((medication) => (
-            <article
-              className="rounded-md border border-slate-100 bg-slate-50 p-3"
-              key={medication.id}
-            >
-              <h3 className="font-semibold text-slate-950">{medication.name}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
-                دوز: {formatMissing(medication.dose)}
-              </p>
-              <p className="text-sm leading-7 text-slate-600">
-                تکرار مصرف: {formatMissing(medication.frequency)}
-              </p>
-            </article>
-          ))
-        )}
-      </div>
-      <MedicationCreateForm patientId={patientId} />
-    </section>
-  );
-}
-
 function MedicalHistorySection({ summary }: { summary: PatientSummary }) {
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-3">
-        <ConditionsSection items={summary.conditions} patientId={summary.id} />
-        <AllergiesSection items={summary.allergies} patientId={summary.id} />
-        <MedicationsSection
-          items={summary.currentMedications}
-          patientId={summary.id}
-        />
-      </section>
-
-      <section className="space-y-4">
-        <SectionHeader
-          description="مدارک و نتایج پاراکلینیکال در همین بخش نگه داشته شده‌اند تا سوابق پزشکی یکپارچه بماند."
-          title="مدارک و نتایج"
-        />
-        <PatientDocuments patientId={summary.id} />
-        <PatientParaclinicalResults patientId={summary.id} />
-      </section>
-    </div>
-  );
+  return <MedicalHistoryForms summary={summary} />;
 }
 
 function PersonalInfoSection({ summary }: { summary: PatientSummary }) {
@@ -914,11 +821,10 @@ function PersonalInfoSection({ summary }: { summary: PatientSummary }) {
 
   return (
     <section className="rounded-md border border-slate-200 bg-white p-4">
-      <SectionHeader
-        description="اطلاعات پایه و تماس که در خلاصه پرونده در دسترس است."
-        title="اطلاعات شخصی و تماس"
-      />
-      <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <p className="text-sm leading-7 text-slate-600">
+        اطلاعات پایه و تماس که در خلاصه پرونده در دسترس است.
+      </p>
+      <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <InfoItem label="نام کامل" value={summary.fullName} />
         <InfoItem label="تاریخ تولد / سن" value={formatBirthDate(summary.birthDate)} />
         <InfoItem label="جنسیت" value={summary.gender} />
@@ -936,20 +842,38 @@ function PersonalInfoSection({ summary }: { summary: PatientSummary }) {
 
 function SectionContent({
   activeSection,
+  onNavigateToSection,
+  onPriorityMeasurementTypesChange,
+  priorityMeasurementTypes,
   summary,
 }: {
   activeSection: SectionId;
+  onNavigateToSection: (section: SectionId) => void;
+  onPriorityMeasurementTypesChange: (measurementTypes: string[]) => void;
+  priorityMeasurementTypes: string[];
   summary: PatientSummary;
 }) {
   switch (activeSection) {
     case "overview":
-      return <OverviewSection summary={summary} />;
+      return (
+        <OverviewSection
+          onNavigateToSection={onNavigateToSection}
+          priorityMeasurementTypes={priorityMeasurementTypes}
+          summary={summary}
+        />
+      );
     case "care-plan":
       return <PatientCarePlan patientId={summary.id} />;
     case "medical-history":
       return <MedicalHistorySection summary={summary} />;
     case "measurements":
-      return <PatientMeasurements patientId={summary.id} />;
+      return (
+        <PatientMeasurements
+          onPriorityMeasurementTypesChange={onPriorityMeasurementTypesChange}
+          patientId={summary.id}
+          priorityMeasurementTypes={priorityMeasurementTypes}
+        />
+      );
     case "reminders":
       return <PatientReminders patientId={summary.id} />;
     case "timeline":
@@ -957,7 +881,13 @@ function SectionContent({
     case "personal":
       return <PersonalInfoSection summary={summary} />;
     default:
-      return <OverviewSection summary={summary} />;
+      return (
+        <OverviewSection
+          onNavigateToSection={onNavigateToSection}
+          priorityMeasurementTypes={priorityMeasurementTypes}
+          summary={summary}
+        />
+      );
   }
 }
 
@@ -967,6 +897,9 @@ export default function PatientRecordShell({
   summary: PatientSummary;
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("overview");
+  const [priorityMeasurementTypes, setPriorityMeasurementTypes] = useState<
+    string[]
+  >(defaultPriorityMeasurementTypes);
   const activeItem =
     sections.find((section) => section.id === activeSection) ?? sections[0];
 
@@ -1049,7 +982,13 @@ export default function PatientRecordShell({
             description={activeItem.description}
             title={activeItem.label}
           />
-          <SectionContent activeSection={activeSection} summary={summary} />
+          <SectionContent
+            activeSection={activeSection}
+            onNavigateToSection={setActiveSection}
+            onPriorityMeasurementTypesChange={setPriorityMeasurementTypes}
+            priorityMeasurementTypes={priorityMeasurementTypes}
+            summary={summary}
+          />
         </section>
       </div>
     </main>

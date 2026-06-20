@@ -15,6 +15,14 @@ import {
   type PatientDocument,
 } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import {
+  documentTypeOptions,
+  selectPlaceholder,
+  sensitivityLevelOptions,
+  sourceTypeOptions,
+  verificationStatusOptions,
+  type HealthOption,
+} from "@/lib/health-options";
 
 const timelineRefreshEventName = "zibzie:timeline-refresh";
 
@@ -33,26 +41,6 @@ const emptyForm: CreatePatientDocumentPayload = {
   verificationStatus: "Unverified",
   sensitivityLevel: "Normal",
 };
-
-const documentTypeOptions = [
-  "LabResult",
-  "Imaging",
-  "Prescription",
-  "PhysicianReport",
-  "Pathology",
-  "DischargeSummary",
-  "OperationReport",
-  "Insurance",
-  "Other",
-];
-
-const sourceTypeOptions = ["Manual", "ClinicianEntered", "System"];
-const verificationStatusOptions = [
-  "Unverified",
-  "PatientReported",
-  "ClinicianVerified",
-];
-const sensitivityLevelOptions = ["Normal", "Sensitive"];
 
 function TextInput({
   label,
@@ -89,11 +77,13 @@ function SelectInput({
   value,
   options,
   onChange,
+  allowEmpty = false,
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: HealthOption[];
   onChange: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
   return (
     <FormField label={label}>
@@ -102,9 +92,10 @@ function SelectInput({
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
+        {allowEmpty ? <option value="">{selectPlaceholder}</option> : null}
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
