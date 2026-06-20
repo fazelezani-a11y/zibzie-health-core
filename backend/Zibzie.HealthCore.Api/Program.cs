@@ -5,6 +5,7 @@ using Zibzie.HealthCore.Application.Measurements;
 using Zibzie.HealthCore.Application.Patients;
 using Zibzie.HealthCore.Application.ParaclinicalResults;
 using Zibzie.HealthCore.Application.Reminders;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Infrastructure.CarePlans;
 using Zibzie.HealthCore.Infrastructure.Documents;
 using Zibzie.HealthCore.Infrastructure.Measurements;
@@ -12,6 +13,7 @@ using Zibzie.HealthCore.Infrastructure.Patients;
 using Zibzie.HealthCore.Infrastructure.ParaclinicalResults;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 using Zibzie.HealthCore.Infrastructure.Reminders;
+using Zibzie.HealthCore.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,7 @@ builder.Services.AddScoped<ICarePlanDueReminderService, CarePlanDueReminderServi
 builder.Services.AddScoped<IPatientReminderService, PatientReminderService>();
 builder.Services.AddScoped<IPatientMeasurementService, PatientMeasurementService>();
 builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService>();
+builder.Services.AddScoped<IHealthCoreAuthorizationService, HealthCoreAuthorizationService>();
 
 builder.Services.AddCors(options =>
 {
