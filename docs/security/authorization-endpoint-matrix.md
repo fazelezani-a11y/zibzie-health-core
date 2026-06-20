@@ -26,7 +26,8 @@ No access-management, export, share, download, or security admin endpoints exist
 - Phase 84B2 protects Documents endpoints.
 - Phase 84C protects Paraclinical Results endpoints.
 - Phase 84D protects current Medical History endpoints: Conditions, Allergies, and Medications.
-- Care plan, reminders, measurements, patient summary/profile, and timeline are not protected yet.
+- Phase 84E1 protects Care Plan endpoints.
+- Reminders, measurements, patient summary/profile, and timeline are not protected yet.
 
 ## Request Context Gap
 
@@ -119,11 +120,11 @@ Patterns found:
 
 | Area | Controller / Route | Method | Action | PatientId source | Required permission | Type | Sensitivity | Grant? | Audit? | Audit action | Audit resource | Notes / risks |
 |---|---|---:|---|---|---|---|---|---|---|---|---|---|
-| Care Plan | `/api/health-core/patients/{patientId}/care-plan` | GET | List care plan | Route | `ViewCarePlan` | Read | Check item sensitivity. | Yes | Summary or always for restricted | `View` | `CarePlanItem` | Care plan can expose diagnoses/actions. |
-| Care Plan | `/api/health-core/patients/{patientId}/care-plan` | POST | Create item | Route | `CreateCarePlanItem` | Write | Request sensitivity. | Yes | Always | `Create` | `CarePlanItem` | DueAt can auto-create reminder; audit generated reminder separately later if integrated. |
+| Care Plan | `/api/health-core/patients/{patientId}/care-plan` | GET | List care plan | Route | `ViewCarePlan` | Read | Baseline list check now; future mixed-sensitivity redaction may be needed. | Yes | Always | `View` | `CarePlanItem` | Protected in Phase 84E1. Care plan can expose diagnoses/actions. |
+| Care Plan | `/api/health-core/patients/{patientId}/care-plan` | POST | Create item | Route | `CreateCarePlanItem` | Write | Request sensitivity. | Yes | Always | `Create` | `CarePlanItem` | Protected in Phase 84E1. DueAt automation/timeline behavior unchanged. |
 | Care Plan | `/api/health-core/care-plan-items/{itemId}` | GET | Get item | Load item | `ViewCarePlan` | Read | Entity sensitivity. | Yes | Summary or always for restricted | `View` | `CarePlanItem` | Must resolve patient id from item. |
-| Care Plan | `/api/health-core/care-plan-items/{itemId}` | PUT | Update/complete/cancel item | Load item | `EditCarePlanItem`, `CompleteCarePlanItem`, or `CancelCarePlanItem` by status change | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `CarePlanItem` | Need action-specific permission logic for completion/cancel. |
-| Care Plan | `/api/health-core/care-plan-items/{itemId}` | DELETE | Soft-delete item | Load item | `EditCarePlanItem` or future delete permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `CarePlanItem` | No dedicated delete permission yet. |
+| Care Plan | `/api/health-core/care-plan-items/{itemId}` | PUT | Update/complete/cancel item | Load item | `EditCarePlanItem`, `CompleteCarePlanItem`, or `CancelCarePlanItem` by status change | Write | Existing/requested sensitivity. | Yes | Always | `Update` | `CarePlanItem` | Protected in Phase 84E1 with status-specific permission selection. |
+| Care Plan | `/api/health-core/care-plan-items/{itemId}` | DELETE | Soft-delete item | Load item | `EditCarePlanItem` or future delete permission | Write | Entity sensitivity. | Yes | Always | `Delete` | `CarePlanItem` | Protected in Phase 84E1. No dedicated delete permission yet. |
 | Reminders | `/api/health-core/patients/{patientId}/reminders` | GET | List reminders | Route | `ViewReminders` | Read | Check reminder sensitivity. | Yes | Summary or always for restricted | `View` | `Reminder` | Reminders may reveal care details. |
 | Reminders | `/api/health-core/patients/{patientId}/reminders` | POST | Create reminder | Route | `CreateReminder` | Write | Request sensitivity. | Yes | Always | `Create` | `Reminder` | System-generated reminders should audit as `SystemAction` later. |
 | Reminders | `/api/health-core/reminders/{reminderId}` | GET | Get reminder | Load reminder | `ViewReminders` | Read | Entity sensitivity. | Yes | Summary or always for restricted | `View` | `Reminder` | Must resolve patient id from reminder. |
@@ -200,11 +201,10 @@ No grant creation endpoint exists yet.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84E Care Plan, Reminders, and Measurements enforcement and audit logging**.
+Recommended next step: **84E2 Reminders enforcement and audit logging**.
 
 Keep the rollout narrow and module-by-module:
 
-- Protect Care Plan first because writes affect care operations and can generate reminders.
 - Protect Reminders next because reminder content can reveal sensitive care details.
 - Protect Measurements after that, including abnormal/restricted measurement considerations.
 - Keep the temporary development fallback documented until real production authentication/JWT integration exists.

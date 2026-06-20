@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.CarePlans;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -12,13 +14,22 @@ public class CarePlanItemsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly ICarePlanItemService _carePlanItemService;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
     public CarePlanItemsController(
         AppDbContext dbContext,
-        ICarePlanItemService carePlanItemService)
+        ICarePlanItemService carePlanItemService,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _carePlanItemService = carePlanItemService;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/care-plan")]
@@ -31,6 +42,26 @@ public class CarePlanItemsController : ControllerBase
         [FromQuery] DateTimeOffset? dueBefore = null,
         [FromQuery] DateTimeOffset? dueAfter = null)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewCarePlan);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogCarePlanAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.ViewCarePlan,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -119,6 +150,15 @@ public class CarePlanItemsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogCarePlanAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            HealthPermissions.ViewCarePlan,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(items);
     }
 
@@ -151,6 +191,27 @@ public class CarePlanItemsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.CreateCarePlanItem,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogCarePlanAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                HealthPermissions.CreateCarePlanItem,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var dto = await _carePlanItemService.CreateCarePlanItemAsync(patientId, request);
 
         if (dto is null)
@@ -160,6 +221,15 @@ public class CarePlanItemsController : ControllerBase
                 message = "Patient not found."
             });
         }
+
+        await LogCarePlanAuditAsync(
+            requestContext,
+            patientId,
+            dto.Id,
+            HealthPermissions.CreateCarePlanItem,
+            AuditActionTypes.Create,
+            true,
+            accessDecision);
 
         return CreatedAtAction(
             nameof(GetCarePlanItem),
@@ -181,6 +251,36 @@ public class CarePlanItemsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(item.PatientProfileId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewCarePlan,
+            item.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogCarePlanAuditAsync(
+                requestContext,
+                item.PatientProfileId,
+                item.Id,
+                HealthPermissions.ViewCarePlan,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
+        await LogCarePlanAuditAsync(
+            requestContext,
+            item.PatientProfileId,
+            item.Id,
+            HealthPermissions.ViewCarePlan,
+            AuditActionTypes.View,
+            true,
+            accessDecision);
+
         return Ok(ToDto(item));
     }
 
@@ -198,6 +298,28 @@ public class CarePlanItemsController : ControllerBase
             {
                 message = "Care plan item not found."
             });
+        }
+
+        var permission = GetCarePlanUpdatePermission(request.Status);
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(item.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            permission,
+            request.SensitivityLevel ?? item.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogCarePlanAuditAsync(
+                requestContext,
+                item.PatientProfileId,
+                item.Id,
+                permission,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var statusChangedToCompleted = false;
@@ -376,6 +498,15 @@ public class CarePlanItemsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogCarePlanAuditAsync(
+            requestContext,
+            item.PatientProfileId,
+            item.Id,
+            permission,
+            AuditActionTypes.Update,
+            true,
+            accessDecision);
+
         return Ok(ToDto(item));
     }
 
@@ -393,6 +524,27 @@ public class CarePlanItemsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(item.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditCarePlanItem,
+            item.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogCarePlanAuditAsync(
+                requestContext,
+                item.PatientProfileId,
+                item.Id,
+                HealthPermissions.EditCarePlanItem,
+                AuditActionTypes.AccessDenied,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var now = DateTimeOffset.UtcNow;
 
         item.IsDeleted = true;
@@ -401,7 +553,77 @@ public class CarePlanItemsController : ControllerBase
 
         await _dbContext.SaveChangesAsync();
 
+        await LogCarePlanAuditAsync(
+            requestContext,
+            item.PatientProfileId,
+            item.Id,
+            HealthPermissions.EditCarePlanItem,
+            AuditActionTypes.Delete,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogCarePlanAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid patientId,
+        Guid? itemId,
+        string permission,
+        string actionType,
+        bool succeeded,
+        AccessDecision? accessDecision = null)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.CarePlanItem,
+            ResourceId = itemId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason,
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private static string GetCarePlanUpdatePermission(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return HealthPermissions.EditCarePlanItem;
+        }
+
+        var normalizedStatus = status.Trim();
+
+        if (string.Equals(normalizedStatus, CarePlanStatuses.Completed, StringComparison.OrdinalIgnoreCase))
+        {
+            return HealthPermissions.CompleteCarePlanItem;
+        }
+
+        if (string.Equals(normalizedStatus, CarePlanStatuses.Cancelled, StringComparison.OrdinalIgnoreCase))
+        {
+            return HealthPermissions.CancelCarePlanItem;
+        }
+
+        return HealthPermissions.EditCarePlanItem;
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static CarePlanItemDto ToDto(CarePlanItem item)
