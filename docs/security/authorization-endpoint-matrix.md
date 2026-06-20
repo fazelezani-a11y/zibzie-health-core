@@ -1,8 +1,8 @@
 # Authorization Endpoint Matrix
 
-Phase 84A maps the current Health Core API surface to future authorization and audit requirements.
+Phase 84A mapped the current Health Core API surface to future authorization and audit requirements.
 
-This is a planning document only. No controller or endpoint behavior is enforced yet.
+This document is now maintained as the endpoint authorization rollout matrix. Enforcement status is tracked below.
 
 ## Current API Surface
 
@@ -25,11 +25,14 @@ No access-management, export, share, download, or security admin endpoints exist
 
 - Phase 84B2 protects Documents endpoints.
 - Phase 84C protects Paraclinical Results endpoints.
-- Medical history, care plan, reminders, measurements, patient summary/profile, and timeline are not protected yet.
+- Phase 84D protects current Medical History endpoints: Conditions, Allergies, and Medications.
+- Care plan, reminders, measurements, patient summary/profile, and timeline are not protected yet.
 
 ## Request Context Gap
 
 The API currently has no real authentication/current-user infrastructure.
+
+Phase 84B1 added a request-context provider with a temporary development fallback. That fallback keeps the current admin panel usable but is not production-safe.
 
 Before endpoint enforcement, the API needs a lightweight request context that can resolve:
 
@@ -197,18 +200,11 @@ No grant creation endpoint exists yet.
 
 ## Recommended Next Coding Phase
 
-Recommended next step: **84B1 Request Context foundation**.
+Recommended next step: **84E Care Plan, Reminders, and Measurements enforcement and audit logging**.
 
-Do this before protecting Documents endpoints.
+Keep the rollout narrow and module-by-module:
 
-Minimum useful foundation:
-
-- Add `IHealthCoreRequestContext`.
-- Resolve `UserId` or `ServiceAccountId`.
-- Resolve `ProductCode` and `ProductRole`.
-- Resolve correlation id.
-- Expose IP address, user agent, request path, and HTTP method for audit.
-- Keep it non-enforcing at first.
-- Add development-only fallback headers only if explicitly gated.
-
-After request context exists and test grants can be created, proceed with **84B2 Documents enforcement and audit logging**.
+- Protect Care Plan first because writes affect care operations and can generate reminders.
+- Protect Reminders next because reminder content can reveal sensitive care details.
+- Protect Measurements after that, including abnormal/restricted measurement considerations.
+- Keep the temporary development fallback documented until real production authentication/JWT integration exists.

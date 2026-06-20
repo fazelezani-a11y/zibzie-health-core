@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.MedicalHistory;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,15 +13,45 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class AllergiesController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
-    public AllergiesController(AppDbContext dbContext)
+    public AllergiesController(
+        AppDbContext dbContext,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/allergies")]
     public async Task<ActionResult<List<AllergyDto>>> GetPatientAllergies(Guid patientId)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewMedicalHistory);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogAllergyAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -51,6 +83,15 @@ public class AllergiesController : ControllerBase
             })
             .ToListAsync();
 
+        await LogAllergyAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            AuditActionTypes.View,
+            HealthPermissions.ViewMedicalHistory,
+            true,
+            accessDecision);
+
         return Ok(allergies);
     }
 
@@ -65,6 +106,27 @@ public class AllergiesController : ControllerBase
             {
                 message = "Allergen is required."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogAllergyAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var patientExists = await _dbContext.PatientProfiles
@@ -100,6 +162,15 @@ public class AllergiesController : ControllerBase
 
         var dto = ToDto(allergy);
 
+        await LogAllergyAuditAsync(
+            requestContext,
+            patientId,
+            allergy.Id,
+            AuditActionTypes.Create,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
+
         return CreatedAtAction(
             nameof(GetPatientAllergies),
             new { patientId },
@@ -130,6 +201,27 @@ public class AllergiesController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(allergy.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            request.SensitivityLevel ?? allergy.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogAllergyAuditAsync(
+                requestContext,
+                allergy.PatientProfileId,
+                allergy.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         allergy.Allergen = request.Allergen.Trim();
         allergy.AllergyType = string.IsNullOrWhiteSpace(request.AllergyType) ? null : request.AllergyType.Trim();
         allergy.Severity = string.IsNullOrWhiteSpace(request.Severity) ? null : request.Severity.Trim();
@@ -141,6 +233,15 @@ public class AllergiesController : ControllerBase
         allergy.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
+
+        await LogAllergyAuditAsync(
+            requestContext,
+            allergy.PatientProfileId,
+            allergy.Id,
+            AuditActionTypes.Update,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
 
         return Ok(ToDto(allergy));
     }
@@ -159,13 +260,82 @@ public class AllergiesController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(allergy.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            allergy.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogAllergyAuditAsync(
+                requestContext,
+                allergy.PatientProfileId,
+                allergy.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         allergy.IsDeleted = true;
         allergy.DeletedAt = DateTime.UtcNow;
         allergy.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
 
+        await LogAllergyAuditAsync(
+            requestContext,
+            allergy.PatientProfileId,
+            allergy.Id,
+            AuditActionTypes.Delete,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogAllergyAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid? patientId,
+        Guid? allergyId,
+        string actionType,
+        string permission,
+        bool succeeded,
+        AccessDecision? accessDecision)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.Allergy,
+            ResourceId = allergyId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason ?? "Access denied.",
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static AllergyDto ToDto(Allergy allergy)

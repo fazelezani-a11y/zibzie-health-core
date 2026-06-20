@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zibzie.HealthCore.Application.MedicalHistory;
+using Zibzie.HealthCore.Application.Security;
 using Zibzie.HealthCore.Domain.Common;
 using Zibzie.HealthCore.Domain.Entities;
+using Zibzie.HealthCore.Domain.Security;
 using Zibzie.HealthCore.Infrastructure.Persistence;
 
 namespace Zibzie.HealthCore.Api.Controllers;
@@ -11,15 +13,45 @@ namespace Zibzie.HealthCore.Api.Controllers;
 public class ConditionsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly IHealthCoreAuthorizationService _authorizationService;
+    private readonly IHealthCoreRequestContextProvider _requestContextProvider;
+    private readonly IAuditLogService _auditLogService;
 
-    public ConditionsController(AppDbContext dbContext)
+    public ConditionsController(
+        AppDbContext dbContext,
+        IHealthCoreAuthorizationService authorizationService,
+        IHealthCoreRequestContextProvider requestContextProvider,
+        IAuditLogService auditLogService)
     {
         _dbContext = dbContext;
+        _authorizationService = authorizationService;
+        _requestContextProvider = requestContextProvider;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet("api/health-core/patients/{patientId:guid}/conditions")]
     public async Task<ActionResult<List<ConditionDto>>> GetPatientConditions(Guid patientId)
     {
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanViewPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.ViewMedicalHistory);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogConditionAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.ViewMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         var patientExists = await _dbContext.PatientProfiles
             .AnyAsync(x => x.Id == patientId && x.IsActive);
 
@@ -51,6 +83,15 @@ public class ConditionsController : ControllerBase
             })
             .ToListAsync();
 
+        await LogConditionAuditAsync(
+            requestContext,
+            patientId,
+            null,
+            AuditActionTypes.View,
+            HealthPermissions.ViewMedicalHistory,
+            true,
+            accessDecision);
+
         return Ok(conditions);
     }
 
@@ -65,6 +106,27 @@ public class ConditionsController : ControllerBase
             {
                 message = "Condition name is required."
             });
+        }
+
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(patientId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            request.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogConditionAuditAsync(
+                requestContext,
+                patientId,
+                null,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
         }
 
         var patientExists = await _dbContext.PatientProfiles
@@ -100,6 +162,15 @@ public class ConditionsController : ControllerBase
 
         var dto = ToDto(condition);
 
+        await LogConditionAuditAsync(
+            requestContext,
+            patientId,
+            condition.Id,
+            AuditActionTypes.Create,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
+
         return CreatedAtAction(
             nameof(GetPatientConditions),
             new { patientId },
@@ -130,6 +201,27 @@ public class ConditionsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(condition.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            request.SensitivityLevel ?? condition.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogConditionAuditAsync(
+                requestContext,
+                condition.PatientProfileId,
+                condition.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         condition.Name = request.Name.Trim();
         condition.Status = string.IsNullOrWhiteSpace(request.Status) ? null : request.Status.Trim();
         condition.StartedYear = request.StartedYear;
@@ -141,6 +233,15 @@ public class ConditionsController : ControllerBase
         condition.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
+
+        await LogConditionAuditAsync(
+            requestContext,
+            condition.PatientProfileId,
+            condition.Id,
+            AuditActionTypes.Update,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
 
         return Ok(ToDto(condition));
     }
@@ -159,13 +260,82 @@ public class ConditionsController : ControllerBase
             });
         }
 
+        var requestContext = _requestContextProvider.GetCurrent();
+        var authorizationContext = _requestContextProvider.CreateAuthorizationContext(condition.PatientProfileId);
+        var accessDecision = await _authorizationService.CanEditPatientSectionAsync(
+            authorizationContext,
+            HealthPermissions.EditMedicalHistory,
+            condition.SensitivityLevel);
+
+        if (!accessDecision.IsAllowed)
+        {
+            await LogConditionAuditAsync(
+                requestContext,
+                condition.PatientProfileId,
+                condition.Id,
+                AuditActionTypes.AccessDenied,
+                HealthPermissions.EditMedicalHistory,
+                false,
+                accessDecision);
+
+            return AccessDenied();
+        }
+
         condition.IsDeleted = true;
         condition.DeletedAt = DateTime.UtcNow;
         condition.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
 
+        await LogConditionAuditAsync(
+            requestContext,
+            condition.PatientProfileId,
+            condition.Id,
+            AuditActionTypes.Delete,
+            HealthPermissions.EditMedicalHistory,
+            true,
+            accessDecision);
+
         return NoContent();
+    }
+
+    private async Task LogConditionAuditAsync(
+        HealthCoreRequestContext requestContext,
+        Guid? patientId,
+        Guid? conditionId,
+        string actionType,
+        string permission,
+        bool succeeded,
+        AccessDecision? accessDecision)
+    {
+        await _auditLogService.LogAsync(new AuditLogRequest
+        {
+            UserId = requestContext.UserId,
+            ServiceAccountId = requestContext.ServiceAccountId,
+            PatientId = patientId,
+            ProductCode = requestContext.ProductCode,
+            ProductRole = requestContext.ProductRole,
+            ActionType = actionType,
+            ResourceType = AuditResourceTypes.Condition,
+            ResourceId = conditionId,
+            Permission = permission,
+            AccessScope = accessDecision?.MatchedScope,
+            Succeeded = succeeded,
+            FailureReason = succeeded ? null : accessDecision?.DenialReason ?? "Access denied.",
+            IpAddress = requestContext.IpAddress,
+            UserAgent = requestContext.UserAgent,
+            CorrelationId = requestContext.CorrelationId,
+            RequestPath = requestContext.RequestPath,
+            HttpMethod = requestContext.HttpMethod
+        });
+    }
+
+    private ObjectResult AccessDenied()
+    {
+        return StatusCode(StatusCodes.Status403Forbidden, new
+        {
+            message = "Access denied."
+        });
     }
 
     private static ConditionDto ToDto(Condition condition)
