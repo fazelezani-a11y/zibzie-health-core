@@ -6,15 +6,15 @@ This phase is documentation-only. It does not implement cookies, route handlers,
 
 ## 1. Executive Summary
 
-Phase 87E1 added backend internal admin login and JWT issuing. Phase 87E2 added a `/login` page, temporary localStorage token storage, and browser-side `Authorization: Bearer` attachment.
+Phase 87E1 added backend internal admin login and JWT issuing. Phase 87E2 added a `/login` page. Later sub-phases moved the frontend toward an httpOnly cookie-backed session for both server and browser calls.
 
-That is enough for browser-side client components, but it is not enough for current server-rendered admin pages. `/patients` and `/patients/[id]` fetch data from server components, and server components cannot read browser localStorage. A production-ready admin frontend needs a server-readable session mechanism before Development fallback can be removed.
+The original localStorage bridge was enough for browser-side client components, but not enough for server-rendered admin pages. `/patients` and `/patients/[id]` fetch data from server components, and server components cannot read browser localStorage. The current cookie/session path addresses that gap; fallback removal still needs verification.
 
 Recommended direction:
 
 - keep backend JWT issuing as the source of trusted claims
-- add a Next.js BFF/session layer that stores the backend access token in an httpOnly cookie
-- let server components call Health Core with `Authorization: Bearer <token>` read from the cookie
+- keep the Next.js BFF/session layer that stores the backend access token in an httpOnly cookie
+- let server and browser calls reach Health Core through cookie-backed helpers/proxies
 - keep Development fallback until server-side authenticated fetches work
 
 ## 2. Current State
@@ -24,20 +24,20 @@ Frontend architecture findings:
 | Route / module | Current rendering | Auth implication |
 | --- | --- | --- |
 | `/` | server component redirect to `/patients` | no direct API call |
-| `/login` | client component | can use browser localStorage and call backend login |
-| `/patients` | server component, `dynamic = "force-dynamic"` | cannot read localStorage token for `getPatients()` |
-| `/patients/[id]` | server component, `dynamic = "force-dynamic"` | cannot read localStorage token for `getPatientSummary()` |
-| `/patients/new` | client component | browser token can be attached by API client |
-| patient record shell/modules | client components | browser token can be attached by API client |
+| `/login` | client component | calls Next admin-auth route handler; cookie is set server-side |
+| `/patients` | server component, `dynamic = "force-dynamic"` | uses server-side cookie-aware helper |
+| `/patients/[id]` | server component, `dynamic = "force-dynamic"` | uses server-side cookie-aware helper |
+| `/patients/new` | client component | uses browser API client through Next proxy |
+| patient record shell/modules | client components | use browser API client through Next proxy |
 
 Other relevant details:
 
 - Next.js version is `16.2.9`.
 - React version is `19.2.4`.
 - The central frontend API helper is `frontend/src/lib/api/client.ts`.
-- API base URL uses `NEXT_PUBLIC_API_BASE_URL`, falling back to `http://localhost:5230`.
-- The login page stores a temporary browser token through `frontend/src/lib/auth/admin-auth.ts`.
-- `next.config.ts` currently has no proxy/session/custom route behavior.
+- backend base URL uses `HEALTH_CORE_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`, falling back to `http://localhost:5230`.
+- the login page no longer stores the backend JWT in localStorage.
+- Next route handlers provide admin auth/session and Health Core proxy behavior.
 - Development fallback remains configured in the backend and is intentionally not removed yet.
 
 ## 3. Problem Statement
@@ -157,12 +157,13 @@ This keeps Health Core backend authorization unchanged while giving the frontend
 - Kept Development fallback as temporary backup when the cookie is missing.
 - See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).
 
-### 87E2e: Client API Migration to Session/Proxy
+### 87E2e: Client API Migration to Session/Proxy - implemented
 
-- Move browser-side calls away from localStorage bearer tokens.
-- Use Next route handlers/proxy or session-aware helper.
-- Add frontend logout.
-- Centralize `401` and `403` handling.
+- Moved browser-side Health Core API calls away from localStorage bearer tokens.
+- Added a Next `/api/health-core/[...path]` proxy.
+- Kept frontend logout UI for a later phase.
+- Centralized basic `401`/`403` handling through the proxy and API client.
+- See [Client API session proxy migration](client-api-session-proxy-migration.md).
 
 ### 87E3: Disable Fallback Outside Development/Test
 

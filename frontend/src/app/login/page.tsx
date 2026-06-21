@@ -4,10 +4,7 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { ApiError, getCurrentAdmin, loginAdmin } from "@/lib/api";
-import {
-  clearAdminAccessToken,
-  setAdminAccessToken,
-} from "@/lib/auth/admin-auth";
+import { clearAdminAccessToken } from "@/lib/auth/admin-auth";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -48,15 +45,7 @@ export default function AdminLoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await loginAdmin({ username, password });
-
-      setAdminAccessToken({
-        accessToken: result.accessToken,
-        expiresAt: result.expiresAt,
-        productCode: result.productCode,
-        productRole: result.productRole,
-        admin: result.admin,
-      });
+      await loginAdmin({ username, password });
 
       router.replace("/patients");
       router.refresh();

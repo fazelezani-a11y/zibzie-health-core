@@ -56,8 +56,8 @@ No aggressive redirect to `/login` was added in this phase, to avoid breaking De
 
 Not done in this phase:
 
-- client-side modules are not migrated to the session/proxy path
-- temporary localStorage token bridge remains
+- client-side modules now use the session/proxy path for Health Core API calls
+- localStorage helper remains only as legacy cleanup
 - route guard/middleware is not added
 - Development fallback is not removed
 - logout UI is not added
@@ -65,4 +65,4 @@ Not done in this phase:
 
 Next phase:
 
-- Phase 87E2e should migrate browser-side API calls toward the session/proxy path and reduce reliance on localStorage.
+- Phase 87E3 should verify fallback-off behavior after cookie-backed server and browser calls are in place.

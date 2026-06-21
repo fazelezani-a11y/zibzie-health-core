@@ -7,8 +7,6 @@ export type AdminLoginInput = {
 };
 
 export type AdminLoginResponse = {
-  accessToken: string;
-  tokenType: "Bearer";
   expiresAt: string | null;
   productCode: string;
   productRole: string;
@@ -44,6 +42,10 @@ async function requestSessionJson<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAdminAccessToken();
+    }
+
     let message = `Request failed with status ${response.status}.`;
 
     try {

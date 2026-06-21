@@ -1,11 +1,4 @@
-import {
-  clearAdminAccessToken,
-  getAdminAccessToken,
-} from "../auth/admin-auth";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:5230";
+import { clearAdminAccessToken } from "../auth/admin-auth";
 
 export class ApiError extends Error {
   constructor(
@@ -18,7 +11,7 @@ export class ApiError extends Error {
 }
 
 function apiUrl(path: string) {
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 export function optionalValue(value: string) {
@@ -66,24 +59,20 @@ export async function requestJson<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const accessToken = getAdminAccessToken();
   const headers = new Headers(init?.headers);
 
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }
 
-  if (accessToken && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
   const response = await fetch(apiUrl(path), {
     ...init,
+    credentials: "same-origin",
     headers,
   });
 
   if (!response.ok) {
-    if (response.status === 401 && accessToken) {
+    if (response.status === 401) {
       clearAdminAccessToken();
     }
 

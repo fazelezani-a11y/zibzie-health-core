@@ -19,7 +19,7 @@ Behavior:
 - returns a generic `401` for invalid credentials
 - returns `502` when the backend auth service is unavailable or returns an invalid response
 
-During the transition, the route still returns `accessToken` to the browser so the existing localStorage-based client API bridge keeps working. This is temporary and should be removed after Phase 87E2e migrates browser calls to the session/proxy path.
+After Phase 87E2e, the route no longer returns the backend `accessToken` to browser code. It sets the httpOnly cookie and returns only safe session/admin metadata.
 
 ### GET `/api/admin-auth/me`
 
@@ -82,7 +82,7 @@ The login page now checks `/api/admin-auth/me` on load so an existing cookie-bac
 
 - `/patients` server-side fetches are not converted yet.
 - `/patients/[id]` server-side fetches are not converted yet.
-- browser-side health-record API calls still use the temporary localStorage token bridge.
+- browser-side health-record API calls now use the `/api/health-core/[...path]` proxy.
 - Development fallback is not removed.
 - no refresh token/session renewal exists.
 - no production CSRF strategy has been implemented yet.
@@ -90,3 +90,5 @@ The login page now checks `/api/admin-auth/me` on load so an existing cookie-bac
 ## Next Phase
 
 Phase 87E2d added a server-side authenticated API helper that reads the cookie and attaches `Authorization: Bearer <token>` for server component calls. See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).
+
+Phase 87E2e added a browser-side `/api/health-core/[...path]` proxy so client components can also use the cookie-backed session path. See [Client API session proxy migration](client-api-session-proxy-migration.md).

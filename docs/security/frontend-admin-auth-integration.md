@@ -1,6 +1,6 @@
 # Frontend Admin Auth Integration
 
-Phase 87E2 connects the admin frontend to the internal admin auth backend added in Phase 87E1. This is a transition step: it adds login and bearer-token support without removing the existing Development fallback.
+Phase 87E2 connected the admin frontend to the internal admin auth backend added in Phase 87E1. Later sub-phases added httpOnly cookie route handlers, server-side authenticated fetching, and a browser API proxy.
 
 ## Login Route
 
@@ -8,21 +8,23 @@ The frontend login page is:
 
 `/login`
 
-The page posts credentials to:
+The page posts credentials to the Next session route:
 
-`POST /api/health-core/auth/admin/login`
+`POST /api/admin-auth/login`
 
-On success, it stores the returned access token and redirects to `/patients`.
+On success, the route handler stores the backend access token in an httpOnly cookie and redirects to `/patients`.
 
 On failure, it shows a generic Persian error message and does not reveal whether the username exists.
 
 ## Token Storage
 
-The current frontend stores the admin access token in `localStorage` through:
+The current production direction is the httpOnly cookie `zibzie_admin_access_token`.
+
+The older localStorage helper remains in:
 
 `frontend/src/lib/auth/admin-auth.ts`
 
-This is temporary and not the preferred production model. It was chosen because the current frontend does not yet have server-managed session or httpOnly cookie infrastructure.
+It is now a legacy transition cleanup path, not the primary browser auth mechanism. It can clear older stored tokens on `401` or logout.
 
 The wrapper exposes:
 
@@ -31,41 +33,29 @@ The wrapper exposes:
 - `clearAdminAccessToken()`
 - `getAdminAuthState()`
 
-The stored object includes:
-
-- access token
-- expiry
-- product code
-- product role
-- safe admin display info
-
-Expired or malformed stored tokens are cleared locally.
+New logins no longer store the backend JWT in localStorage.
 
 ## API Client Behavior
 
-The central frontend API client now attaches:
+The central frontend API client now calls same-origin `/api/health-core/...` paths. The Next proxy reads the httpOnly cookie and attaches `Authorization: Bearer <token>` to backend requests.
 
-`Authorization: Bearer <token>`
-
-when a browser-side token exists.
-
-If no token exists, the API client continues without an Authorization header. This preserves current local Development behavior while `HealthCoreAuth` fallback is still configured.
-
-If a protected request returns `401` and a token was present, the token is cleared. `403` responses are surfaced through the existing `ApiError` path so pages/components can show their current error states.
+If a protected request returns `401`, the proxy clears the cookie and the API client clears any legacy localStorage token. `403` responses are surfaced through the existing `ApiError` path so pages/components can show their current error states.
 
 ## Current Server-Rendered Page Caveat
 
-Some current routes, especially `/patients` and `/patients/[id]`, fetch initial data from server components. The temporary `localStorage` token is only available in the browser, so those server-side fetches cannot use it.
+Some current routes, especially `/patients` and `/patients/[id]`, fetch initial data from server components. Those pages now use the server-side authenticated API helper, which reads the httpOnly cookie server-side.
 
-During the transition, these routes can still work in Development through the existing fallback. A production-ready frontend integration should move to one of these models:
+During the transition, missing cookies can still work in Development through the existing fallback. Production readiness should continue toward:
 
 - httpOnly cookie/session auth that server components can read safely
-- a Next route/proxy layer that attaches trusted credentials server-side
-- converting selected data fetches to client-side calls where appropriate
+- a Next route/proxy layer that attaches trusted credentials server-side and browser-side
+- fallback-off verification in staging/production-like config
 
 This phase intentionally avoids a broad frontend routing or rendering rewrite.
 
 The recommended server-side session path is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md). The first route-handler layer is documented in [Next admin session route handlers](next-admin-session-route-handlers.md).
+
+The browser API proxy migration is documented in [Client API session proxy migration](client-api-session-proxy-migration.md).
 
 ## `/me` Helper
 

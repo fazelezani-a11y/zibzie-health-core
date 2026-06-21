@@ -254,11 +254,12 @@ See [Admin login and frontend JWT integration strategy](admin-login-frontend-int
 JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal admin login/JWT issuance. The current local security smoke still uses Development header fallback. Future production-style tests should verify:
 
 - admin login returns a JWT with `InternalAdmin` product context
-- frontend `/login` stores the token and browser-side API calls attach `Authorization: Bearer`
+- frontend `/login` creates an httpOnly cookie-backed session
 - Next `/api/admin-auth/login` sets the httpOnly admin session cookie
 - Next `/api/admin-auth/me` validates the cookie-backed session
 - Next `/api/admin-auth/logout` clears the session cookie
 - server-rendered `/patients` and `/patients/[id]` can use the cookie-backed JWT when the server-side helper is active
+- browser-side Health Core API calls can use `/api/health-core/[...path]` with the cookie-backed JWT
 - valid JWT/service identity with product claims is allowed only within grants/scopes
 - missing JWT is denied
 - invalid signature is denied before endpoint logic
@@ -286,10 +287,11 @@ Recommended stages:
 - Current script does not test every protected endpoint group.
 - Current script depends on local dev/header fallback.
 - Production JWT/service identity and frontend token flows are not complete yet.
-- Current frontend token storage is temporary `localStorage`; server-rendered pages still need a cookie/session or proxy strategy before fallback can be removed.
+- localStorage is no longer the primary frontend auth path; it remains only as legacy cleanup.
 - See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the planned SSR/session test path.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md) for the first cookie-backed route-handler layer.
 - See [Server-side authenticated API helper](server-side-authenticated-api-helper.md) for the migrated SSR fetch path.
+- See [Client API session proxy migration](client-api-session-proxy-migration.md) for the browser proxy path.
 - No grant creation/revocation workflow exists yet.
 - No grant-scoped patient directory filtering exists yet.
 - Patient Summary partial filtering/redaction is deferred.
