@@ -65,15 +65,15 @@ During the transition, these routes can still work in Development through the ex
 
 This phase intentionally avoids a broad frontend routing or rendering rewrite.
 
-The recommended server-side session path is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md).
+The recommended server-side session path is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md). The first route-handler layer is documented in [Next admin session route handlers](next-admin-session-route-handlers.md).
 
 ## `/me` Helper
 
 The frontend has a small helper for:
 
-`GET /api/health-core/auth/admin/me`
+`GET /api/admin-auth/me`
 
-The login page uses it to recognize an already stored valid token and redirect to `/patients`.
+The login page uses it to recognize an already stored valid httpOnly cookie session and redirect to `/patients`.
 
 ## 401 and 403 Handling
 
@@ -107,6 +107,7 @@ Recommended next steps:
 Future phases should add:
 
 - httpOnly cookie or server-managed session support
+- server-side API helper for `/patients` and `/patients/[id]`
 - frontend logout UI
 - token expiry warning
 - refresh/session strategy if needed

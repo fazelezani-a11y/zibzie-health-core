@@ -357,6 +357,14 @@ Recommended next phases:
 - Preserved Development fallback behavior for routes that still fetch on the server.
 - See [Frontend admin auth integration](frontend-admin-auth-integration.md).
 
+### 87E2c: Next Admin Session Route Handlers - implemented
+
+- Added frontend route handlers for login, me, and logout.
+- Stored backend JWT in `zibzie_admin_access_token` httpOnly cookie.
+- Kept localStorage token response temporarily for browser-side API compatibility.
+- Did not convert server-rendered patient pages yet.
+- See [Next admin session route handlers](next-admin-session-route-handlers.md).
+
 ### 87E3: Disable Fallback Outside Development/Test
 
 - Verify staging config has fallback disabled.

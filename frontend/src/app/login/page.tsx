@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { ApiError, getCurrentAdmin, loginAdmin } from "@/lib/api";
 import {
   clearAdminAccessToken,
-  getAdminAccessToken,
   setAdminAccessToken,
 } from "@/lib/auth/admin-auth";
 
@@ -18,10 +17,6 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!getAdminAccessToken()) {
-      return;
-    }
-
     let isMounted = true;
 
     getCurrentAdmin()

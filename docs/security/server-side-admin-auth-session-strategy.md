@@ -139,14 +139,15 @@ This keeps Health Core backend authorization unchanged while giving the frontend
 
 ## 9. Implementation Phases
 
-### 87E2c: Next Admin Session Route Handlers
+### 87E2c: Next Admin Session Route Handlers - implemented
 
-- Add `POST /api/admin-auth/login`.
-- Add `GET /api/admin-auth/me`.
-- Add `POST /api/admin-auth/logout`.
+- Added `POST /api/admin-auth/login`.
+- Added `GET /api/admin-auth/me`.
+- Added `POST /api/admin-auth/logout`.
 - Route handlers call backend admin auth endpoints.
 - Route handlers set/clear httpOnly cookies.
 - No protected page conversion yet.
+- See [Next admin session route handlers](next-admin-session-route-handlers.md).
 
 ### 87E2d: Server-Side Authenticated API Helper
 
