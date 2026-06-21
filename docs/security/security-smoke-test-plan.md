@@ -283,6 +283,7 @@ Recommended stages:
 - Current script depends on local dev/header fallback.
 - Production JWT/service identity and frontend token flows are not complete yet.
 - Current frontend token storage is temporary `localStorage`; server-rendered pages still need a cookie/session or proxy strategy before fallback can be removed.
+- See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the planned SSR/session test path.
 - No grant creation/revocation workflow exists yet.
 - No grant-scoped patient directory filtering exists yet.
 - Patient Summary partial filtering/redaction is deferred.

@@ -65,6 +65,8 @@ During the transition, these routes can still work in Development through the ex
 
 This phase intentionally avoids a broad frontend routing or rendering rewrite.
 
+The recommended server-side session path is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md).
+
 ## `/me` Helper
 
 The frontend has a small helper for:

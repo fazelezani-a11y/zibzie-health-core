@@ -51,7 +51,7 @@ Frontend state:
 
 Implication:
 
-The least disruptive frontend integration point remains `frontend/src/lib/api/client.ts`, but server-rendered patient pages need a token strategy that also works on the server. That makes secure httpOnly cookies or a Next proxy/session layer preferable for the next production-readiness step.
+The least disruptive frontend integration point remains `frontend/src/lib/api/client.ts`, but server-rendered patient pages need a token strategy that also works on the server. That makes secure httpOnly cookies or a Next proxy/session layer preferable for the next production-readiness step. The server-side strategy is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md).
 
 ## 3. Admin User Types and Roles
 
