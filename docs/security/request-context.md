@@ -1,8 +1,8 @@
 # Health Core Request Context
 
-Phase 84B1 adds a lightweight request-context foundation for future authorization and audit integration.
+Phase 84B1 added a lightweight request-context foundation for authorization and audit integration.
 
-This phase does not enforce authorization, reject requests, or change endpoint behavior.
+The request context is now used by protected controller endpoints to build authorization decisions and audit log requests.
 
 ## Purpose
 
@@ -24,9 +24,11 @@ The request context centralizes:
 
 ## Current Auth Status
 
-The current API does not have real authentication or authorization middleware.
+The current API does not have real authentication or ASP.NET Core authorization middleware.
 
-There is no JWT setup, no current-user helper, no endpoint authorization attributes, and no controller logic that relies on `HttpContext.User`.
+There is a `Jwt` configuration section in API settings, but `Program.cs` does not currently register JWT bearer authentication or call authentication middleware.
+
+Protected controllers perform explicit authorization checks through `IHealthCoreAuthorizationService`; they do not rely on `[Authorize]` attributes.
 
 ## Resolution Order
 
@@ -67,21 +69,23 @@ Production should use a real identity provider or service-to-service authenticat
 
 Future product frontends should authenticate users through their product identity flow, then pass or exchange trusted identity/product context with Health Core.
 
+See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed production claim contract, product context model, environment fallback policy, and phased migration path.
+
 ## Future Consumers
 
-Future phases will use this context in:
+This context is used or intended to be used in:
 
 - `IHealthCoreAuthorizationService`
 - `IAuditLogService`
-- high-risk endpoint filters or explicit controller/service checks
+- explicit controller checks for protected endpoint groups
 - access denied audit logging
 - successful read/write audit logging
 
-## Not Implemented Yet
+## Not Implemented Yet for Production Auth
 
-- No endpoint enforcement.
-- No authorization attributes.
-- No request rejection.
-- No frontend changes.
+- No JWT bearer authentication middleware.
+- No production identity provider integration.
+- No environment-based fallback disablement.
+- No frontend login/token integration.
 - No patient access grant creation UI/API.
-- No audit logging from controllers.
+- No authentication failure audit before controller execution.

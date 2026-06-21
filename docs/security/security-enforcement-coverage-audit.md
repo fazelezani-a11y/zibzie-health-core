@@ -100,11 +100,11 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 - AuditLog read/admin/reporting endpoints are not implemented. If exposed later, they must be strictly admin-only and audited.
 - Audit volume management is not implemented for frequent successful reads.
 - Future medical-history modules such as surgery, hospitalization, vaccination, family history, and social history are not implemented.
-- Security smoke tests and end-to-end authorization tests should be added as coverage grows.
+- Security smoke test planning and a local smoke script exist as of Phase 86; broader E2E automation remains future work.
 
 ## 8. Risk-ranked remaining work
 
-1. Replace development/header fallback with real JWT or service-to-service authentication before production use.
+1. Replace development/header fallback with real JWT or service-to-service authentication before production use. See [Production auth and JWT strategy](production-auth-jwt-strategy.md).
 2. Implement PatientAccessGrant creation, revocation, assignment, and emergency-access workflows with audit logging.
 3. Add grant creation/revocation workflows and apply grant-scoped directory filtering.
 4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.
@@ -112,7 +112,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
 7. Add audit volume controls for frequent successful reads while always auditing denied access.
 8. Apply the same authorization/audit pattern to future medical-history modules.
-9. Add security smoke tests and end-to-end tests for protected endpoint groups.
+9. Expand security smoke tests and end-to-end tests for protected endpoint groups.
 
 ## 9. Recommended next phase
 

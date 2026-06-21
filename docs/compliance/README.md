@@ -33,6 +33,7 @@ This index groups the current Health Core security and compliance documentation 
 
 ## Strategy Notes
 
+- [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 
@@ -52,4 +53,4 @@ The strongest remaining readiness work is:
 - implement PatientAccessGrant creation/revocation workflows
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies
-- create security smoke/E2E tests
+- expand security smoke/E2E tests beyond the current local smoke foundation

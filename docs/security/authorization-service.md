@@ -75,3 +75,5 @@ Phase 84 applied this service to current high-risk endpoint groups and patient
 profile endpoints. Future work should replace development request-context
 fallbacks with production identity, add grant-management workflows, and improve
 sensitivity/redaction behavior.
+
+Production identity planning is documented in [Production auth and JWT strategy](production-auth-jwt-strategy.md).

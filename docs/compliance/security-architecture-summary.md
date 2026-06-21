@@ -53,6 +53,8 @@ The current request-context provider includes a development fallback so the loca
 
 The fallback is not production-safe. Production must use authenticated user/service identity, preferably signed JWT or service-to-service credentials, and must provide trusted product and role context.
 
+The proposed production claim contract, product context model, and environment fallback policy are documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
+
 ## Data Minimization Notes
 
 Current patient list/detail endpoints preserve existing DTO shapes for frontend compatibility. Future work should minimize directory results so broad list/search does not expose national code, mobile number, email, or address unless the caller has a stronger permission and scope.

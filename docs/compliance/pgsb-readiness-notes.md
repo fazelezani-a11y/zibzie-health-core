@@ -49,6 +49,8 @@ Before any real external health exchange integration, Health Core should complet
 - compliance evidence package
 - technical certification gap analysis if required by the relevant authority
 
+The recommended production authentication path is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
+
 ## PGSB Readiness Framing
 
 The current state should be described as:

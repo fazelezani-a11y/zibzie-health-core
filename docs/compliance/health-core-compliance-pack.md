@@ -190,7 +190,7 @@ Known intentional future work:
 - Optimize audit volume for frequent dashboard reads.
 - Add strict AuditLog admin/reporting endpoint only if operationally needed.
 - Add future medical-history modules: surgery, hospitalization, vaccination, family/social history.
-- Add security smoke tests and end-to-end authorization tests.
+- Expand security smoke and end-to-end authorization tests beyond the current local smoke foundation.
 
 ## 11. Future Production Auth/JWT Requirements
 
@@ -205,6 +205,8 @@ Before production use, Health Core needs a real identity model:
 - removal or production disabling of dev/header fallback
 
 The current fallback exists to keep the local admin panel usable while production auth is not yet integrated. It is not production-safe.
+
+The recommended production JWT/service identity model is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
 ## 12. Future Regulatory / PGSB Readiness Considerations
 

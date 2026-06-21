@@ -245,6 +245,8 @@ It is not production-safe. Future production tests must use signed JWT or truste
 
 ## 11. Future Production JWT Test Plan
 
+See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed claim contract, product context model, and environment fallback policy.
+
 Future production-style tests should verify:
 
 - valid JWT/service identity with product claims is allowed only within grants/scopes
