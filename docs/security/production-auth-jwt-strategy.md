@@ -13,7 +13,7 @@ Current protected endpoints rely on `IHealthCoreRequestContextProvider` to resol
 - product role
 - correlation and HTTP request metadata
 
-The provider can read claims if an authenticated principal exists, but the API does not currently configure JWT bearer authentication or call authentication/authorization middleware. It also supports temporary headers and a default development fallback so the current admin panel remains usable.
+The provider reads claims from an authenticated principal when a valid bearer token is present. It also supports temporary headers and a default development fallback so the current admin panel remains usable during local development.
 
 Before production use, Health Core should require signed user or service identity, map trusted claims into `HealthCoreRequestContext`, and disable arbitrary header/default fallback outside explicitly approved development environments.
 
@@ -25,12 +25,14 @@ Current implementation pieces:
 - `IHealthCoreRequestContextProvider.GetCurrent()` returns the current request context.
 - `IHealthCoreRequestContextProvider.CreateAuthorizationContext(Guid patientId)` maps the request context into `HealthCoreAuthorizationContext`.
 - `HttpHealthCoreRequestContextProvider` uses `IHttpContextAccessor`.
-- `Program.cs` registers `IHttpContextAccessor`, `IHealthCoreRequestContextProvider`, `IHealthCoreAuthorizationService`, and `IAuditLogService`.
+- `HealthCoreAuthOptions` configures whether header fallback and default development fallback are allowed.
+- `JwtOptions` configures JWT issuer/audience/authority/signing-key validation settings.
+- `Program.cs` registers `IHttpContextAccessor`, JWT bearer authentication, `IHealthCoreRequestContextProvider`, `IHealthCoreAuthorizationService`, and `IAuditLogService`.
 
 Current auth configuration:
 
 - `appsettings.json` contains a `Jwt` section with issuer, audience, and a development key.
-- `Program.cs` does not currently call `AddAuthentication`, `AddJwtBearer`, `UseAuthentication`, or `UseAuthorization`.
+- `Program.cs` calls `AddAuthentication`, `AddJwtBearer`, `UseAuthentication`, and `UseAuthorization`.
 - Launch settings allow anonymous authentication.
 - Controllers perform explicit authorization checks through `IHealthCoreAuthorizationService`; they do not rely on ASP.NET Core authorization attributes.
 
@@ -41,12 +43,12 @@ Current request-context resolution order:
    - product code: `product_code`, `product`
    - product role: `product_role`, `role`, `ClaimTypes.Role`
    - service account id: `service_account_id`, `client_id`
-2. Temporary fallback headers:
+2. Temporary fallback headers, only when `HealthCoreAuth:AllowHeaderFallback` is enabled and the environment is not Production:
    - `X-HealthCore-Product`
    - `X-HealthCore-Product-Role`
    - `X-HealthCore-Service-Account`
    - `X-Correlation-ID`
-3. Default development fallback:
+3. Default development fallback, only when `HealthCoreAuth:AllowDefaultDevFallback` is enabled and the environment is not Production:
    - `ProductCode = InternalAdmin`
    - `ProductRole = HealthCoreAdmin`
    - `ServiceAccountId = dev-admin`
@@ -54,6 +56,8 @@ Current request-context resolution order:
 `X-Correlation-ID` is used when provided. Otherwise the ASP.NET Core trace identifier is used.
 
 `IsFallbackContext` is true when the context uses fallback headers or default development values.
+
+Base/default configuration disables both fallback paths. Development configuration enables them for local use. The provider ignores fallback in Production even if configuration accidentally enables it.
 
 ## 3. Why Dev/Header Fallback Is Not Production-Safe
 
@@ -289,7 +293,7 @@ Recommended policy:
 
 | Environment | Header fallback | Default dev fallback | Production JWT/service auth |
 | --- | --- | --- | --- |
-| Development | Allowed for local development | Allowed | Optional until Phase 87C |
+| Development | Allowed for local development | Allowed | Wired in Phase 87C; optional for local flows until frontend/service integration |
 | Test/CI | Allowed only for explicit security tests | Allowed only when configured | Recommended for integration tests once available |
 | Staging | Disabled by default; enable only with explicit config and access controls | Disabled | Required |
 | Production | Disabled | Disabled | Required |
@@ -307,9 +311,9 @@ Rules:
 Recommended migration:
 
 1. Keep current provider behavior unchanged while documenting the policy.
-2. Add auth-mode configuration without changing endpoint decisions.
-3. Add JWT bearer validation and map claims into the existing request context.
-4. Keep fallback enabled only in Development.
+2. Add auth-mode configuration without changing endpoint decisions. Completed in Phase 87B.
+3. Add JWT bearer validation and map claims into the existing request context. Completed in Phase 87C.
+4. Keep fallback enabled only in Development and explicitly configured test environments.
 5. Update local and CI smoke tests to include JWT-backed contexts.
 6. Update admin frontend to send authenticated requests.
 7. Disable header/default fallback in staging.
@@ -358,14 +362,15 @@ Security smoke tests should continue to verify allowed and denied behavior, but 
 
 ## 16. Recommended Next Implementation Phases
 
-Phase 87B: Auth configuration foundation
+Phase 87B: Auth configuration foundation - implemented
 
 - add explicit auth mode and fallback configuration
 - keep current behavior in Development
-- make staging/production fallback policy configurable but not yet enforced broadly
+- keep fallback disabled in base/default configuration
+- ignore fallback in Production even if misconfigured
 - document operational settings
 
-Phase 87C: JWT bearer authentication
+Phase 87C: JWT bearer authentication - implemented
 
 - add JWT validation
 - map claims to request context

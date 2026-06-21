@@ -241,13 +241,15 @@ order by "CreatedAt";
 
 The header/default development fallback exists to keep the local admin panel usable before production authentication exists.
 
-It is not production-safe. Future production tests must use signed JWT or trusted service identity rather than arbitrary headers.
+As of Phase 87B, fallback is controlled by `HealthCoreAuth` configuration. Base/default configuration disables fallback, Development enables it, and the request-context provider ignores fallback in Production even if configuration accidentally enables it.
+
+The local security smoke script uses header fallback and is therefore a Development/local test tool. Future production tests must use signed JWT or trusted service identity rather than arbitrary headers.
 
 ## 11. Future Production JWT Test Plan
 
 See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed claim contract, product context model, and environment fallback policy.
 
-Future production-style tests should verify:
+JWT bearer authentication is wired as of Phase 87C, but the current local security smoke still uses Development header fallback. Future production-style tests should verify:
 
 - valid JWT/service identity with product claims is allowed only within grants/scopes
 - missing JWT is denied

@@ -1,6 +1,9 @@
 using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Zibzie.HealthCore.Api.Security;
 using Zibzie.HealthCore.Domain.Security;
 
@@ -32,6 +35,55 @@ public class HttpHealthCoreRequestContextProviderTests
     }
 
     [Fact]
+    public void GetCurrent_PrefersClaimsOverFallbackHeaders()
+    {
+        var userId = Guid.NewGuid();
+        var httpContext = CreateHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim("sub", userId.ToString()),
+            new Claim("product_code", ProductCodes.DigiCare),
+            new Claim("product_role", ProductRoles.DigiCareClinician),
+            new Claim("service_account_id", "digicare-claims-service"),
+        }, "TestAuth"));
+        httpContext.Request.Headers["X-HealthCore-Product"] = ProductCodes.HomeVisit;
+        httpContext.Request.Headers["X-HealthCore-Product-Role"] = ProductRoles.HomeVisitDoctor;
+        httpContext.Request.Headers["X-HealthCore-Service-Account"] = "header-service";
+        var provider = CreateProvider(httpContext);
+
+        var context = provider.GetCurrent();
+
+        Assert.Equal(userId, context.UserId);
+        Assert.Equal("digicare-claims-service", context.ServiceAccountId);
+        Assert.Equal(ProductCodes.DigiCare, context.ProductCode);
+        Assert.Equal(ProductRoles.DigiCareClinician, context.ProductRole);
+        Assert.True(context.IsAuthenticated);
+        Assert.False(context.IsFallbackContext);
+    }
+
+    [Fact]
+    public void GetCurrent_ReadsServiceAccountFromClientIdClaim()
+    {
+        var httpContext = CreateHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim("client_id", "digicare-service"),
+            new Claim("product_code", ProductCodes.DigiCare),
+            new Claim("product_role", ProductRoles.DigiCareCaseManager),
+        }, "TestAuth"));
+        var provider = CreateProvider(httpContext);
+
+        var context = provider.GetCurrent();
+
+        Assert.Null(context.UserId);
+        Assert.Equal("digicare-service", context.ServiceAccountId);
+        Assert.Equal(ProductCodes.DigiCare, context.ProductCode);
+        Assert.Equal(ProductRoles.DigiCareCaseManager, context.ProductRole);
+        Assert.True(context.IsAuthenticated);
+        Assert.False(context.IsFallbackContext);
+    }
+
+    [Fact]
     public void GetCurrent_ReadsCorrelationIdAndRequestMetadata()
     {
         var httpContext = CreateHttpContext();
@@ -53,7 +105,7 @@ public class HttpHealthCoreRequestContextProviderTests
     }
 
     [Fact]
-    public void GetCurrent_MarksHeaderContextAsFallback()
+    public void GetCurrent_UsesHeaderFallbackWhenEnabled()
     {
         var httpContext = CreateHttpContext();
         httpContext.Request.Headers["X-HealthCore-Product"] = ProductCodes.HomeVisit;
@@ -71,7 +123,29 @@ public class HttpHealthCoreRequestContextProviderTests
     }
 
     [Fact]
-    public void GetCurrent_UsesDefaultFallbackWhenNoIdentityOrHeadersExist()
+    public void GetCurrent_IgnoresHeaderFallbackWhenDisabled()
+    {
+        var httpContext = CreateHttpContext();
+        httpContext.Request.Headers["X-HealthCore-Product"] = ProductCodes.HomeVisit;
+        httpContext.Request.Headers["X-HealthCore-Product-Role"] = ProductRoles.HomeVisitDoctor;
+        httpContext.Request.Headers["X-HealthCore-Service-Account"] = "homevisit-service";
+        var provider = CreateProvider(
+            httpContext,
+            allowHeaderFallback: false,
+            allowDefaultDevFallback: false);
+
+        var context = provider.GetCurrent();
+
+        Assert.Null(context.UserId);
+        Assert.Null(context.ServiceAccountId);
+        Assert.Null(context.ProductCode);
+        Assert.Null(context.ProductRole);
+        Assert.False(context.IsAuthenticated);
+        Assert.False(context.IsFallbackContext);
+    }
+
+    [Fact]
+    public void GetCurrent_UsesDefaultFallbackWhenEnabled()
     {
         var provider = CreateProvider(CreateHttpContext());
 
@@ -82,6 +156,47 @@ public class HttpHealthCoreRequestContextProviderTests
         Assert.Equal("dev-admin", context.ServiceAccountId);
         Assert.False(context.IsAuthenticated);
         Assert.True(context.IsFallbackContext);
+    }
+
+    [Fact]
+    public void GetCurrent_DoesNotUseDefaultFallbackWhenDisabled()
+    {
+        var provider = CreateProvider(
+            CreateHttpContext(),
+            allowHeaderFallback: false,
+            allowDefaultDevFallback: false);
+
+        var context = provider.GetCurrent();
+
+        Assert.Null(context.UserId);
+        Assert.Null(context.ServiceAccountId);
+        Assert.Null(context.ProductCode);
+        Assert.Null(context.ProductRole);
+        Assert.False(context.IsAuthenticated);
+        Assert.False(context.IsFallbackContext);
+    }
+
+    [Fact]
+    public void GetCurrent_ProductionIgnoresFallbackEvenWhenEnabled()
+    {
+        var httpContext = CreateHttpContext();
+        httpContext.Request.Headers["X-HealthCore-Product"] = ProductCodes.HomeVisit;
+        httpContext.Request.Headers["X-HealthCore-Product-Role"] = ProductRoles.HomeVisitDoctor;
+        httpContext.Request.Headers["X-HealthCore-Service-Account"] = "homevisit-service";
+        var provider = CreateProvider(
+            httpContext,
+            allowHeaderFallback: true,
+            allowDefaultDevFallback: true,
+            environmentName: Environments.Production);
+
+        var context = provider.GetCurrent();
+
+        Assert.Null(context.UserId);
+        Assert.Null(context.ServiceAccountId);
+        Assert.Null(context.ProductCode);
+        Assert.Null(context.ProductRole);
+        Assert.False(context.IsAuthenticated);
+        Assert.False(context.IsFallbackContext);
     }
 
     [Fact]
@@ -115,11 +230,40 @@ public class HttpHealthCoreRequestContextProviderTests
         };
     }
 
-    private static HttpHealthCoreRequestContextProvider CreateProvider(HttpContext httpContext)
+    private static HttpHealthCoreRequestContextProvider CreateProvider(
+        HttpContext httpContext,
+        bool allowHeaderFallback = true,
+        bool allowDefaultDevFallback = true,
+        string environmentName = "Development")
     {
         return new HttpHealthCoreRequestContextProvider(new HttpContextAccessor
+            {
+                HttpContext = httpContext
+            },
+            Options.Create(new HealthCoreAuthOptions
+            {
+                AllowHeaderFallback = allowHeaderFallback,
+                AllowDefaultDevFallback = allowDefaultDevFallback,
+                DefaultDevProductCode = ProductCodes.InternalAdmin,
+                DefaultDevProductRole = ProductRoles.HealthCoreAdmin,
+                DefaultDevServiceAccountId = "dev-admin"
+            }),
+            new TestHostEnvironment(environmentName));
+    }
+
+    private sealed class TestHostEnvironment : IHostEnvironment
+    {
+        public TestHostEnvironment(string environmentName)
         {
-            HttpContext = httpContext
-        });
+            EnvironmentName = environmentName;
+        }
+
+        public string EnvironmentName { get; set; }
+
+        public string ApplicationName { get; set; } = "Zibzie.HealthCore.Tests";
+
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

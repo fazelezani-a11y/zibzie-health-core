@@ -183,7 +183,7 @@ Reference:
 
 Known intentional future work:
 
-- Replace dev/header fallback with production JWT or service-to-service authentication.
+- Complete production JWT/service identity configuration and retire dev/header fallback before production use.
 - Implement grant creation/revocation admin workflows.
 - Implement Patient Summary partial filtering/redaction.
 - Improve sensitivity and visibility filtering.
@@ -194,9 +194,9 @@ Known intentional future work:
 
 ## 11. Future Production Auth/JWT Requirements
 
-Before production use, Health Core needs a real identity model:
+JWT bearer authentication is wired, but before production use Health Core still needs a real identity model:
 
-- signed JWT or service-to-service authentication
+- production issuer/key/authority configuration for signed JWT or service-to-service authentication
 - stable user/service identifiers
 - trusted product context claims
 - product role claims or server-side role mapping
@@ -204,7 +204,7 @@ Before production use, Health Core needs a real identity model:
 - controlled service account credentials
 - removal or production disabling of dev/header fallback
 
-The current fallback exists to keep the local admin panel usable while production auth is not yet integrated. It is not production-safe.
+The current fallback exists to keep the local admin panel usable while production identity/frontend integration is not yet complete. It is not production-safe.
 
 The recommended production JWT/service identity model is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 

@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Zibzie.HealthCore.Api.Security;
 using Zibzie.HealthCore.Application.CarePlans;
 using Zibzie.HealthCore.Application.Documents;
@@ -30,6 +33,56 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<HealthCoreAuthOptions>(builder.Configuration.GetSection("HealthCoreAuth"));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+
+        if (!string.IsNullOrWhiteSpace(jwtOptions.Authority))
+        {
+            options.Authority = jwtOptions.Authority;
+            options.RequireHttpsMetadata = jwtOptions.RequireHttpsMetadata;
+        }
+
+        if (!string.IsNullOrWhiteSpace(jwtOptions.Audience))
+        {
+            options.Audience = jwtOptions.Audience;
+        }
+
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = jwtOptions.ValidateIssuer,
+            ValidateAudience = jwtOptions.ValidateAudience,
+            ValidateLifetime = jwtOptions.ValidateLifetime,
+            ValidateIssuerSigningKey = jwtOptions.ValidateIssuerSigningKey,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+
+        if (!string.IsNullOrWhiteSpace(jwtOptions.Issuer))
+        {
+            tokenValidationParameters.ValidIssuer = jwtOptions.Issuer;
+        }
+
+        if (!string.IsNullOrWhiteSpace(jwtOptions.Audience))
+        {
+            tokenValidationParameters.ValidAudience = jwtOptions.Audience;
+        }
+
+        if (!string.IsNullOrWhiteSpace(jwtOptions.EffectiveSigningKey))
+        {
+            tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.EffectiveSigningKey));
+        }
+
+        options.TokenValidationParameters = tokenValidationParameters;
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -67,6 +120,9 @@ app.UseSwaggerUI();
 app.UseCors("DefaultCors");
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

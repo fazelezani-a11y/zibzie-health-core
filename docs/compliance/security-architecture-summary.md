@@ -51,7 +51,7 @@ Timeline must not be used as a substitute for AuditLog.
 
 The current request-context provider includes a development fallback so the local admin panel can keep working before real authentication exists.
 
-The fallback is not production-safe. Production must use authenticated user/service identity, preferably signed JWT or service-to-service credentials, and must provide trusted product and role context.
+JWT bearer authentication is wired, but the fallback remains available in configured non-Production environments for local development. The fallback is not production-safe. Production must use authenticated user/service identity, preferably signed JWT or service-to-service credentials, and must provide trusted product and role context.
 
 The proposed production claim contract, product context model, and environment fallback policy are documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 

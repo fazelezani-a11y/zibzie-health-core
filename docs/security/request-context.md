@@ -6,7 +6,7 @@ The request context is now used by protected controller endpoints to build autho
 
 ## Purpose
 
-Future protected endpoints need a consistent way to build `HealthCoreAuthorizationContext` and `AuditLogRequest` values from the current HTTP request.
+Protected endpoints need a consistent way to build `HealthCoreAuthorizationContext` and `AuditLogRequest` values from the current HTTP request.
 
 The request context centralizes:
 
@@ -24,11 +24,13 @@ The request context centralizes:
 
 ## Current Auth Status
 
-The current API does not have real authentication or ASP.NET Core authorization middleware.
+Phase 87C wires JWT bearer authentication into the API.
 
-There is a `Jwt` configuration section in API settings, but `Program.cs` does not currently register JWT bearer authentication or call authentication middleware.
+`Program.cs` registers JWT bearer authentication and calls `UseAuthentication()` / `UseAuthorization()`. This allows a valid bearer token to populate `HttpContext.User`.
 
-Protected controllers perform explicit authorization checks through `IHealthCoreAuthorizationService`; they do not rely on `[Authorize]` attributes.
+Protected controllers still perform explicit authorization checks through `IHealthCoreAuthorizationService`; they do not rely on broad `[Authorize]` attributes or global authentication requirements.
+
+If no valid bearer token is present, Development fallback may still provide local context when configured. If fallback is disabled, the request context remains unauthenticated/empty and protected endpoints are denied by the authorization service.
 
 ## Resolution Order
 
@@ -39,29 +41,50 @@ The HTTP provider resolves context in this order:
    - product code: `product_code`, `product`
    - product role: `product_role`, `role`, `ClaimTypes.Role`
    - service account: `service_account_id`, `client_id`
-2. Temporary fallback headers:
+2. Temporary fallback headers, only when `HealthCoreAuth:AllowHeaderFallback` is enabled and the environment is not Production:
    - `X-HealthCore-Product`
    - `X-HealthCore-Product-Role`
    - `X-HealthCore-Service-Account`
    - `X-Correlation-ID`
-3. Temporary development fallback:
+3. Temporary development fallback, only when `HealthCoreAuth:AllowDefaultDevFallback` is enabled and the environment is not Production:
    - `ProductCode = InternalAdmin`
    - `ProductRole = HealthCoreAdmin`
    - `ServiceAccountId = dev-admin`
 
 `X-Correlation-ID` is used when present. Otherwise the ASP.NET Core trace identifier is used.
 
+## Fallback Configuration
+
+Phase 87B added `HealthCoreAuth` configuration.
+
+Base/default configuration is production-safe:
+
+- `AllowHeaderFallback = false`
+- `AllowDefaultDevFallback = false`
+
+Development configuration keeps local admin-panel behavior working:
+
+- `AllowHeaderFallback = true`
+- `AllowDefaultDevFallback = true`
+- `DefaultDevProductCode = InternalAdmin`
+- `DefaultDevProductRole = HealthCoreAdmin`
+- `DefaultDevServiceAccountId = dev-admin`
+
+The provider also has a hard safety guard: fallback is ignored in Production even if configuration accidentally enables it.
+
+When no authenticated claims are available and fallback is disabled, the provider returns an unauthenticated context without product code, product role, user id, or service account id. Protected endpoints should then be denied by `IHealthCoreAuthorizationService`.
+
 ## Fallback Warning
 
 Header fallback and default development fallback are not production-safe authorization mechanisms.
 
-They exist only so the current unauthenticated admin panel and local development flows can keep working while the security foundation is being built.
+They exist only so the current unauthenticated admin panel and local development flows can keep working before production authentication is implemented.
 
 Any request context that uses headers or default values is marked with:
 
 `IsFallbackContext = true`
 
-Before endpoint enforcement is enabled in production, fallback contexts should either be rejected for protected endpoints or limited to explicitly approved development/test environments.
+Before production deployment, fallback contexts must remain disabled outside explicitly approved development/test environments.
 
 ## Production Direction
 
@@ -83,9 +106,7 @@ This context is used or intended to be used in:
 
 ## Not Implemented Yet for Production Auth
 
-- No JWT bearer authentication middleware.
 - No production identity provider integration.
-- No environment-based fallback disablement.
 - No frontend login/token integration.
 - No patient access grant creation UI/API.
 - No authentication failure audit before controller execution.
