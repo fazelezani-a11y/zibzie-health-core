@@ -15,6 +15,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Authorization service](../security/authorization-service.md)
 - [Request context](../security/request-context.md)
 - [Audit log](../security/audit-log.md)
+- [Admin auth backend foundation](../security/admin-auth-backend-foundation.md)
 
 ## Endpoint Authorization
 
@@ -51,7 +52,7 @@ This index groups the current Health Core security and compliance documentation 
 The strongest remaining readiness work is:
 
 - complete production JWT/service identity adoption and retire development fallback before production
-- implement admin login and frontend JWT integration
+- implement frontend admin JWT integration and continue hardening admin auth
 - implement PatientAccessGrant creation/revocation workflows
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies

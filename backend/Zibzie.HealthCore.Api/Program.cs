@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Zibzie.HealthCore.Api.Security;
@@ -10,6 +11,7 @@ using Zibzie.HealthCore.Application.Patients;
 using Zibzie.HealthCore.Application.ParaclinicalResults;
 using Zibzie.HealthCore.Application.Reminders;
 using Zibzie.HealthCore.Application.Security;
+using Zibzie.HealthCore.Domain.Entities;
 using Zibzie.HealthCore.Infrastructure.CarePlans;
 using Zibzie.HealthCore.Infrastructure.Documents;
 using Zibzie.HealthCore.Infrastructure.Measurements;
@@ -35,6 +37,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<HealthCoreAuthOptions>(builder.Configuration.GetSection("HealthCoreAuth"));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<AdminAuthOptions>(builder.Configuration.GetSection("AdminAuth"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
 
@@ -100,6 +103,9 @@ builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService
 builder.Services.AddScoped<IHealthCoreAuthorizationService, HealthCoreAuthorizationService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IHealthCoreRequestContextProvider, HttpHealthCoreRequestContextProvider>();
+builder.Services.AddScoped<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
 builder.Services.AddCors(options =>
 {
@@ -113,6 +119,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+await AdminUserBootstrapper.SeedAsync(app.Services, app.Environment);
 
 app.UseSwagger();
 app.UseSwaggerUI();

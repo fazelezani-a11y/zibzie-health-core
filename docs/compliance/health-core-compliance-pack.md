@@ -194,7 +194,7 @@ Known intentional future work:
 
 ## 11. Future Production Auth/JWT Requirements
 
-JWT bearer authentication is wired, but before production use Health Core still needs a real identity model:
+JWT bearer authentication is wired, and a minimal internal admin login backend can issue short-lived `InternalAdmin` JWTs. Before production use Health Core still needs a complete identity model:
 
 - production issuer/key/authority configuration for signed JWT or service-to-service authentication
 - stable user/service identifiers
@@ -208,7 +208,7 @@ The current fallback exists to keep the local admin panel usable while productio
 
 The recommended production JWT/service identity model is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
-The admin login and frontend token transition path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md).
+The admin login and frontend token transition path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md). The implemented backend foundation is documented in [Admin auth backend foundation](../security/admin-auth-backend-foundation.md).
 
 ## 12. Future Regulatory / PGSB Readiness Considerations
 

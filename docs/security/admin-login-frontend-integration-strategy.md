@@ -337,15 +337,14 @@ Audit:
 
 Recommended next phases:
 
-### 87E1: Admin Auth Backend Foundation
+### 87E1: Admin Auth Backend Foundation - implemented
 
-- Decide username/password vs OTP for the first admin flow.
-- Add admin identity source.
-- Add login endpoint.
-- Add JWT issuing service.
-- Add secure password hashing or OTP verification.
-- Add login success/failure audit events.
-- Keep existing endpoint permissions unchanged.
+- Added an internal admin username/password auth backend.
+- Added `AdminUser`, password hashing, JWT issuing, and login audit events.
+- Added `POST /api/health-core/auth/admin/login`.
+- Added `GET /api/health-core/auth/admin/me`.
+- Kept existing health-record endpoint permissions unchanged.
+- See [Admin auth backend foundation](admin-auth-backend-foundation.md).
 
 ### 87E2: Frontend Admin Token Integration
 

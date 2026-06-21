@@ -38,6 +38,8 @@ public class AppDbContext : DbContext
 
     public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
 
+    public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

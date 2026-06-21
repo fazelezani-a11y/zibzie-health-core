@@ -377,20 +377,36 @@ Phase 87C: JWT bearer authentication - implemented
 - keep dev fallback only in Development
 - add tests for token validation and request-context mapping
 
-Phase 87D: Admin login/frontend integration
+Phase 87D: Admin login/frontend integration strategy - implemented
 
 - strategy documented in [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md)
-- future implementation should make the admin UI send authenticated requests
+- future frontend implementation should make the admin UI send authenticated requests
 - remove reliance on header/default fallback for normal admin use
 - keep local developer override only where explicitly configured
 
-Phase 87E: Service-to-service auth
+Phase 87E1: Admin auth backend foundation - implemented
+
+- internal admin username/password login backend
+- `AdminUser` table and password hashing
+- JWT issuing for `InternalAdmin` admin roles
+- login success/failure audit events
+- bootstrap seed controlled by non-Production config
+- see [Admin auth backend foundation](admin-auth-backend-foundation.md)
+
+Phase 87E2: Frontend admin token integration
+
+- add frontend login page
+- send `Authorization: Bearer <token>` or equivalent secure cookie strategy
+- add logout and `401`/`403` handling
+- reduce reliance on Development fallback for normal admin use
+
+Phase 87F: Service-to-service auth
 
 - define service account credential model
 - support product backend and automation callers
 - audit service account usage
 
-Phase 87F: Production hardening
+Phase 87G: Production hardening
 
 - issuer/audience/key rotation
 - HTTPS and reverse proxy header policy

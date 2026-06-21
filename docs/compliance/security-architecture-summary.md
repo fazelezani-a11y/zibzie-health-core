@@ -51,11 +51,11 @@ Timeline must not be used as a substitute for AuditLog.
 
 The current request-context provider includes a development fallback so the local admin panel can keep working before real authentication exists.
 
-JWT bearer authentication is wired, but the fallback remains available in configured non-Production environments for local development. The fallback is not production-safe. Production must use authenticated user/service identity, preferably signed JWT or service-to-service credentials, and must provide trusted product and role context.
+JWT bearer authentication is wired, and Phase 87E1 adds a minimal internal admin login backend that can issue `InternalAdmin` JWTs. The fallback remains available in configured non-Production environments for local development. The fallback is not production-safe. Production must use authenticated user/service identity, preferably signed JWT or service-to-service credentials, and must provide trusted product and role context.
 
 The proposed production claim contract, product context model, and environment fallback policy are documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
-The admin login and frontend token adoption path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md).
+The admin login and frontend token adoption path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md), and the backend admin-auth foundation is documented in [Admin auth backend foundation](../security/admin-auth-backend-foundation.md).
 
 ## Data Minimization Notes
 

@@ -22,6 +22,8 @@ public sealed class JwtOptions
 
     public string? Key { get; set; }
 
+    public int AccessTokenMinutes { get; set; } = 60;
+
     public string? EffectiveSigningKey => string.IsNullOrWhiteSpace(SigningKey)
         ? Key
         : SigningKey;

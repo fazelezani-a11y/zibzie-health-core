@@ -94,7 +94,9 @@ Future product frontends should authenticate users through their product identit
 
 See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed production claim contract, product context model, environment fallback policy, and phased migration path.
 
-See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the proposed admin login flow and frontend token handling plan.
+See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the admin login and frontend token handling plan.
+
+See [Admin auth backend foundation](admin-auth-backend-foundation.md) for the internal admin login endpoint and Health Core-issued admin JWT foundation added in Phase 87E1.
 
 ## Future Consumers
 
