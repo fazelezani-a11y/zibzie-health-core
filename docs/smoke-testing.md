@@ -42,6 +42,44 @@ Use a different backend URL:
 .\scripts\smoke-healthcore.ps1 -BaseUrl http://localhost:5230
 ```
 
+## Security Smoke
+
+Phase 86 adds a smaller security-focused smoke script:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1
+```
+
+If local execution policy blocks direct script execution:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-security-healthcore.ps1
+```
+
+Use a different backend URL:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1 -BaseUrl http://localhost:5230
+```
+
+The security smoke is non-destructive by default. It verifies:
+
+- `/health` is healthy.
+- `GET /api/health-core/patients` is allowed with InternalAdmin development headers.
+- `GET /api/health-core/patients` is denied with an unknown product/role.
+- If a patient exists, patient summary and documents list are allowed for InternalAdmin and denied for the unknown product/role.
+
+If no local patient exists, either run the full smoke script first or allow the
+security smoke to create a local test patient:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1 -CreatePatientIfMissing
+```
+
+The security smoke does not directly verify `AuditLog` rows because no public
+AuditLog read endpoint exists. See `docs/security/security-smoke-test-plan.md`
+for database-query verification options.
+
 ## Coverage
 
 The script creates a unique test patient and verifies:

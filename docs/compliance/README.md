@@ -29,6 +29,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Patient summary authorization](../security/patient-summary-authorization.md)
 - [Timeline authorization](../security/timeline-authorization.md)
 - [Patient profile and directory authorization](../security/patient-profile-directory-authorization.md)
+- [Security smoke test plan](../security/security-smoke-test-plan.md)
 
 ## Strategy Notes
 
