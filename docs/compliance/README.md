@@ -36,6 +36,7 @@ This index groups the current Health Core security and compliance documentation 
 
 - [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md)
 - [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md)
+- [Frontend admin auth integration](../security/frontend-admin-auth-integration.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 

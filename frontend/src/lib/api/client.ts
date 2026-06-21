@@ -1,3 +1,8 @@
+import {
+  clearAdminAccessToken,
+  getAdminAccessToken,
+} from "../auth/admin-auth";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://localhost:5230";
@@ -61,15 +66,27 @@ export async function requestJson<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  const accessToken = getAdminAccessToken();
+  const headers = new Headers(init?.headers);
+
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+
+  if (accessToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+
   const response = await fetch(apiUrl(path), {
     ...init,
-    headers: {
-      Accept: "application/json",
-      ...init?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
+    if (response.status === 401 && accessToken) {
+      clearAdminAccessToken();
+    }
+
     let message = `درخواست ناموفق بود. کد خطا: ${response.status}`;
 
     try {

@@ -7,3 +7,4 @@ export * from "./api/paraclinical-results";
 export * from "./api/care-plan";
 export * from "./api/reminders";
 export * from "./api/measurements";
+export * from "./api/admin-auth";

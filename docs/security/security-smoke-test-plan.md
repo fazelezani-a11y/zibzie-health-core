@@ -251,8 +251,10 @@ See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the 
 
 See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the planned admin UI token flow.
 
-JWT bearer authentication is wired as of Phase 87C, but the current local security smoke still uses Development header fallback. Future production-style tests should verify:
+JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal admin login/JWT issuance. The current local security smoke still uses Development header fallback. Future production-style tests should verify:
 
+- admin login returns a JWT with `InternalAdmin` product context
+- frontend `/login` stores the token and browser-side API calls attach `Authorization: Bearer`
 - valid JWT/service identity with product claims is allowed only within grants/scopes
 - missing JWT is denied
 - invalid signature is denied before endpoint logic
@@ -279,7 +281,8 @@ Recommended stages:
 - Current security smoke script does not verify AuditLog rows directly.
 - Current script does not test every protected endpoint group.
 - Current script depends on local dev/header fallback.
-- No production JWT flow exists yet.
+- Production JWT/service identity and frontend token flows are not complete yet.
+- Current frontend token storage is temporary `localStorage`; server-rendered pages still need a cookie/session or proxy strategy before fallback can be removed.
 - No grant creation/revocation workflow exists yet.
 - No grant-scoped patient directory filtering exists yet.
 - Patient Summary partial filtering/redaction is deferred.

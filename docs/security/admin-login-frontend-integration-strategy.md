@@ -1,19 +1,19 @@
 # Admin Login and Frontend JWT Integration Strategy
 
-Phase 87D defines the admin login and frontend token integration strategy for Health Core. It does not implement login, add authentication endpoints, change frontend behavior, or change backend API behavior.
+Phase 87D defined the admin login and frontend token integration strategy for Health Core. Later phases added the backend admin auth foundation and the first frontend token integration.
 
 ## 1. Executive Summary
 
-Health Core now has JWT bearer authentication wired in the backend and endpoint-level authorization through `IHealthCoreAuthorizationService`. The missing piece is a real admin login flow and frontend token handling.
+Health Core now has JWT bearer authentication wired in the backend and endpoint-level authorization through `IHealthCoreAuthorizationService`. Phase 87E1 added a controlled internal admin login backend, and Phase 87E2 added a minimal frontend login/token path.
 
-The current admin panel can continue to work locally through the configured Development fallback, but that path is not production-safe. The next implementation should introduce an admin authentication flow that issues or receives JWTs containing `InternalAdmin` product context and a Health Core admin role, then teach the frontend API client to send those credentials.
+The current admin panel can continue to work locally through the configured Development fallback, but that path is not production-safe. The next implementation should replace the temporary browser `localStorage` token strategy with a server-compatible cookie/session or proxy strategy so server-rendered admin pages can authenticate without relying on fallback.
 
 Recommended direction:
 
-- Use a small staged admin-auth implementation for the near-term internal panel.
+- Keep the small staged admin-auth implementation for the near-term internal panel.
 - Keep JWT compatibility with the production claim contract from Phase 87A/87C.
 - Prefer httpOnly secure cookie storage if deployment topology allows it.
-- Keep bearer-token-in-JavaScript storage only as a temporary development compromise if needed.
+- Treat bearer-token-in-JavaScript storage as a temporary development compromise.
 - Defer broad SSO and product-wide identity federation until the Health Core admin panel is stable.
 
 ## 2. Current State
@@ -27,21 +27,23 @@ Backend state:
 - `HttpHealthCoreRequestContextProvider` prefers authenticated claims when a valid bearer token is present.
 - Development header/default fallback remains config-gated through `HealthCoreAuth`.
 - Production ignores fallback even if configuration accidentally enables it.
-- There is no `AuthController`, login endpoint, refresh endpoint, logout endpoint, or admin-user endpoint.
+- `AdminAuthController` exposes internal admin login and a simple `/me` endpoint.
+- There is still no refresh endpoint, logout endpoint, password reset flow, or production SSO integration.
 
 Backend config state:
 
-- `Jwt` config exists with issuer, audience, and a development signing key placeholder.
+- `Jwt` config exists with issuer, audience, access-token lifetime, and a Development-only signing key placeholder.
 - `HealthCoreAuth` base/default config disables fallback.
 - `HealthCoreAuth` Development config enables fallback.
+- `AdminAuth:BootstrapAdmin` is disabled by default and ignored in Production.
 
 Frontend state:
 
 - The frontend is a Next app under `frontend/src/app`.
-- There is no login page or auth route.
+- `/login` posts to the backend admin login endpoint.
 - There is no auth context/provider.
-- There is no token storage logic.
-- There is no `Authorization: Bearer` attachment.
+- A small temporary localStorage wrapper stores the admin access token.
+- Browser-side API calls attach `Authorization: Bearer` when a token exists.
 - `frontend/src/lib/api/client.ts` is the central `fetch` wrapper.
 - Patient list/detail server components call API helpers directly.
 - Create/edit modules are client components and also use the same API helper layer.
@@ -49,7 +51,7 @@ Frontend state:
 
 Implication:
 
-The least disruptive frontend integration point is `frontend/src/lib/api/client.ts`, but server-rendered patient pages need a token strategy that also works on the server. That makes secure httpOnly cookies preferable when feasible.
+The least disruptive frontend integration point remains `frontend/src/lib/api/client.ts`, but server-rendered patient pages need a token strategy that also works on the server. That makes secure httpOnly cookies or a Next proxy/session layer preferable for the next production-readiness step.
 
 ## 3. Admin User Types and Roles
 
@@ -348,18 +350,19 @@ Recommended next phases:
 
 ### 87E2: Frontend Admin Token Integration
 
-- Add login page.
-- Add auth state/session handling.
-- Update `frontend/src/lib/api/client.ts` to attach credentials.
-- Add logout.
-- Add `401` and `403` handling.
-- Preserve existing patient-record UI behavior for authenticated admins.
+- Added `/login`.
+- Added a temporary `localStorage` token wrapper.
+- Updated `frontend/src/lib/api/client.ts` to attach bearer tokens in browser requests.
+- Added conservative `401` token clearing while leaving `403` to page/component error handling.
+- Preserved Development fallback behavior for routes that still fetch on the server.
+- See [Frontend admin auth integration](frontend-admin-auth-integration.md).
 
 ### 87E3: Disable Fallback Outside Development/Test
 
 - Verify staging config has fallback disabled.
 - Add JWT-backed security smoke path.
 - Keep header fallback smoke only as local Development tooling.
+- Add server-compatible cookie/session or proxy flow before disabling fallback for server-rendered admin pages.
 
 ### 87E4: Admin Session and Security Hardening
 
