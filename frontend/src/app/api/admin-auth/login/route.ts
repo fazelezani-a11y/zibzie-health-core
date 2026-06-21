@@ -96,8 +96,6 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({
-    accessToken: body.accessToken,
-    tokenType: body.tokenType ?? "Bearer",
     expiresAt: body.expiresAt ?? null,
     productCode: body.productCode ?? "InternalAdmin",
     productRole: body.productRole ?? "",

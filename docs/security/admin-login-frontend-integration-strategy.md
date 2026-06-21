@@ -6,14 +6,14 @@ Phase 87D defined the admin login and frontend token integration strategy for He
 
 Health Core now has JWT bearer authentication wired in the backend and endpoint-level authorization through `IHealthCoreAuthorizationService`. Phase 87E1 added a controlled internal admin login backend, and Phase 87E2 added a minimal frontend login/token path.
 
-The current admin panel can continue to work locally through the configured Development fallback, but that path is not production-safe. The next implementation should replace the temporary browser `localStorage` token strategy with a server-compatible cookie/session or proxy strategy so server-rendered admin pages can authenticate without relying on fallback.
+The current admin panel can continue to work locally through the configured Development fallback, but that path is not production-safe. The frontend now has a cookie-backed session path for server and browser Health Core calls; the next step is fallback-off verification and session hardening.
 
 Recommended direction:
 
 - Keep the small staged admin-auth implementation for the near-term internal panel.
 - Keep JWT compatibility with the production claim contract from Phase 87A/87C.
 - Prefer httpOnly secure cookie storage if deployment topology allows it.
-- Treat bearer-token-in-JavaScript storage as a temporary development compromise.
+- Keep bearer-token-in-JavaScript storage out of the production path.
 - Defer broad SSO and product-wide identity federation until the Health Core admin panel is stable.
 
 ## 2. Current State
@@ -42,8 +42,8 @@ Frontend state:
 - The frontend is a Next app under `frontend/src/app`.
 - `/login` posts to the backend admin login endpoint.
 - There is no auth context/provider.
-- A small temporary localStorage wrapper stores the admin access token.
-- Browser-side API calls attach `Authorization: Bearer` when a token exists.
+- A small legacy localStorage wrapper remains only for cleanup of older stored tokens.
+- Browser-side Health Core API calls use the `/api/health-core/[...path]` proxy, which attaches backend authorization from the httpOnly cookie.
 - `frontend/src/lib/api/client.ts` is the central `fetch` wrapper.
 - Patient list/detail server components call API helpers directly.
 - Create/edit modules are client components and also use the same API helper layer.
@@ -51,7 +51,7 @@ Frontend state:
 
 Implication:
 
-The least disruptive frontend integration point remains `frontend/src/lib/api/client.ts`, but server-rendered patient pages need a token strategy that also works on the server. That makes secure httpOnly cookies or a Next proxy/session layer preferable for the next production-readiness step. The server-side strategy is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md).
+The least disruptive frontend integration point remains `frontend/src/lib/api/client.ts`, now backed by the same-origin proxy. Server-rendered patient pages use the server-side helper. The server-side strategy is documented in [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md).
 
 ## 3. Admin User Types and Roles
 
@@ -352,7 +352,7 @@ Recommended next phases:
 
 - Added `/login`.
 - Added a temporary `localStorage` token wrapper.
-- Updated `frontend/src/lib/api/client.ts` to attach bearer tokens in browser requests.
+- Initially updated `frontend/src/lib/api/client.ts` to attach bearer tokens in browser requests.
 - Added conservative `401` token clearing while leaving `403` to page/component error handling.
 - Preserved Development fallback behavior for routes that still fetch on the server.
 - See [Frontend admin auth integration](frontend-admin-auth-integration.md).
@@ -361,16 +361,31 @@ Recommended next phases:
 
 - Added frontend route handlers for login, me, and logout.
 - Stored backend JWT in `zibzie_admin_access_token` httpOnly cookie.
-- Kept localStorage token response temporarily for browser-side API compatibility.
+- Initially kept localStorage token response temporarily for browser-side API compatibility.
 - Did not convert server-rendered patient pages yet.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md).
+
+### 87E2d: Server-Side Authenticated API Helper - implemented
+
+- Added server-side helper for cookie-backed backend calls.
+- Migrated `/patients` and `/patients/[id]`.
+- Kept Development fallback as missing-cookie transition behavior.
+- See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).
+
+### 87E2e: Client API Session Proxy Migration - implemented
+
+- Added `/api/health-core/[...path]` proxy.
+- Browser Health Core API calls now use the same-origin proxy.
+- `/api/admin-auth/login` no longer returns backend JWT to browser code.
+- localStorage helper remains only as legacy cleanup.
+- See [Client API session proxy migration](client-api-session-proxy-migration.md).
 
 ### 87E3: Disable Fallback Outside Development/Test
 
 - Verify staging config has fallback disabled.
 - Add JWT-backed security smoke path.
 - Keep header fallback smoke only as local Development tooling.
-- Add server-compatible cookie/session or proxy flow before disabling fallback for server-rendered admin pages.
+- Verify cookie-backed server and browser paths before disabling fallback.
 
 ### 87E4: Admin Session and Security Hardening
 
