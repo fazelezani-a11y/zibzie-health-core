@@ -379,7 +379,8 @@ Phase 87C: JWT bearer authentication - implemented
 
 Phase 87D: Admin login/frontend integration
 
-- admin UI sends authenticated requests
+- strategy documented in [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md)
+- future implementation should make the admin UI send authenticated requests
 - remove reliance on header/default fallback for normal admin use
 - keep local developer override only where explicitly configured
 

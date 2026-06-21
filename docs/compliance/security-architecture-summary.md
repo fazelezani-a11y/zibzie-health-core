@@ -55,6 +55,8 @@ JWT bearer authentication is wired, but the fallback remains available in config
 
 The proposed production claim contract, product context model, and environment fallback policy are documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
+The admin login and frontend token adoption path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md).
+
 ## Data Minimization Notes
 
 Current patient list/detail endpoints preserve existing DTO shapes for frontend compatibility. Future work should minimize directory results so broad list/search does not expose national code, mobile number, email, or address unless the caller has a stronger permission and scope.

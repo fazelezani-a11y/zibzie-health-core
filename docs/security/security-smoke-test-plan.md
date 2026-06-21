@@ -249,6 +249,8 @@ The local security smoke script uses header fallback and is therefore a Developm
 
 See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed claim contract, product context model, and environment fallback policy.
 
+See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the planned admin UI token flow.
+
 JWT bearer authentication is wired as of Phase 87C, but the current local security smoke still uses Development header fallback. Future production-style tests should verify:
 
 - valid JWT/service identity with product claims is allowed only within grants/scopes

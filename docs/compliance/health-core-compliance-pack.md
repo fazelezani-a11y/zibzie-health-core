@@ -208,6 +208,8 @@ The current fallback exists to keep the local admin panel usable while productio
 
 The recommended production JWT/service identity model is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
+The admin login and frontend token transition path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md).
+
 ## 12. Future Regulatory / PGSB Readiness Considerations
 
 Health Core is not integrated with PGSB, any government gateway, or national health exchange.

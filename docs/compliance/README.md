@@ -34,6 +34,7 @@ This index groups the current Health Core security and compliance documentation 
 ## Strategy Notes
 
 - [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md)
+- [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 
@@ -49,7 +50,8 @@ This index groups the current Health Core security and compliance documentation 
 
 The strongest remaining readiness work is:
 
-- replace development fallback with production JWT or service-to-service authentication
+- complete production JWT/service identity adoption and retire development fallback before production
+- implement admin login and frontend JWT integration
 - implement PatientAccessGrant creation/revocation workflows
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies
