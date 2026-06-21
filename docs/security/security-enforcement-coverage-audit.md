@@ -92,7 +92,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 ## 7. Known intentional gaps
 
-- Real production JWT or service-to-service authentication is not implemented. The current development/header fallback remains temporary and not production-safe.
+- JWT bearer authentication is wired, but real production issuer/service identity integration is not complete. The current development/header fallback remains temporary and not production-safe.
 - PatientAccessGrant creation, revocation, and assignment workflows are not implemented.
 - Patient profile create/update/deactivate endpoints are protected as of Phase 84H3. Directory DTO minimization and grant-scoped filtering remain future work.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
@@ -104,7 +104,7 @@ No AuditLog read/admin endpoints are currently implemented. No access grant crea
 
 ## 8. Risk-ranked remaining work
 
-1. Replace development/header fallback with real JWT or service-to-service authentication before production use. See [Production auth and JWT strategy](production-auth-jwt-strategy.md).
+1. Complete production JWT/service identity configuration and replace development/header fallback before production use. See [Production auth and JWT strategy](production-auth-jwt-strategy.md).
 2. Implement PatientAccessGrant creation, revocation, assignment, and emergency-access workflows with audit logging.
 3. Add grant creation/revocation workflows and apply grant-scoped directory filtering.
 4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.

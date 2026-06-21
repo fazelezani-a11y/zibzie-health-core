@@ -1,18 +1,24 @@
 using System.Security.Claims;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Zibzie.HealthCore.Application.Security;
-using Zibzie.HealthCore.Domain.Security;
 
 namespace Zibzie.HealthCore.Api.Security;
 
 public class HttpHealthCoreRequestContextProvider : IHealthCoreRequestContextProvider
 {
-    private const string DefaultDevelopmentServiceAccountId = "dev-admin";
-
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly HealthCoreAuthOptions _authOptions;
+    private readonly IHostEnvironment _hostEnvironment;
 
-    public HttpHealthCoreRequestContextProvider(IHttpContextAccessor httpContextAccessor)
+    public HttpHealthCoreRequestContextProvider(
+        IHttpContextAccessor httpContextAccessor,
+        IOptions<HealthCoreAuthOptions> authOptions,
+        IHostEnvironment hostEnvironment)
     {
         _httpContextAccessor = httpContextAccessor;
+        _authOptions = authOptions.Value;
+        _hostEnvironment = hostEnvironment;
     }
 
     public HealthCoreRequestContext GetCurrent()
@@ -21,21 +27,30 @@ public class HttpHealthCoreRequestContextProvider : IHealthCoreRequestContextPro
 
         if (httpContext is null)
         {
-            return CreateDefaultFallbackContext();
+            return IsDefaultDevFallbackAllowed()
+                ? CreateDefaultFallbackContext()
+                : new HealthCoreRequestContext();
         }
 
         var user = httpContext.User;
         var isAuthenticated = user.Identity?.IsAuthenticated == true;
 
-        var userId = TryReadUserId(user);
+        var userId = isAuthenticated ? TryReadUserId(user) : null;
 
-        var productCodeFromClaims = FirstClaimValue(user, "product_code", "product");
-        var productRoleFromClaims = FirstClaimValue(user, "product_role", "role", ClaimTypes.Role);
-        var serviceAccountIdFromClaims = FirstClaimValue(user, "service_account_id", "client_id");
+        var productCodeFromClaims = isAuthenticated ? FirstClaimValue(user, "product_code", "product") : null;
+        var productRoleFromClaims = isAuthenticated ? FirstClaimValue(user, "product_role", "role", ClaimTypes.Role) : null;
+        var serviceAccountIdFromClaims = isAuthenticated ? FirstClaimValue(user, "service_account_id", "client_id") : null;
 
-        var productCodeFromHeaders = FirstHeaderValue(httpContext, "X-HealthCore-Product");
-        var productRoleFromHeaders = FirstHeaderValue(httpContext, "X-HealthCore-Product-Role");
-        var serviceAccountIdFromHeaders = FirstHeaderValue(httpContext, "X-HealthCore-Service-Account");
+        var headerFallbackAllowed = IsHeaderFallbackAllowed();
+        var productCodeFromHeaders = headerFallbackAllowed
+            ? FirstHeaderValue(httpContext, "X-HealthCore-Product")
+            : null;
+        var productRoleFromHeaders = headerFallbackAllowed
+            ? FirstHeaderValue(httpContext, "X-HealthCore-Product-Role")
+            : null;
+        var serviceAccountIdFromHeaders = headerFallbackAllowed
+            ? FirstHeaderValue(httpContext, "X-HealthCore-Service-Account")
+            : null;
 
         var usedHeaderFallback =
             (string.IsNullOrWhiteSpace(productCodeFromClaims) && !string.IsNullOrWhiteSpace(productCodeFromHeaders)) ||
@@ -48,22 +63,25 @@ public class HttpHealthCoreRequestContextProvider : IHealthCoreRequestContextPro
 
         var usedDefaultFallback = false;
 
-        if (string.IsNullOrWhiteSpace(productCode))
+        if (IsDefaultDevFallbackAllowed())
         {
-            productCode = ProductCodes.InternalAdmin;
-            usedDefaultFallback = true;
-        }
+            if (string.IsNullOrWhiteSpace(productCode))
+            {
+                productCode = _authOptions.DefaultDevProductCode;
+                usedDefaultFallback = true;
+            }
 
-        if (string.IsNullOrWhiteSpace(productRole))
-        {
-            productRole = ProductRoles.HealthCoreAdmin;
-            usedDefaultFallback = true;
-        }
+            if (string.IsNullOrWhiteSpace(productRole))
+            {
+                productRole = _authOptions.DefaultDevProductRole;
+                usedDefaultFallback = true;
+            }
 
-        if (!userId.HasValue && string.IsNullOrWhiteSpace(serviceAccountId))
-        {
-            serviceAccountId = DefaultDevelopmentServiceAccountId;
-            usedDefaultFallback = true;
+            if (!userId.HasValue && string.IsNullOrWhiteSpace(serviceAccountId))
+            {
+                serviceAccountId = _authOptions.DefaultDevServiceAccountId;
+                usedDefaultFallback = true;
+            }
         }
 
         return new HealthCoreRequestContext
@@ -96,16 +114,26 @@ public class HttpHealthCoreRequestContextProvider : IHealthCoreRequestContextPro
         };
     }
 
-    private static HealthCoreRequestContext CreateDefaultFallbackContext()
+    private HealthCoreRequestContext CreateDefaultFallbackContext()
     {
         return new HealthCoreRequestContext
         {
-            ServiceAccountId = DefaultDevelopmentServiceAccountId,
-            ProductCode = ProductCodes.InternalAdmin,
-            ProductRole = ProductRoles.HealthCoreAdmin,
+            ServiceAccountId = TrimToNull(_authOptions.DefaultDevServiceAccountId),
+            ProductCode = TrimToNull(_authOptions.DefaultDevProductCode),
+            ProductRole = TrimToNull(_authOptions.DefaultDevProductRole),
             IsAuthenticated = false,
             IsFallbackContext = true
         };
+    }
+
+    private bool IsHeaderFallbackAllowed()
+    {
+        return _authOptions.AllowHeaderFallback && !_hostEnvironment.IsProduction();
+    }
+
+    private bool IsDefaultDevFallbackAllowed()
+    {
+        return _authOptions.AllowDefaultDevFallback && !_hostEnvironment.IsProduction();
     }
 
     private static Guid? TryReadUserId(ClaimsPrincipal user)
