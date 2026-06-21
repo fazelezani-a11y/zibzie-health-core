@@ -149,12 +149,13 @@ This keeps Health Core backend authorization unchanged while giving the frontend
 - No protected page conversion yet.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md).
 
-### 87E2d: Server-Side Authenticated API Helper
+### 87E2d: Server-Side Authenticated API Helper - implemented
 
-- Add a server-only API helper that reads the auth cookie.
-- Attach backend bearer token in server component fetches.
-- Use it in `/patients` and `/patients/[id]`.
-- Keep Development fallback as temporary backup.
+- Added a server-side API helper that reads the auth cookie.
+- Attached backend bearer token in server component fetches.
+- Used it in `/patients` and `/patients/[id]`.
+- Kept Development fallback as temporary backup when the cookie is missing.
+- See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).
 
 ### 87E2e: Client API Migration to Session/Proxy
 

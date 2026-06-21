@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { ApiError, getPatientSummary, type PatientSummary } from "@/lib/api";
+import type { PatientSummary } from "@/lib/api";
+import {
+  getPatientSummaryServer,
+  ServerApiError,
+} from "@/lib/api/server-client";
 import PatientRecordShell from "./PatientRecordShell";
 
 export const dynamic = "force-dynamic";
@@ -40,9 +44,9 @@ export default async function PatientPage({
   let isNotFound = false;
 
   try {
-    summary = await getPatientSummary(id);
+    summary = await getPatientSummaryServer(id);
   } catch (error) {
-    isNotFound = error instanceof ApiError && error.status === 404;
+    isNotFound = error instanceof ServerApiError && error.status === 404;
     errorMessage =
       error instanceof Error
         ? error.message

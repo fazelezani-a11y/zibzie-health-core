@@ -89,4 +89,4 @@ The login page now checks `/api/admin-auth/me` on load so an existing cookie-bac
 
 ## Next Phase
 
-Phase 87E2d should add a server-side authenticated API helper that reads the cookie and attaches `Authorization: Bearer <token>` for server component calls.
+Phase 87E2d added a server-side authenticated API helper that reads the cookie and attaches `Authorization: Bearer <token>` for server component calls. See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getPatients, type PatientListItem } from "@/lib/api";
+import type { PatientListItem } from "@/lib/api";
+import { getPatientsServer } from "@/lib/api/server-client";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export default async function PatientsPage() {
   let errorMessage: string | null = null;
 
   try {
-    patients = await getPatients();
+    patients = await getPatientsServer();
   } catch (error) {
     errorMessage =
       error instanceof Error

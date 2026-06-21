@@ -258,6 +258,7 @@ JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal
 - Next `/api/admin-auth/login` sets the httpOnly admin session cookie
 - Next `/api/admin-auth/me` validates the cookie-backed session
 - Next `/api/admin-auth/logout` clears the session cookie
+- server-rendered `/patients` and `/patients/[id]` can use the cookie-backed JWT when the server-side helper is active
 - valid JWT/service identity with product claims is allowed only within grants/scopes
 - missing JWT is denied
 - invalid signature is denied before endpoint logic
@@ -288,6 +289,7 @@ Recommended stages:
 - Current frontend token storage is temporary `localStorage`; server-rendered pages still need a cookie/session or proxy strategy before fallback can be removed.
 - See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the planned SSR/session test path.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md) for the first cookie-backed route-handler layer.
+- See [Server-side authenticated API helper](server-side-authenticated-api-helper.md) for the migrated SSR fetch path.
 - No grant creation/revocation workflow exists yet.
 - No grant-scoped patient directory filtering exists yet.
 - Patient Summary partial filtering/redaction is deferred.

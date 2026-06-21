@@ -39,6 +39,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Frontend admin auth integration](../security/frontend-admin-auth-integration.md)
 - [Server-side admin auth and session strategy](../security/server-side-admin-auth-session-strategy.md)
 - [Next admin session route handlers](../security/next-admin-session-route-handlers.md)
+- [Server-side authenticated API helper](../security/server-side-authenticated-api-helper.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 
