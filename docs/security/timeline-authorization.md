@@ -70,7 +70,7 @@ For Phase 84F, successful Timeline reads are audited as `View`, following the cu
 
 ## Development Fallback
 
-There is still no real JWT/auth provider.
+JWT bearer authentication and internal admin login are now available, but real production identity/frontend integration is still incomplete.
 
 The Phase 84B1 request-context fallback remains active:
 
@@ -82,8 +82,8 @@ This keeps the development admin panel usable. It is marked as fallback context 
 
 ## Not Included Yet
 
-- No authorization on standalone Patient Profile endpoints.
+- Standalone Patient Profile endpoints were protected in later phases.
 - No frontend changes.
-- No real production authentication/JWT integration.
+- No production identity rollout or frontend JWT integration.
 - No access grant creation workflow.
 - No Timeline-to-AuditLog merge or exposure.

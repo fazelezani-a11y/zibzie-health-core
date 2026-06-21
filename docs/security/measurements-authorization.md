@@ -71,7 +71,7 @@ For Phase 84E3, successful reads are audited as `View`, following the current pr
 
 ## Development Fallback
 
-There is still no real JWT/auth provider.
+JWT bearer authentication and internal admin login are now available, but real production identity/frontend integration is still incomplete.
 
 The Phase 84B1 request-context fallback remains active:
 
@@ -83,7 +83,7 @@ This keeps the development admin panel usable. It is marked as fallback context 
 
 ## Not Included Yet
 
-- No authorization on patient summary/profile or timeline endpoints.
+- This document only describes the Measurements enforcement phase; later phases protected additional endpoint groups.
 - No frontend changes.
-- No real production authentication/JWT integration.
+- No production identity rollout or frontend JWT integration.
 - No access grant creation workflow.

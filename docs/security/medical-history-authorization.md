@@ -61,7 +61,7 @@ Restricted sensitivity decisions are delegated to `HealthCoreAuthorizationServic
 
 ## Development Fallback
 
-There is still no real JWT/auth provider.
+JWT bearer authentication and internal admin login are now available, but real production identity/frontend integration is still incomplete.
 
 The Phase 84B1 request-context fallback remains active:
 
@@ -83,7 +83,7 @@ Future medical-history modules such as surgery, hospitalization, vaccination, fa
 
 ## Not Included Yet
 
-- No authorization on care plan, reminders, measurements, patient summary/profile, or timeline endpoints.
+- This document only describes the current Medical History enforcement phase; later phases protected additional endpoint groups.
 - No frontend changes.
-- No real production authentication/JWT integration.
+- No production identity rollout or frontend JWT integration.
 - No access grant creation workflow.

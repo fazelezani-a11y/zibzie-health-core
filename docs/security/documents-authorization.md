@@ -59,7 +59,7 @@ Audit records include:
 
 ## Development Fallback
 
-There is still no real JWT/auth provider.
+JWT bearer authentication and internal admin login are now available, but real production identity/frontend integration is still incomplete.
 
 The Phase 84B1 request-context fallback remains active:
 
@@ -71,8 +71,8 @@ This fallback lets the current development admin panel continue to work. It is m
 
 ## Not Included Yet
 
-- No authorization on non-document endpoints.
+- This document only describes the Documents enforcement phase; later phases protected additional endpoint groups.
 - No frontend changes.
 - No file download/share/export endpoints exist yet.
 - No access grant creation workflow.
-- No real production authentication/JWT integration.
+- No production identity rollout or frontend JWT integration.

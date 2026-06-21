@@ -65,7 +65,7 @@ For Phase 84E5, successful reads are audited following the current protected end
 
 ## Development Fallback
 
-There is still no real JWT/auth provider.
+JWT bearer authentication and internal admin login are now available, but real production identity/frontend integration is still incomplete.
 
 The Phase 84B1 request-context fallback remains active:
 

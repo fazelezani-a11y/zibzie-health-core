@@ -67,7 +67,7 @@ It requires the role profile to include `EmergencyAccess` and an active grant wi
 - No frontend behavior changes.
 - No emergency break-glass workflow.
 - No policy-based ASP.NET Core authorization integration.
-- No production JWT/service identity integration.
+- Production JWT/service identity rollout is not complete.
 
 ## Future Integration
 
