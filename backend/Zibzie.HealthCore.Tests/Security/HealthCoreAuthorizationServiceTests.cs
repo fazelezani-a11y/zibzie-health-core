@@ -95,6 +95,62 @@ public class HealthCoreAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task HasPermissionAsync_ForServiceAccountWithActiveGrant_Allows()
+    {
+        await using var dbContext = CreateDbContext();
+        var patient = await SeedPatientAsync(dbContext);
+        const string serviceAccountId = "digicare-careteam-service";
+        var grant = await SeedGrantAsync(
+            dbContext,
+            patient.Id,
+            null,
+            ProductCodes.DigiCare,
+            ProductRoles.DigiCareCaseManager,
+            AccessScopes.AssignedPatientsOnly,
+            AuthorizationReasons.CareTeamOperation,
+            serviceAccountId: serviceAccountId);
+        var service = new HealthCoreAuthorizationService(dbContext);
+
+        var decision = await service.HasPermissionAsync(
+            new HealthCoreAuthorizationContext
+            {
+                PatientId = patient.Id,
+                ServiceAccountId = serviceAccountId,
+                ProductCode = ProductCodes.DigiCare,
+                ProductRole = ProductRoles.DigiCareCaseManager
+            },
+            HealthPermissions.ViewPatientSummary,
+            CancellationToken.None);
+
+        Assert.True(decision.IsAllowed);
+        Assert.Equal(HealthPermissions.ViewPatientSummary, decision.MatchedPermission);
+        Assert.Equal(AccessScopes.AssignedPatientsOnly, decision.MatchedScope);
+        Assert.Equal(grant.Id, decision.MatchedGrantId);
+    }
+
+    [Fact]
+    public async Task HasPermissionAsync_ForServiceAccountWithoutGrant_Denies()
+    {
+        await using var dbContext = CreateDbContext();
+        var patient = await SeedPatientAsync(dbContext);
+        var service = new HealthCoreAuthorizationService(dbContext);
+
+        var decision = await service.HasPermissionAsync(
+            new HealthCoreAuthorizationContext
+            {
+                PatientId = patient.Id,
+                ServiceAccountId = "digicare-careteam-service",
+                ProductCode = ProductCodes.DigiCare,
+                ProductRole = ProductRoles.DigiCareCaseManager
+            },
+            HealthPermissions.ViewPatientSummary,
+            CancellationToken.None);
+
+        Assert.False(decision.IsAllowed);
+        Assert.Equal("No active patient access grant was found.", decision.DenialReason);
+    }
+
+    [Fact]
     public async Task HasPermissionAsync_WithExpiredGrant_Denies()
     {
         await using var dbContext = CreateDbContext();
@@ -257,14 +313,15 @@ public class HealthCoreAuthorizationServiceTests
     private static async Task<PatientAccessGrant> SeedGrantAsync(
         AppDbContext dbContext,
         Guid patientId,
-        Guid userId,
+        Guid? userId,
         string productCode,
         string productRole,
         string accessScope,
         string authorizationReason,
         DateTimeOffset? validFrom = null,
         DateTimeOffset? validUntil = null,
-        DateTimeOffset? revokedAt = null)
+        DateTimeOffset? revokedAt = null,
+        string? serviceAccountId = null)
     {
         var now = DateTimeOffset.UtcNow;
         var grant = new PatientAccessGrant
@@ -272,6 +329,7 @@ public class HealthCoreAuthorizationServiceTests
             Id = Guid.NewGuid(),
             PatientId = patientId,
             UserId = userId,
+            ServiceAccountId = serviceAccountId,
             ProductCode = productCode,
             ProductRole = productRole,
             AccessScope = accessScope,

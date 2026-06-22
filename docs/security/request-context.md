@@ -53,6 +53,21 @@ The HTTP provider resolves context in this order:
 
 `X-Correlation-ID` is used when present. Otherwise the ASP.NET Core trace identifier is used.
 
+## Service-to-Service Context
+
+Service-to-service callers should use signed JWT claims, not fallback headers.
+
+For pure service calls:
+
+- `service_account_id` or `client_id` identifies the product service/client.
+- `product_code` identifies the calling product, such as `DigiCare`.
+- `product_role` identifies the product role/profile to evaluate.
+- `user_id` should be absent unless a real human user is also represented.
+
+For user-initiated product-backend calls, future tokens may include both a human `user_id` and a `service_account_id`. AuditLog should preserve both when available.
+
+See [Service-to-service auth strategy](service-to-service-auth-strategy.md).
+
 ## Fallback Configuration
 
 Phase 87B added `HealthCoreAuth` configuration.
@@ -114,6 +129,8 @@ See [Admin login and frontend JWT integration strategy](admin-login-frontend-int
 See [Admin auth backend foundation](admin-auth-backend-foundation.md) for the internal admin login endpoint and Health Core-issued admin JWT foundation added in Phase 87E1.
 
 See [Frontend admin auth integration](frontend-admin-auth-integration.md), [Next admin session route handlers](next-admin-session-route-handlers.md), [Server-side authenticated API helper](server-side-authenticated-api-helper.md), and [Client API session proxy migration](client-api-session-proxy-migration.md) for the current admin frontend transition path.
+
+See [Service-to-service auth strategy](service-to-service-auth-strategy.md) for product backend/service token guidance.
 
 ## Future Consumers
 

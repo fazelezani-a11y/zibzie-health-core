@@ -14,6 +14,8 @@ Role + Permission + Product Context + Scope + PatientAccessGrant + Sensitivity +
 - Sensitivity: the data sensitivity level, currently normal/sensitive with restricted planned.
 - AuditLog: security and compliance evidence for allowed and denied actions.
 
+Identity may be a human `UserId`, a product `ServiceAccountId`, or both for future user-initiated product-backend calls.
+
 ## Request Context Flow
 
 The intended request flow is:
@@ -56,6 +58,8 @@ JWT bearer authentication is wired, and Phase 87E1 adds a minimal internal admin
 The proposed production claim contract, product context model, and environment fallback policy are documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
 The admin login and frontend token adoption path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md), and the backend admin-auth foundation is documented in [Admin auth backend foundation](../security/admin-auth-backend-foundation.md).
+
+Service-to-service auth is documented in [Service-to-service auth strategy](../security/service-to-service-auth-strategy.md). Product services should not reuse `InternalAdmin` human admin tokens. They should present signed service JWTs with product context and service account identity, then rely on product profiles plus patient grants.
 
 ## Data Minimization Notes
 

@@ -16,7 +16,7 @@ This phase covers:
 - legacy localStorage containment
 - production readiness checklist
 
-It does not implement service-to-service auth, central SSO, refresh tokens, endpoint permission changes, or Development fallback removal.
+It does not implement service token issuing, central SSO, refresh tokens, endpoint permission changes, or Development fallback removal.
 
 ## Current Admin Auth Flow
 
@@ -183,5 +183,5 @@ Before production:
 - session revocation or admin session versioning
 - refresh-token/session renewal decision
 - central SSO decision
-- service-to-service auth
+- service-to-service token issuing and service account lifecycle
 - monitoring and alerting for auth failures

@@ -91,10 +91,13 @@ Core concepts:
 
 Default behavior is deny unless profile, permission, scope, and grant rules allow access. A narrow InternalAdmin exception exists for local/admin operation and must remain production-controlled.
 
+Service-to-service access uses the same model. Product services should authenticate with signed service JWTs that include service account id, product code, and product role. Service tokens must not reuse human `InternalAdmin` admin tokens, and non-internal services should still require patient-scoped grants.
+
 Reference:
 
 - [Permission catalog](../security/permission-catalog.md)
 - [Authorization service](../security/authorization-service.md)
+- [Service-to-service auth strategy](../security/service-to-service-auth-strategy.md)
 
 ## 6. Audit and Logging Model
 
@@ -209,6 +212,8 @@ The current fallback exists to keep the local admin panel usable while productio
 The recommended production JWT/service identity model is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
 The admin login and frontend token transition path is documented in [Admin login and frontend JWT integration strategy](../security/admin-login-frontend-integration-strategy.md). The implemented backend foundation is documented in [Admin auth backend foundation](../security/admin-auth-backend-foundation.md).
+
+The product service-token model is documented in [Service-to-service auth strategy](../security/service-to-service-auth-strategy.md). A full service account lifecycle, service role catalog, and product integration pilot remain future work.
 
 ## 12. Future Regulatory / PGSB Readiness Considerations
 

@@ -32,6 +32,20 @@ A request is allowed only when:
 - grant scope matches the product role profile scope
 - sensitivity rules allow the requested data level
 
+## Service Account Authorization
+
+Service-to-service callers use the same authorization service path as human product users.
+
+For service calls:
+
+- `ServiceAccountId` may satisfy the identity requirement when `UserId` is absent.
+- `ProductCode` and `ProductRole` must still map to a `ProductAccessProfiles` role profile.
+- non-internal product service calls still require an active `PatientAccessGrant`.
+- the grant may match by `ServiceAccountId`.
+- service tokens alone do not grant broad patient access.
+
+This lets product backends and workers use scoped patient grants without reusing human `InternalAdmin` tokens.
+
 ## Internal Admin Exception
 
 The only no-grant shortcut is intentionally narrow:
@@ -77,3 +91,5 @@ fallbacks with production identity, add grant-management workflows, and improve
 sensitivity/redaction behavior.
 
 Production identity planning is documented in [Production auth and JWT strategy](production-auth-jwt-strategy.md).
+
+Service-to-service planning is documented in [Service-to-service auth strategy](service-to-service-auth-strategy.md).

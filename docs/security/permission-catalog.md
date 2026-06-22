@@ -37,6 +37,19 @@ the raw permission keys used by backend policy code.
 - `AuthorizationReasons`: access reason identifiers such as `ActiveCare`,
   `PatientShared`, and `Emergency`.
 
+## Service-to-Service Use
+
+Phase 87F does not add separate service-only permissions.
+
+Service tokens should use the same stable `HealthPermissions` values through
+`ProductAccessProfiles`. A service account must still provide product context
+and a product role/profile, and non-internal service access should be bounded by
+`PatientAccessGrant`.
+
+Future service role constants may be added after product/service boundaries are
+approved, but they should still map to the central permission catalog rather
+than inventing a second permission system.
+
 ## Patient Summary
 
 Phase 84E5 added `ViewPatientSummary` for the patient summary endpoint.
@@ -86,3 +99,6 @@ covered by separate audit/compliance permissions.
 Later phases should continue applying endpoint enforcement incrementally. Future
 patient work should focus on DTO minimization, contact-level redaction, and
 grant-scoped directory filtering.
+
+Service-to-service planning is documented in
+[Service-to-service auth strategy](service-to-service-auth-strategy.md).

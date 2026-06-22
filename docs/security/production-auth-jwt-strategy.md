@@ -417,11 +417,21 @@ Phase 87E4: Admin session/security hardening - implemented
 - documented cookie, logout, CSRF, rate-limit, and production checklist
 - see [Admin session security hardening](admin-session-security-hardening.md)
 
-Phase 87F: Service-to-service auth
+Phase 87F: Service-to-service auth strategy and foundation - implemented
 
-- define service account credential model
-- support product backend and automation callers
-- audit service account usage
+- document service token claims and issuer model
+- keep service tokens separate from human admin tokens
+- verify request context and authorization service account grant paths with tests
+- defer ServiceAccount table, token issuing endpoints, and central SSO
+- see [Service-to-service auth strategy](service-to-service-auth-strategy.md)
+
+Recommended follow-up service auth phases:
+
+- define conservative service role/profile catalog
+- decide service-token audience and issuer rules
+- implement service account lifecycle model only after requirements are clear
+- add grant workflows for product services
+- pilot one product integration with fallback disabled
 
 Phase 87G: Production hardening
 

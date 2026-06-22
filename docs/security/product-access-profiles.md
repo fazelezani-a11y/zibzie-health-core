@@ -2,7 +2,7 @@
 
 Product access profiles define the intended least-privilege defaults for Zibzie products that call Health Core.
 
-This catalog is code-only for now. It does not enforce endpoint authorization, change API behavior, or create database records. Future phases will use these stable role/profile identifiers with `PatientAccessGrant`, an authorization service, and security `AuditLog` records.
+This catalog defines stable role/profile identifiers used by the current authorization service. Endpoint enforcement now uses these profiles together with `PatientAccessGrant` and AuditLog.
 
 ## How to Use These Profiles Later
 
@@ -11,6 +11,18 @@ This catalog is code-only for now. It does not enforce endpoint authorization, c
 - Actual patient access will still require a patient-level grant or equivalent authorization decision.
 - Audit logging should record the product context, role/profile, permission decision, patient/resource, action, and success or failure.
 - UI labels can be Persian later, but raw role, product, permission, scope, and reason keys should remain stable English identifiers.
+
+## Service-to-Service Use
+
+Phase 87F keeps service-to-service auth conservative:
+
+- product services should use signed JWTs with `service_account_id` or `client_id`
+- service tokens should carry product context and a product role/profile
+- non-internal service calls still require patient-scoped grants
+- service-specific role constants are deferred until product service boundaries are approved
+- human `InternalAdmin` roles must not be reused for product services
+
+See [Service-to-service auth strategy](service-to-service-auth-strategy.md).
 
 ## Included Product Contexts
 
@@ -61,7 +73,7 @@ patient lifecycle workflow is specified.
 
 ## Next Phases
 
-- Persist patient-product-user access grants.
-- Implement an authorization service using product context, role profile, permissions, scope, sensitivity, and grants.
-- Add security audit logging separate from patient-facing timeline events.
-- Apply authorization checks to high-risk endpoints first.
+- Define conservative service role/profile catalog after product service boundaries are approved.
+- Add grant creation/revocation workflows.
+- Add grant-scoped patient directory filtering.
+- Add service-token smoke tests after a safe test issuer exists.

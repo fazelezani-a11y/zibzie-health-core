@@ -285,6 +285,8 @@ After the backend is running with fallback disabled, verify the frontend session
 
 See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the proposed claim contract, product context model, and environment fallback policy.
 
+See [Service-to-service auth strategy](service-to-service-auth-strategy.md) for product service-token expectations.
+
 See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the planned admin UI token flow.
 
 JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal admin login/JWT issuance. The current local security smoke can now verify both Development fallback and fallback-off JWT-required behavior. Future production-style tests should verify:
@@ -302,6 +304,8 @@ JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal
 - expired token is denied
 - product role without permission is denied
 - active grant allows scoped access
+- service token with matching `PatientAccessGrant` succeeds
+- service token without matching `PatientAccessGrant` is denied
 - expired/revoked grant denies access
 - emergency access requires explicit emergency grant/reason
 - access denied is always audited
@@ -315,14 +319,15 @@ Recommended stages:
 3. Add API integration tests with a real test server and test authentication handler.
 4. Add product-specific E2E tests for DigiCare, HomeVisit, Second Opinion, Personal Health Record, and Clinic Queue.
 5. Add grant lifecycle tests after grant creation/revocation APIs exist.
-6. Add CI-friendly security smoke that provisions test data and cleans it up safely.
+6. Add service-token smoke after product service roles and a safe test issuer are available.
+7. Add CI-friendly security smoke that provisions test data and cleans it up safely.
 
 ## 13. Known Limitations
 
 - Current security smoke script does not verify AuditLog rows directly.
 - Current script does not test every protected endpoint group.
 - Current script depends on local dev/header fallback.
-- Production JWT/service identity and frontend token flows are not complete yet.
+- Product service-token issuer/lifecycle flows are not complete yet.
 - localStorage is no longer the primary frontend auth path; it remains only as legacy cleanup.
 - See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the planned SSR/session test path.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md) for the first cookie-backed route-handler layer.

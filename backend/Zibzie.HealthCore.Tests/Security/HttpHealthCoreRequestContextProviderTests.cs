@@ -222,6 +222,28 @@ public class HttpHealthCoreRequestContextProviderTests
         Assert.Equal(ProductRoles.SecondOpinionLeadSpecialist, authorizationContext.ProductRole);
     }
 
+    [Fact]
+    public void CreateAuthorizationContext_MapsServiceAccountContext()
+    {
+        var patientId = Guid.NewGuid();
+        var httpContext = CreateHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim("client_id", "homevisit-visit-service"),
+            new Claim("product_code", ProductCodes.HomeVisit),
+            new Claim("product_role", ProductRoles.HomeVisitDoctor),
+        }, "TestAuth"));
+        var provider = CreateProvider(httpContext);
+
+        var authorizationContext = provider.CreateAuthorizationContext(patientId);
+
+        Assert.Null(authorizationContext.UserId);
+        Assert.Equal("homevisit-visit-service", authorizationContext.ServiceAccountId);
+        Assert.Equal(patientId, authorizationContext.PatientId);
+        Assert.Equal(ProductCodes.HomeVisit, authorizationContext.ProductCode);
+        Assert.Equal(ProductRoles.HomeVisitDoctor, authorizationContext.ProductRole);
+    }
+
     private static DefaultHttpContext CreateHttpContext()
     {
         return new DefaultHttpContext
