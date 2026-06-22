@@ -348,7 +348,7 @@ Recommended next phases:
 - Kept existing health-record endpoint permissions unchanged.
 - See [Admin auth backend foundation](admin-auth-backend-foundation.md).
 
-### 87E2: Frontend Admin Token Integration
+### 87E2: Frontend Admin Token Integration - implemented
 
 - Added `/login`.
 - Added a temporary `localStorage` token wrapper.
@@ -361,8 +361,7 @@ Recommended next phases:
 
 - Added frontend route handlers for login, me, and logout.
 - Stored backend JWT in `zibzie_admin_access_token` httpOnly cookie.
-- Initially kept localStorage token response temporarily for browser-side API compatibility.
-- Did not convert server-rendered patient pages yet.
+- Later phases stopped returning the backend JWT to browser code.
 - See [Next admin session route handlers](next-admin-session-route-handlers.md).
 
 ### 87E2d: Server-Side Authenticated API Helper - implemented
@@ -380,20 +379,21 @@ Recommended next phases:
 - localStorage helper remains only as legacy cleanup.
 - See [Client API session proxy migration](client-api-session-proxy-migration.md).
 
-### 87E3: Disable Fallback Outside Development/Test
+### 87E3: Fallback-Off Verification and Transition - implemented
 
-- Verify staging config has fallback disabled.
-- Add JWT-backed security smoke path.
+- Added JWT-backed security smoke path.
+- Documented local fallback-off environment overrides.
 - Keep header fallback smoke only as local Development tooling.
-- Verify cookie-backed server and browser paths before disabling fallback.
+- Documented cookie-backed server and browser verification before disabling fallback.
+- See [Fallback-off verification](fallback-off-verification.md).
 
-### 87E4: Admin Session and Security Hardening
+### 87E4: Admin Session and Security Hardening - implemented
 
-- Tune token lifetime.
-- Add refresh/session strategy if needed.
-- Add lockout/rate limiting.
-- Add auth failure audit/monitoring.
-- Add admin credential lifecycle and reset procedures.
+- Added Production startup validation for unsafe fallback/bootstrap/JWT configuration.
+- Added no-store headers to admin session and Health Core proxy route responses.
+- Documented token lifetime, cookie security, logout, localStorage containment, CSRF, and rate-limit decisions.
+- Left refresh tokens, lockout/rate limiting, and central SSO as future work.
+- See [Admin session security hardening](admin-session-security-hardening.md).
 
 ### 87F: Service-to-Service Auth
 

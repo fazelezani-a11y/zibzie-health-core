@@ -70,3 +70,5 @@ Next phase:
 - Phase 87E3 verifies fallback-off behavior after cookie-backed server and browser calls are in place.
 
 See [Fallback-off verification](fallback-off-verification.md) for the backend and frontend checklist.
+
+See [Admin session security hardening](admin-session-security-hardening.md) for the current session lifetime, cookie, logout, and CSRF checklist.

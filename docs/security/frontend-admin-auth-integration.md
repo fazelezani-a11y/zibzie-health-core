@@ -41,6 +41,8 @@ The central frontend API client now calls same-origin `/api/health-core/...` pat
 
 If a protected request returns `401`, the proxy clears the cookie and the API client clears any legacy localStorage token. `403` responses are surfaced through the existing `ApiError` path so pages/components can show their current error states.
 
+Session and proxied Health Core responses are marked `Cache-Control: no-store` as of Phase 87E4.
+
 ## Current Server-Rendered Page Caveat
 
 Some current routes, especially `/patients` and `/patients/[id]`, fetch initial data from server components. Those pages now use the server-side authenticated API helper, which reads the httpOnly cookie server-side.
@@ -93,6 +95,8 @@ Recommended next steps:
 5. Disable fallback in staging/production after the verification checklist passes.
 
 See [Fallback-off verification](fallback-off-verification.md) for the backend smoke mode and manual frontend checklist.
+
+See [Admin session security hardening](admin-session-security-hardening.md) for the current cookie, logout, CSRF, localStorage, and production checklist decisions.
 
 ## Future Hardening
 
