@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import AdminSessionBar from "@/components/AdminSessionBar";
+import PatientAccessGrantsPanel from "@/components/PatientAccessGrantsPanel";
 import Badge from "@/components/ui/Badge";
 import Notice from "@/components/ui/Notice";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -31,6 +33,7 @@ type SectionId =
   | "measurements"
   | "reminders"
   | "timeline"
+  | "access"
   | "personal";
 
 type BadgeTone =
@@ -105,6 +108,11 @@ const sections: Array<{
     id: "timeline",
     label: "خط زمانی پرونده",
     description: "نمای رویدادهای ثبت‌شده",
+  },
+  {
+    id: "access",
+    label: "امنیت و دسترسی",
+    description: "دسترسی‌های فعال و لغوشده بیمار",
   },
   {
     id: "personal",
@@ -878,6 +886,8 @@ function SectionContent({
       return <PatientReminders patientId={summary.id} />;
     case "timeline":
       return <PatientTimeline patientId={summary.id} showCreateForm={false} />;
+    case "access":
+      return <PatientAccessGrantsPanel patientId={summary.id} />;
     case "personal":
       return <PersonalInfoSection summary={summary} />;
     default:
@@ -905,6 +915,8 @@ export default function PatientRecordShell({
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+      <AdminSessionBar />
+
       <section className="rounded-md border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
