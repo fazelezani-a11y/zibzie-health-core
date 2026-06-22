@@ -19,10 +19,17 @@ type BackendAdminLoginResponse = {
   };
 };
 
+function withNoStore(response: NextResponse) {
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 const invalidLoginResponse = () =>
-  NextResponse.json(
-    { message: "Invalid username or password." },
-    { status: 401 },
+  withNoStore(
+    NextResponse.json(
+      { message: "Invalid username or password." },
+      { status: 401 },
+    ),
   );
 
 export async function POST(request: NextRequest) {
@@ -60,9 +67,11 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch {
-    return NextResponse.json(
-      { message: "Authentication service is unavailable." },
-      { status: 502 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Authentication service is unavailable." },
+        { status: 502 },
+      ),
     );
   }
 
@@ -71,9 +80,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (!backendResponse.ok) {
-    return NextResponse.json(
-      { message: "Authentication service is unavailable." },
-      { status: 502 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Authentication service is unavailable." },
+        { status: 502 },
+      ),
     );
   }
 
@@ -82,16 +93,20 @@ export async function POST(request: NextRequest) {
   try {
     body = (await backendResponse.json()) as BackendAdminLoginResponse;
   } catch {
-    return NextResponse.json(
-      { message: "Authentication service returned an invalid response." },
-      { status: 502 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Authentication service returned an invalid response." },
+        { status: 502 },
+      ),
     );
   }
 
   if (!body.accessToken) {
-    return NextResponse.json(
-      { message: "Authentication service returned an invalid response." },
-      { status: 502 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Authentication service returned an invalid response." },
+        { status: 502 },
+      ),
     );
   }
 
@@ -113,5 +128,5 @@ export async function POST(request: NextRequest) {
     adminSessionCookieOptions(body.expiresAt),
   );
 
-  return response;
+  return withNoStore(response);
 }

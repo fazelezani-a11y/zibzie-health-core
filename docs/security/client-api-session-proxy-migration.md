@@ -35,6 +35,7 @@ The proxy:
 - calls backend without `Authorization` when the cookie is missing, preserving Development fallback during transition
 - does not log or expose token values
 - clears the session cookie when backend returns `401`
+- marks proxied responses as `Cache-Control: no-store`
 
 Backend unavailable is surfaced as `502` with a safe message.
 
@@ -94,10 +95,12 @@ Before fallback removal:
 - decide whether to remove the legacy localStorage helper entirely
 - add smoke tests for cookie-backed browser mutations
 - verify fallback-off behavior locally/staging with the JWT-required smoke and frontend session checklist
-- decide CSRF posture for cookie-authenticated mutations
+- implement the final CSRF posture for cookie-authenticated mutations
 
 Next phase:
 
 - Phase 87E3 verifies fallback-off behavior outside ordinary Development fallback once server and browser calls work through the cookie-backed session path.
 
 See [Fallback-off verification](fallback-off-verification.md) for the transition checklist.
+
+See [Admin session security hardening](admin-session-security-hardening.md) for the current CSRF and session-hardening decisions.

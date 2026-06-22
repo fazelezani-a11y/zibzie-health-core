@@ -150,8 +150,12 @@ Production must keep fallback disabled:
 - no header fallback
 - no default `dev-admin` fallback
 - signed JWT or trusted service identity required
+- bootstrap admin disabled
+- secure JWT authority/signing configuration supplied outside the repository
 
 Development fallback can remain for local convenience until the admin login/session path is stable enough for everyday use.
+
+Phase 87E4 adds Production startup validation for these safety requirements. See [Admin session security hardening](admin-session-security-hardening.md).
 
 ## Remaining Work
 
@@ -160,4 +164,4 @@ Development fallback can remain for local convenience until the admin login/sess
 - Remove or fully retire legacy localStorage token helpers after transition.
 - Add staging configuration that runs fallback-off by default.
 - Add authentication failure audit/monitoring outside controller paths.
-- Decide final CSRF posture for cookie-authenticated mutations.
+- Implement final CSRF protection for cookie-authenticated mutations.

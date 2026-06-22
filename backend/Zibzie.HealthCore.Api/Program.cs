@@ -40,6 +40,14 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<AdminAuthOptions>(builder.Configuration.GetSection("AdminAuth"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+var healthCoreAuthOptions = builder.Configuration.GetSection("HealthCoreAuth").Get<HealthCoreAuthOptions>() ?? new HealthCoreAuthOptions();
+var adminAuthOptions = builder.Configuration.GetSection("AdminAuth").Get<AdminAuthOptions>() ?? new AdminAuthOptions();
+
+HealthCoreSecurityStartupValidation.Validate(
+    builder.Environment,
+    healthCoreAuthOptions,
+    jwtOptions,
+    adminAuthOptions);
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

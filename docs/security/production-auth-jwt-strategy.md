@@ -393,12 +393,29 @@ Phase 87E1: Admin auth backend foundation - implemented
 - bootstrap seed controlled by non-Production config
 - see [Admin auth backend foundation](admin-auth-backend-foundation.md)
 
-Phase 87E2: Frontend admin token integration
+Phase 87E2: Frontend admin token/session integration - implemented
 
-- add frontend login page
-- send `Authorization: Bearer <token>` or equivalent secure cookie strategy
-- add logout and `401`/`403` handling
-- reduce reliance on Development fallback for normal admin use
+- frontend `/login` page
+- Next route handlers for login/me/logout
+- httpOnly cookie-backed admin session
+- server-side authenticated API helper for `/patients` and `/patients/[id]`
+- browser-side `/api/health-core/[...path]` proxy
+- legacy localStorage helper retained only as cleanup
+- see [Frontend admin auth integration](frontend-admin-auth-integration.md)
+
+Phase 87E3: Fallback-off verification and transition - implemented
+
+- backend smoke supports fallback and JWT-required modes
+- documented local fallback-off environment overrides
+- documented frontend session/proxy verification checklist
+- see [Fallback-off verification](fallback-off-verification.md)
+
+Phase 87E4: Admin session/security hardening - implemented
+
+- Production startup guard for unsafe fallback/bootstrap/JWT config
+- no-store headers for session/proxy route responses
+- documented cookie, logout, CSRF, rate-limit, and production checklist
+- see [Admin session security hardening](admin-session-security-hardening.md)
 
 Phase 87F: Service-to-service auth
 

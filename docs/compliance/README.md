@@ -42,6 +42,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Server-side authenticated API helper](../security/server-side-authenticated-api-helper.md)
 - [Client API session proxy migration](../security/client-api-session-proxy-migration.md)
 - [Fallback-off verification](../security/fallback-off-verification.md)
+- [Admin session security hardening](../security/admin-session-security-hardening.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 

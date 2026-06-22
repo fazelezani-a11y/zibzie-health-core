@@ -69,6 +69,8 @@ Run the fallback-off JWT-required smoke after starting the backend with `HealthC
 
 See [Fallback-off verification](fallback-off-verification.md) for the exact environment overrides and frontend session checklist.
 
+See [Admin session security hardening](admin-session-security-hardening.md) for the production safety checklist that should be reviewed after smoke passes.
+
 ## 4. Protected Endpoint Groups
 
 Current protected groups:
@@ -263,6 +265,8 @@ The local security smoke script supports two modes:
 - `Jwt`: expects fallback to be disabled and proves protected requests require a real admin JWT.
 
 Future production tests must use signed JWT or trusted service identity rather than arbitrary headers.
+
+Production startup validation now rejects enabled fallback, enabled bootstrap admin, and missing/unsafe JWT validation configuration.
 
 ## 10.1 Fallback-Off Frontend Session Check
 

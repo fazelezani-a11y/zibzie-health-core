@@ -13,14 +13,21 @@ type ProxyContext = {
 
 const supportedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
+function withNoStore(response: NextResponse) {
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 async function proxyHealthCoreRequest(
   request: NextRequest,
   context: ProxyContext,
 ) {
   if (!supportedMethods.includes(request.method)) {
-    return NextResponse.json(
-      { message: "Method is not supported." },
-      { status: 405 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Method is not supported." },
+        { status: 405 },
+      ),
     );
   }
 
@@ -58,9 +65,11 @@ async function proxyHealthCoreRequest(
       cache: "no-store",
     });
   } catch {
-    return NextResponse.json(
-      { message: "Health Core service is unavailable." },
-      { status: 502 },
+    return withNoStore(
+      NextResponse.json(
+        { message: "Health Core service is unavailable." },
+        { status: 502 },
+      ),
     );
   }
 
@@ -70,6 +79,8 @@ async function proxyHealthCoreRequest(
   if (responseContentType) {
     responseHeaders.set("Content-Type", responseContentType);
   }
+
+  responseHeaders.set("Cache-Control", "no-store");
 
   const responseBody = await backendResponse.arrayBuffer();
   const response = new NextResponse(responseBody, {

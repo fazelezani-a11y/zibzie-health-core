@@ -72,6 +72,13 @@ These claims are compatible with `HttpHealthCoreRequestContextProvider`, which m
 
 The base appsettings file does not contain a production signing secret. Development keeps a local placeholder key. Production signing keys must come from environment configuration or a secret store.
 
+As of Phase 87E4, Production startup validation rejects unsafe admin auth configuration:
+
+- Development fallback enabled in Production
+- bootstrap admin enabled in Production
+- missing JWT authority/signing key in Production
+- symmetric signing key shorter than 32 bytes in Production
+
 ## Auth Endpoints
 
 ### POST `/api/health-core/auth/admin/login`
@@ -147,7 +154,7 @@ Passwords are never logged. Login audit events are security/compliance records a
 
 Development fallback remains available when configured through `HealthCoreAuth`. This preserves local admin-panel behavior during the transition.
 
-The new admin login backend is the first replacement path for fallback-based admin use. Phase 87E2 should teach the frontend to call the login endpoint and send the bearer token.
+The admin login backend is the first replacement path for fallback-based admin use. The frontend now calls this through the Next session route handlers and stores the backend JWT in an httpOnly cookie.
 
 Production must not rely on header/default fallback.
 
@@ -155,7 +162,6 @@ Production must not rely on header/default fallback.
 
 Before production use, Health Core still needs:
 
-- frontend login and token handling
 - lockout/rate limiting
 - password reset or admin provisioning workflow
 - optional MFA for high-privilege roles
@@ -165,3 +171,5 @@ Before production use, Health Core still needs:
 - central auth/SSO decision
 - service-to-service credential model
 - monitoring for login failures and fallback use
+
+See [Admin session security hardening](admin-session-security-hardening.md) for the current cookie/session hardening checklist and remaining production work.

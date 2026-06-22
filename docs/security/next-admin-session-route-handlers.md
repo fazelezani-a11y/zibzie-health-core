@@ -2,7 +2,7 @@
 
 Phase 87E2c adds Next.js route handlers that sit between the admin frontend and the Health Core backend admin-auth endpoints.
 
-These handlers create the first server-readable admin session path by storing the backend JWT in an httpOnly cookie. They do not yet convert `/patients` or `/patients/[id]` server-side fetching to use the cookie.
+These handlers create the first server-readable admin session path by storing the backend JWT in an httpOnly cookie. Later phases connected `/patients`, `/patients/[id]`, and browser-side Health Core calls to this cookie-backed path.
 
 ## Route Handlers Added
 
@@ -61,6 +61,8 @@ Cookie options:
 
 Token values must not be logged or exposed through ordinary UI state.
 
+As of Phase 87E4, session route responses are marked `Cache-Control: no-store`.
+
 ## Backend Endpoints Called
 
 - `POST /api/health-core/auth/admin/login`
@@ -80,15 +82,16 @@ The login page now checks `/api/admin-auth/me` on load so an existing cookie-bac
 
 ## Still Not Done
 
-- `/patients` server-side fetches are not converted yet.
-- `/patients/[id]` server-side fetches are not converted yet.
-- browser-side health-record API calls now use the `/api/health-core/[...path]` proxy.
 - Development fallback is not removed.
 - no refresh token/session renewal exists.
 - no production CSRF strategy has been implemented yet.
+- no visible logout UI exists yet.
+- no token revocation/session store exists yet.
 
 ## Next Phase
 
 Phase 87E2d added a server-side authenticated API helper that reads the cookie and attaches `Authorization: Bearer <token>` for server component calls. See [Server-side authenticated API helper](server-side-authenticated-api-helper.md).
 
 Phase 87E2e added a browser-side `/api/health-core/[...path]` proxy so client components can also use the cookie-backed session path. See [Client API session proxy migration](client-api-session-proxy-migration.md).
+
+Phase 87E4 documents and lightly hardens admin sessions. See [Admin session security hardening](admin-session-security-hardening.md).
