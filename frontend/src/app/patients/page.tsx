@@ -1,6 +1,8 @@
 import Link from "next/link";
+import AdminAccessState from "@/components/AdminAccessState";
+import AdminSessionBar from "@/components/AdminSessionBar";
 import type { PatientListItem } from "@/lib/api";
-import { getPatientsServer } from "@/lib/api/server-client";
+import { getPatientsServer, ServerApiError } from "@/lib/api/server-client";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +38,7 @@ function DetailRow({
 function PatientCard({ patient }: { patient: PatientListItem }) {
   return (
     <Link
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+      className="block rounded-md border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
       href={`/patients/${patient.id}`}
     >
       <article>
@@ -67,11 +69,13 @@ function PatientCard({ patient }: { patient: PatientListItem }) {
 
 export default async function PatientsPage() {
   let patients: PatientListItem[] = [];
+  let errorStatus: number | undefined;
   let errorMessage: string | null = null;
 
   try {
     patients = await getPatientsServer();
   } catch (error) {
+    errorStatus = error instanceof ServerApiError ? error.status : undefined;
     errorMessage =
       error instanceof Error
         ? error.message
@@ -80,6 +84,8 @@ export default async function PatientsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+      <AdminSessionBar />
+
       <section className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-teal-700">Zibzie Health Core</p>
@@ -100,19 +106,17 @@ export default async function PatientsPage() {
       </section>
 
       {errorMessage ? (
-        <section className="rounded-lg border border-rose-200 bg-rose-50 p-5 text-rose-900">
-          <h2 className="text-base font-bold">خطا در دریافت اطلاعات</h2>
-          <p className="mt-2 text-sm leading-7">{errorMessage}</p>
-        </section>
+        <AdminAccessState status={errorStatus} message={errorMessage} />
       ) : null}
 
       {!errorMessage && patients.length === 0 ? (
-        <section className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+        <section className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center">
           <h2 className="text-lg font-bold text-slate-950">
             هنوز بیماری ثبت نشده است
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            پس از ثبت اولین بیمار، اطلاعات پایه پرونده در همین صفحه نمایش داده می‌شود.
+            پس از ثبت اولین بیمار، اطلاعات پایه پرونده در همین صفحه نمایش داده
+            می‌شود.
           </p>
         </section>
       ) : null}

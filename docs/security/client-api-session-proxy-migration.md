@@ -87,11 +87,23 @@ This reduces production exposure because:
 - backend endpoint authorization and audit behavior remain unchanged
 - the BFF proxy controls which backend paths can be called
 
+## Phase 90 Status
+
+The admin panel now includes visible session/logout UX and controlled 401/403/service-unavailable states on the main patient pages.
+
+PatientAccessGrant list/revoke UI uses the same browser proxy path:
+
+- `GET /api/health-core/patients/{patientId}/access-grants`
+- `POST /api/health-core/access-grants/{grantId}/revoke`
+
+Grant creation remains intentionally out of the frontend until product-role guardrails and consent/sharing policy are clearer.
+
+See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
+
 ## What Remains
 
 Before fallback removal:
 
-- add logout UI
 - decide whether to remove the legacy localStorage helper entirely
 - add smoke tests for cookie-backed browser mutations
 - verify fallback-off behavior locally/staging with the JWT-required smoke and frontend session checklist

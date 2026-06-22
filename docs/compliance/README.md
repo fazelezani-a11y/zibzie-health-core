@@ -45,6 +45,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Client API session proxy migration](../security/client-api-session-proxy-migration.md)
 - [Fallback-off verification](../security/fallback-off-verification.md)
 - [Admin session security hardening](../security/admin-session-security-hardening.md)
+- [Admin panel security UX polish](../security/admin-panel-security-ux-polish.md)
 - [Final production readiness checklist](../security/final-production-readiness-checklist.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)

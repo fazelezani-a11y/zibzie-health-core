@@ -11,6 +11,7 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -25,6 +26,11 @@ export default function AdminLoginPage() {
       .catch((error) => {
         if (error instanceof ApiError && error.status === 401) {
           clearAdminAccessToken();
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsCheckingSession(false);
         }
       });
 
@@ -49,9 +55,16 @@ export default function AdminLoginPage() {
 
       router.replace("/patients");
       router.refresh();
-    } catch {
+    } catch (error) {
       clearAdminAccessToken();
-      setErrorMessage("نام کاربری یا رمز عبور درست نیست.");
+
+      if (error instanceof ApiError && error.status === 502) {
+        setErrorMessage(
+          "سرویس احراز هویت در دسترس نیست. چند لحظه بعد دوباره تلاش کنید.",
+        );
+      } else {
+        setErrorMessage("نام کاربری یا رمز عبور درست نیست.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +72,7 @@ export default function AdminLoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
-      <section className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="w-full max-w-sm rounded-md border border-slate-200 bg-white p-6 shadow-sm">
         <div className="space-y-2">
           <p className="text-sm font-semibold text-teal-700">Zibzie Health Core</p>
           <h1 className="text-2xl font-bold text-slate-950">ورود پنل ادمین</h1>
@@ -67,6 +80,12 @@ export default function AdminLoginPage() {
             برای مدیریت پرونده‌های سلامت با حساب داخلی ادمین وارد شوید.
           </p>
         </div>
+
+        {isCheckingSession ? (
+          <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            در حال بررسی نشست فعلی...
+          </div>
+        ) : null}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           {errorMessage ? (
@@ -100,7 +119,7 @@ export default function AdminLoginPage() {
 
           <button
             className="inline-flex h-11 w-full items-center justify-center rounded-md bg-teal-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isCheckingSession}
             type="submit"
           >
             {isSubmitting ? "در حال ورود..." : "ورود"}

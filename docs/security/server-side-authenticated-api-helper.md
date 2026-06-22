@@ -42,6 +42,8 @@ Specifically:
 - `/patients` uses `getPatientsServer()`.
 - `/patients/[id]` uses `getPatientSummaryServer(id)`.
 
+Phase 90 adds controlled Persian login-required, access-denied, and service-unavailable page states around these server-rendered fetches. See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
+
 ## Error Handling
 
 Current behavior:
@@ -62,7 +64,6 @@ Not done in this phase:
 - localStorage helper remains only as legacy cleanup
 - route guard/middleware is not added
 - Development fallback is not removed
-- logout UI is not added
 - session refresh/hardening is not added
 
 Next phase:

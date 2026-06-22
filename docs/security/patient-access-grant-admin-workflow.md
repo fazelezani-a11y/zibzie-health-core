@@ -188,6 +188,18 @@ The grant workflow can create patient-scoped grants for those service account id
 - broad product all-patient access
 - grant-scoped patient directory filtering
 
+## Admin Panel UI
+
+Phase 90 adds a limited frontend surface in the patient record shell:
+
+- list grants for the current patient
+- show grant status, product context, grantee/service account, validity, and revoke metadata
+- revoke active grants with an optional reason
+
+The UI does not create grants. Grant creation remains backend/API-only until product-role guardrails, consent/sharing policy, and emergency-access policy are clearer.
+
+See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
+
 ## Production Readiness
 
 Before real production use:

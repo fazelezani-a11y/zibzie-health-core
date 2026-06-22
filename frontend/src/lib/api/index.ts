@@ -8,3 +8,4 @@ export * from "./care-plan";
 export * from "./reminders";
 export * from "./measurements";
 export * from "./admin-auth";
+export * from "./access-grants";

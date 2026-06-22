@@ -98,11 +98,20 @@ See [Fallback-off verification](fallback-off-verification.md) for the backend sm
 
 See [Admin session security hardening](admin-session-security-hardening.md) for the current cookie, logout, CSRF, localStorage, and production checklist decisions.
 
+## Phase 90 Admin UX Polish
+
+Phase 90 adds visible session/logout UX to the core admin pages and improves controlled Persian 401/403/service-unavailable states.
+
+The login page still uses `/api/admin-auth/login`, but it now distinguishes invalid credentials from backend-auth service unavailability in the user-facing message. New login still does not receive or store the backend JWT in browser JavaScript.
+
+The patient admin pages now include a small session indicator backed by `/api/admin-auth/me`, and logout uses `/api/admin-auth/logout` plus legacy localStorage cleanup.
+
+See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
+
 ## Future Hardening
 
 Future phases should add:
 
-- frontend logout UI
 - token expiry warning
 - refresh/session strategy if needed
 - stronger global `401` handling after fallback retirement

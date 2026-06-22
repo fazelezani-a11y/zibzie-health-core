@@ -34,6 +34,7 @@ Completed:
 - httpOnly admin session cookie
 - server-side authenticated API helper
 - browser-side `/api/health-core/[...path]` proxy
+- visible admin session/logout UX
 - fallback-off verification docs and smoke mode
 - service-to-service strategy and service-account grant tests
 - internal-admin PatientAccessGrant list/create/revoke workflow
@@ -51,6 +52,7 @@ Protected and audited endpoint groups:
 - measurements
 - timeline
 - patient access grant management
+- patient access grant list/revoke UI
 
 ## 3. Fallback-Off Readiness
 
@@ -86,7 +88,6 @@ Current admin flow:
 
 Remaining production work:
 
-- visible logout UI
 - admin password reset/provisioning lifecycle
 - rate limiting and lockout
 - optional MFA for high-privilege roles
@@ -140,6 +141,7 @@ Not implemented:
 - family sharing UI
 - emergency access UI/policy
 - service account lifecycle table
+- frontend grant creation form
 - grant-scoped patient directory filtering
 
 ## 7. AuditLog Readiness
@@ -164,9 +166,12 @@ Remaining production work:
 Current frontend path:
 
 - `/login` creates the httpOnly cookie through Next route handlers
+- session indicator calls `/api/admin-auth/me`
+- logout button clears the cookie through `/api/admin-auth/logout`
 - `/patients` uses server-side authenticated API helper
 - `/patients/[id]` uses server-side authenticated API helper
 - browser Health Core calls use `/api/health-core/[...path]`
+- patient grant list/revoke UI uses the same proxy path
 - localStorage helper remains only for legacy cleanup
 
 Fallback-off frontend validation:

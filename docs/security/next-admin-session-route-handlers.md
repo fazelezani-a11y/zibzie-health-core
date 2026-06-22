@@ -80,12 +80,22 @@ The backend continues to issue and validate JWTs. Health-record endpoints and en
 
 The login page now checks `/api/admin-auth/me` on load so an existing cookie-backed session can redirect to `/patients`.
 
+## Phase 90 UI Usage
+
+Phase 90 adds visible admin session/logout UX that calls these route handlers:
+
+- session indicator: `GET /api/admin-auth/me`
+- logout button: `POST /api/admin-auth/logout`
+
+The login page continues to use `POST /api/admin-auth/login`, checks existing sessions through `/me`, and does not receive the backend JWT in browser JavaScript.
+
+See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
+
 ## Still Not Done
 
 - Development fallback is not removed.
 - no refresh token/session renewal exists.
 - no production CSRF strategy has been implemented yet.
-- no visible logout UI exists yet.
 - no token revocation/session store exists yet.
 
 ## Next Phase
