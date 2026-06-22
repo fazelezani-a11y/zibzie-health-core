@@ -93,9 +93,11 @@ Before fallback removal:
 - add logout UI
 - decide whether to remove the legacy localStorage helper entirely
 - add smoke tests for cookie-backed browser mutations
-- verify fallback-off behavior locally/staging
+- verify fallback-off behavior locally/staging with the JWT-required smoke and frontend session checklist
 - decide CSRF posture for cookie-authenticated mutations
 
 Next phase:
 
-- Phase 87E3 should verify fallback-off behavior outside Development/test once server and browser calls work through the cookie-backed session path.
+- Phase 87E3 verifies fallback-off behavior outside ordinary Development fallback once server and browser calls work through the cookie-backed session path.
+
+See [Fallback-off verification](fallback-off-verification.md) for the transition checklist.

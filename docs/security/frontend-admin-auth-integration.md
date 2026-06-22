@@ -88,19 +88,19 @@ Recommended next steps:
 
 1. Create a seeded/non-Production admin user.
 2. Log in through `/login`.
-3. Verify browser-side create/list calls send the bearer token.
-4. Add a server-compatible session/cookie strategy before disabling fallback for server-rendered admin pages.
-5. Disable fallback in staging/production.
+3. Verify browser-side create/list calls go through `/api/health-core/...`.
+4. Run fallback-off verification to prove the httpOnly cookie session works without Development fallback.
+5. Disable fallback in staging/production after the verification checklist passes.
+
+See [Fallback-off verification](fallback-off-verification.md) for the backend smoke mode and manual frontend checklist.
 
 ## Future Hardening
 
 Future phases should add:
 
-- httpOnly cookie or server-managed session support
-- server-side API helper for `/patients` and `/patients/[id]`
 - frontend logout UI
 - token expiry warning
 - refresh/session strategy if needed
 - stronger global `401` handling after fallback retirement
 - production-safe CSRF/XSS posture for the chosen session model
-- security smoke tests that exercise `/login` and JWT-backed requests
+- automated frontend smoke tests that exercise `/login`, cookie-backed sessions, and JWT-backed requests

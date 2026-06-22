@@ -41,6 +41,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Next admin session route handlers](../security/next-admin-session-route-handlers.md)
 - [Server-side authenticated API helper](../security/server-side-authenticated-api-helper.md)
 - [Client API session proxy migration](../security/client-api-session-proxy-migration.md)
+- [Fallback-off verification](../security/fallback-off-verification.md)
 - [Patient summary authorization strategy](../security/patient-summary-authorization-strategy.md)
 - [Patient profile and directory authorization strategy](../security/patient-profile-directory-authorization-strategy.md)
 
@@ -58,6 +59,7 @@ The strongest remaining readiness work is:
 
 - complete production JWT/service identity adoption and retire development fallback before production
 - implement frontend admin JWT integration and continue hardening admin auth
+- run and automate fallback-off verification for the admin JWT/session/proxy path
 - implement PatientAccessGrant creation/revocation workflows
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies

@@ -28,6 +28,8 @@ If the cookie is missing, the helper calls the backend without `Authorization`.
 
 This is intentional during the transition because backend Development fallback may still allow local admin flows. When fallback is disabled, the backend returns `401`/`403`, and the server page renders its controlled error state.
 
+Fallback-off verification should confirm that `/patients` and `/patients/[id]` load only after login has created the httpOnly cookie session.
+
 ## Pages Migrated
 
 The following server-rendered pages now use the helper:
@@ -65,4 +67,6 @@ Not done in this phase:
 
 Next phase:
 
-- Phase 87E3 should verify fallback-off behavior after cookie-backed server and browser calls are in place.
+- Phase 87E3 verifies fallback-off behavior after cookie-backed server and browser calls are in place.
+
+See [Fallback-off verification](fallback-off-verification.md) for the backend and frontend checklist.

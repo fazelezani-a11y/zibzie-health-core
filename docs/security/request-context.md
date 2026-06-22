@@ -86,6 +86,21 @@ Any request context that uses headers or default values is marked with:
 
 Before production deployment, fallback contexts must remain disabled outside explicitly approved development/test environments.
 
+## Fallback-Off Verification
+
+Phase 87E3 adds a documented way to run the backend locally with fallback disabled while keeping normal Development fallback unchanged.
+
+Use environment overrides for verification:
+
+```powershell
+$env:HealthCoreAuth__AllowHeaderFallback = "false"
+$env:HealthCoreAuth__AllowDefaultDevFallback = "false"
+```
+
+With those overrides, protected endpoints should deny unauthenticated requests and allow requests only when a valid admin JWT or future trusted service token supplies product context.
+
+See [Fallback-off verification](fallback-off-verification.md) for the backend smoke mode and frontend cookie-session checklist.
+
 ## Production Direction
 
 Production should use a real identity provider or service-to-service authentication. Product context and role information should come from signed claims or trusted server-side mapping, not arbitrary client-supplied headers.
@@ -97,6 +112,8 @@ See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the 
 See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the admin login and frontend token handling plan.
 
 See [Admin auth backend foundation](admin-auth-backend-foundation.md) for the internal admin login endpoint and Health Core-issued admin JWT foundation added in Phase 87E1.
+
+See [Frontend admin auth integration](frontend-admin-auth-integration.md), [Next admin session route handlers](next-admin-session-route-handlers.md), [Server-side authenticated API helper](server-side-authenticated-api-helper.md), and [Client API session proxy migration](client-api-session-proxy-migration.md) for the current admin frontend transition path.
 
 ## Future Consumers
 
@@ -111,6 +128,6 @@ This context is used or intended to be used in:
 ## Not Implemented Yet for Production Auth
 
 - No production identity provider integration.
-- No frontend login/token integration.
 - No patient access grant creation UI/API.
 - No authentication failure audit before controller execution.
+- No final fallback removal outside Development/test.

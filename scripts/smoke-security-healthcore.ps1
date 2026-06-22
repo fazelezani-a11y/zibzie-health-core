@@ -1,5 +1,10 @@
 param(
     [string]$BaseUrl = "http://localhost:5230",
+    [ValidateSet("Fallback", "Jwt")]
+    [string]$Mode = "Fallback",
+    [string]$AdminUsername,
+    [string]$AdminPassword,
+    [string]$PatientId,
     [switch]$CreatePatientIfMissing
 )
 
@@ -72,6 +77,15 @@ function New-DeniedHeaders {
         "X-HealthCore-Product-Role" = "UnknownRole"
         "X-HealthCore-Service-Account" = "denied-smoke"
         "X-Correlation-ID" = "$correlationPrefix-denied"
+    }
+}
+
+function New-BearerHeaders {
+    param([string]$AccessToken)
+
+    return @{
+        "Authorization" = "Bearer $AccessToken"
+        "X-Correlation-ID" = "$correlationPrefix-jwt"
     }
 }
 
@@ -157,13 +171,15 @@ function Invoke-Section {
 }
 
 function New-SmokePatient {
+    param([hashtable]$Headers)
+
     $stamp = Get-Date -Format "yyyyMMddHHmmssfff"
     $mobile = "09" + (Get-Random -Minimum 100000000 -Maximum 999999999)
 
     $response = Invoke-HealthCoreApi `
         -Method POST `
         -Path "/api/health-core/patients" `
-        -Headers (New-AllowedHeaders) `
+        -Headers $Headers `
         -ExpectedStatus 201 `
         -Body @{
             firstName = "Security"
@@ -178,18 +194,30 @@ function New-SmokePatient {
     return $response.Body
 }
 
-try {
-    Write-Host "Health Core local security smoke test"
-    Write-Host "BaseUrl: $BaseUrl"
-    Write-Host "Correlation prefix: $correlationPrefix"
+function Get-AdminAccessToken {
+    if ([string]::IsNullOrWhiteSpace($AdminUsername) -or [string]::IsNullOrWhiteSpace($AdminPassword)) {
+        throw "Jwt mode requires -AdminUsername and -AdminPassword."
+    }
 
+    $login = Invoke-HealthCoreApi `
+        -Method POST `
+        -Path "/api/health-core/auth/admin/login" `
+        -ExpectedStatus 200 `
+        -Body @{
+            username = $AdminUsername
+            password = $AdminPassword
+        }
+
+    if ($null -eq $login.Body -or [string]::IsNullOrWhiteSpace("$($login.Body.accessToken)")) {
+        throw "Admin login did not return an accessToken."
+    }
+
+    return "$($login.Body.accessToken)"
+}
+
+function Invoke-FallbackSmoke {
     $allowedHeaders = New-AllowedHeaders
     $deniedHeaders = New-DeniedHeaders
-
-    Invoke-Section "Health endpoint" {
-        $health = Invoke-HealthCoreApi -Method GET -Path "/health"
-        Confirm-True ($health.Body.status -eq "Healthy") "/health reports Healthy"
-    }
 
     Invoke-Section "Patient directory authorization" {
         $allowed = Invoke-HealthCoreApi `
@@ -212,10 +240,12 @@ try {
     Invoke-Section "Patient-scoped authorization" {
         $patient = $null
 
-        if ($script:Patients.Count -gt 0) {
+        if (-not [string]::IsNullOrWhiteSpace($PatientId)) {
+            $patient = [pscustomobject]@{ id = $PatientId }
+        } elseif ($script:Patients.Count -gt 0) {
             $patient = $script:Patients[0]
         } elseif ($CreatePatientIfMissing) {
-            $patient = New-SmokePatient
+            $patient = New-SmokePatient -Headers $allowedHeaders
             Write-Pass "Created local security-smoke patient because none existed"
         }
 
@@ -224,19 +254,19 @@ try {
             return
         }
 
-        $patientId = $patient.id
-        Write-Host "  Using patient id: $patientId"
+        $patientIdForChecks = $patient.id
+        Write-Host "  Using patient id: $patientIdForChecks"
 
         Invoke-HealthCoreApi `
             -Method GET `
-            -Path "/api/health-core/patients/$patientId/summary" `
+            -Path "/api/health-core/patients/$patientIdForChecks/summary" `
             -Headers $allowedHeaders | Out-Null
 
         Write-Pass "InternalAdmin patient summary request is allowed"
 
         Invoke-HealthCoreApi `
             -Method GET `
-            -Path "/api/health-core/patients/$patientId/summary" `
+            -Path "/api/health-core/patients/$patientIdForChecks/summary" `
             -Headers $deniedHeaders `
             -ExpectedStatus 403 | Out-Null
 
@@ -244,18 +274,107 @@ try {
 
         Invoke-HealthCoreApi `
             -Method GET `
-            -Path "/api/health-core/patients/$patientId/documents" `
+            -Path "/api/health-core/patients/$patientIdForChecks/documents" `
             -Headers $allowedHeaders | Out-Null
 
         Write-Pass "InternalAdmin patient documents request is allowed"
 
         Invoke-HealthCoreApi `
             -Method GET `
-            -Path "/api/health-core/patients/$patientId/documents" `
+            -Path "/api/health-core/patients/$patientIdForChecks/documents" `
             -Headers $deniedHeaders `
             -ExpectedStatus 403 | Out-Null
 
         Write-Pass "Unknown product/role patient documents request is denied with 403"
+    }
+}
+
+function Invoke-JwtRequiredSmoke {
+    Invoke-Section "Fallback-off unauthenticated check" {
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients?page=1&pageSize=5" `
+            -ExpectedStatus @(401, 403) | Out-Null
+
+        Write-Pass "Unauthenticated patient directory request is denied when fallback is off"
+    }
+
+    $accessToken = $null
+
+    Invoke-Section "Admin JWT login" {
+        $accessToken = Get-AdminAccessToken
+        $script:JwtHeaders = New-BearerHeaders -AccessToken $accessToken
+        Write-Pass "Admin login returned a bearer token"
+
+        $me = Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/auth/admin/me" `
+            -Headers $script:JwtHeaders
+
+        Confirm-True ($me.Body.productCode -eq "InternalAdmin") "Admin /me reports InternalAdmin product context"
+    }
+
+    Invoke-Section "JWT patient directory authorization" {
+        $allowed = Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients?page=1&pageSize=5" `
+            -Headers $script:JwtHeaders
+
+        $script:Patients = @(Get-Items $allowed.Body)
+        Confirm-True ($allowed.StatusCode -eq 200) "JWT-backed patient directory request is allowed"
+    }
+
+    Invoke-Section "JWT patient-scoped authorization" {
+        $patient = $null
+
+        if (-not [string]::IsNullOrWhiteSpace($PatientId)) {
+            $patient = [pscustomobject]@{ id = $PatientId }
+        } elseif ($script:Patients.Count -gt 0) {
+            $patient = $script:Patients[0]
+        } elseif ($CreatePatientIfMissing) {
+            $patient = New-SmokePatient -Headers $script:JwtHeaders
+            Write-Pass "Created local security-smoke patient because none existed"
+        }
+
+        if ($null -eq $patient -or [string]::IsNullOrWhiteSpace("$($patient.id)")) {
+            Write-Skip "No patient exists. Re-run with -CreatePatientIfMissing or provide -PatientId."
+            return
+        }
+
+        $patientIdForChecks = $patient.id
+        Write-Host "  Using patient id: $patientIdForChecks"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients/$patientIdForChecks/summary" `
+            -Headers $script:JwtHeaders | Out-Null
+
+        Write-Pass "JWT-backed patient summary request is allowed"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients/$patientIdForChecks/documents" `
+            -Headers $script:JwtHeaders | Out-Null
+
+        Write-Pass "JWT-backed patient documents request is allowed"
+    }
+}
+
+try {
+    Write-Host "Health Core local security smoke test"
+    Write-Host "BaseUrl: $BaseUrl"
+    Write-Host "Mode: $Mode"
+    Write-Host "Correlation prefix: $correlationPrefix"
+
+    Invoke-Section "Health endpoint" {
+        $health = Invoke-HealthCoreApi -Method GET -Path "/health"
+        Confirm-True ($health.Body.status -eq "Healthy") "/health reports Healthy"
+    }
+
+    if ($Mode -eq "Jwt") {
+        Invoke-JwtRequiredSmoke
+    } else {
+        Invoke-FallbackSmoke
     }
 
     Write-Host ""

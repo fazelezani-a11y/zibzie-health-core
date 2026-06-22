@@ -20,6 +20,8 @@ This plan does not replace unit/controller tests. It gives developers a repeatab
 - The PostgreSQL database is running through Docker Compose or an equivalent local setup.
 - The request-context development fallback still exists.
 - Protected endpoints currently support a header-based development context.
+- JWT-backed internal admin login exists and can be used for fallback-off verification.
+- The frontend has Next route handlers and a same-origin Health Core proxy for cookie-backed session testing.
 - No public AuditLog read endpoint exists.
 - The existing API smoke script can create a test patient and exercise module workflows.
 
@@ -54,6 +56,18 @@ Create a patient only if none exists:
 ```powershell
 .\scripts\smoke-security-healthcore.ps1 -CreatePatientIfMissing
 ```
+
+Run the fallback-off JWT-required smoke after starting the backend with `HealthCoreAuth` fallback disabled:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1 `
+  -Mode Jwt `
+  -BaseUrl http://localhost:5230 `
+  -AdminUsername "<local-admin-username>" `
+  -AdminPassword "<local-admin-password>"
+```
+
+See [Fallback-off verification](fallback-off-verification.md) for the exact environment overrides and frontend session checklist.
 
 ## 4. Protected Endpoint Groups
 
@@ -243,7 +257,25 @@ The header/default development fallback exists to keep the local admin panel usa
 
 As of Phase 87B, fallback is controlled by `HealthCoreAuth` configuration. Base/default configuration disables fallback, Development enables it, and the request-context provider ignores fallback in Production even if configuration accidentally enables it.
 
-The local security smoke script uses header fallback and is therefore a Development/local test tool. Future production tests must use signed JWT or trusted service identity rather than arbitrary headers.
+The local security smoke script supports two modes:
+
+- `Fallback`: uses Development header fallback and remains the default local convenience check.
+- `Jwt`: expects fallback to be disabled and proves protected requests require a real admin JWT.
+
+Future production tests must use signed JWT or trusted service identity rather than arbitrary headers.
+
+## 10.1 Fallback-Off Frontend Session Check
+
+After the backend is running with fallback disabled, verify the frontend session path:
+
+1. Open `/login`.
+2. Log in with a local admin account.
+3. Confirm `/api/admin-auth/me` returns `InternalAdmin` context.
+4. Confirm `/patients` and `/patients/{id}` load through server-side authenticated fetching.
+5. Confirm browser-side Health Core calls use `/api/health-core/...`.
+6. Call `POST /api/admin-auth/logout`.
+7. Confirm `/api/admin-auth/me` returns `401`.
+8. Confirm protected `/api/health-core/...` calls fail with `401` or `403` after logout when backend fallback is off.
 
 ## 11. Future Production JWT Test Plan
 
@@ -251,7 +283,7 @@ See [Production auth and JWT strategy](production-auth-jwt-strategy.md) for the 
 
 See [Admin login and frontend JWT integration strategy](admin-login-frontend-integration-strategy.md) for the planned admin UI token flow.
 
-JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal admin login/JWT issuance. The current local security smoke still uses Development header fallback. Future production-style tests should verify:
+JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal admin login/JWT issuance. The current local security smoke can now verify both Development fallback and fallback-off JWT-required behavior. Future production-style tests should verify:
 
 - admin login returns a JWT with `InternalAdmin` product context
 - frontend `/login` creates an httpOnly cookie-backed session
@@ -261,7 +293,7 @@ JWT bearer authentication is wired as of Phase 87C, and Phase 87E1 adds internal
 - server-rendered `/patients` and `/patients/[id]` can use the cookie-backed JWT when the server-side helper is active
 - browser-side Health Core API calls can use `/api/health-core/[...path]` with the cookie-backed JWT
 - valid JWT/service identity with product claims is allowed only within grants/scopes
-- missing JWT is denied
+- missing JWT is denied when fallback is off
 - invalid signature is denied before endpoint logic
 - expired token is denied
 - product role without permission is denied

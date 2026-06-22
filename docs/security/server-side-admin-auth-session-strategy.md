@@ -165,11 +165,13 @@ This keeps Health Core backend authorization unchanged while giving the frontend
 - Centralized basic `401`/`403` handling through the proxy and API client.
 - See [Client API session proxy migration](client-api-session-proxy-migration.md).
 
-### 87E3: Disable Fallback Outside Development/Test
+### 87E3: Fallback-Off Verification and Transition
 
-- Disable fallback only after server-side session works.
-- Keep local-only diagnostics if needed.
-- Add JWT/session-backed smoke tests.
+- Add a repeatable way to run backend locally with fallback disabled.
+- Extend the security smoke script with a JWT-required mode.
+- Verify the frontend cookie/session/proxy path before removing fallback from everyday Development flows.
+- Keep Development fallback available until the verified session path is stable.
+- See [Fallback-off verification](fallback-off-verification.md).
 
 ## 10. Cookie and Session Security Requirements
 
