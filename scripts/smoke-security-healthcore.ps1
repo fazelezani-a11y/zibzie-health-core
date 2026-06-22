@@ -357,6 +357,20 @@ function Invoke-JwtRequiredSmoke {
             -Headers $script:JwtHeaders | Out-Null
 
         Write-Pass "JWT-backed patient documents request is allowed"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients/$patientIdForChecks/access-grants" `
+            -ExpectedStatus @(401, 403) | Out-Null
+
+        Write-Pass "Unauthenticated patient access grant list request is denied"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients/$patientIdForChecks/access-grants" `
+            -Headers $script:JwtHeaders | Out-Null
+
+        Write-Pass "JWT-backed InternalAdmin patient access grant list request is allowed"
     }
 }
 

@@ -175,6 +175,8 @@ Before production:
 - CSRF strategy implemented for cookie-backed mutations
 - audit log access remains admin-only if exposed later
 
+See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated pre-deployment checklist across backend, frontend session/proxy, service auth, grants, and audit logging.
+
 ## Remaining Work
 
 - visible frontend logout control

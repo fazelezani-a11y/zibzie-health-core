@@ -198,6 +198,10 @@ Known intentional future work:
 - Add future medical-history modules: surgery, hospitalization, vaccination, family/social history.
 - Expand security smoke and end-to-end authorization tests beyond the current local smoke foundation.
 
+Phase 89 consolidates these items into a deployment-oriented readiness checklist:
+
+- [Final production readiness checklist](../security/final-production-readiness-checklist.md)
+
 ## 11. Future Production Auth/JWT Requirements
 
 JWT bearer authentication is wired, and a minimal internal admin login backend can issue short-lived `InternalAdmin` JWTs. Before production use Health Core still needs a complete identity model:

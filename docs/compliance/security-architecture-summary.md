@@ -74,3 +74,9 @@ Patient Summary is currently all-or-nothing. Future work should support section-
 Patient deletion currently means soft deactivation with `IsActive = false`. This is preferred over hard delete for medical records unless a formal legal, retention, and operational policy defines hard-delete rules.
 
 Future patient lifecycle workflows should keep auditability and retention requirements explicit.
+
+## Final Readiness Checklist
+
+Phase 89 consolidates fallback-off validation, production configuration requirements, and remaining blockers in [Final production readiness checklist](../security/final-production-readiness-checklist.md).
+
+That checklist should be reviewed before any production-like deployment or partner/security review.

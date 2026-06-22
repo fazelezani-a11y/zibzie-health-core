@@ -297,3 +297,18 @@ patient-scoped grants for service account ids, but it does not issue service
 tokens or create a ServiceAccount lifecycle model.
 
 See [PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).
+
+## Phase 89 Readiness
+
+Service-to-service is ready for architecture validation and grant-scoped tests,
+not real production service integration.
+
+Before product services call Health Core in production:
+
+- service token issuer/lifecycle must be implemented or delegated
+- service roles/profiles must be finalized
+- key rotation and secret management must be operational
+- fallback-off smoke must pass
+- PatientAccessGrant workflow must be exercised for the target product
+
+See [Final production readiness checklist](final-production-readiness-checklist.md).

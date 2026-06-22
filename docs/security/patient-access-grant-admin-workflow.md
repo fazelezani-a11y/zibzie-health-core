@@ -187,3 +187,15 @@ The grant workflow can create patient-scoped grants for those service account id
 - emergency access workflow UI
 - broad product all-patient access
 - grant-scoped patient directory filtering
+
+## Production Readiness
+
+Before real production use:
+
+- validate grant lifecycle with fallback disabled
+- verify grant create/revoke audit rows
+- define operational policy for who may create grants
+- add consent/sharing workflows where patients or family members are involved
+- add emergency access policy if break-glass access is needed
+
+See [Final production readiness checklist](final-production-readiness-checklist.md).

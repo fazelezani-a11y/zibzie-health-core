@@ -71,6 +71,8 @@ See [Fallback-off verification](fallback-off-verification.md) for the exact envi
 
 See [Admin session security hardening](admin-session-security-hardening.md) for the production safety checklist that should be reviewed after smoke passes.
 
+See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated Phase 89 pre-deployment checklist.
+
 ## 4. Protected Endpoint Groups
 
 Current protected groups:
@@ -155,6 +157,7 @@ Minimum local smoke:
 - If a patient exists:
   - `GET /api/health-core/patients/{id}/summary` with InternalAdmin headers returns `200`.
   - `GET /api/health-core/patients/{id}/documents` with InternalAdmin headers returns `200`.
+  - `GET /api/health-core/patients/{id}/access-grants` with InternalAdmin JWT returns `200` in JWT mode.
 
 Extended positive path:
 
@@ -170,6 +173,7 @@ Minimum local smoke:
 - If a patient exists:
   - `GET /api/health-core/patients/{id}/summary` with unknown product/role returns `403`.
   - `GET /api/health-core/patients/{id}/documents` with unknown product/role returns `403`.
+  - unauthenticated `GET /api/health-core/patients/{id}/access-grants` returns `401` or `403` in fallback-off JWT mode.
 
 Future expanded denied tests should cover every protected endpoint group:
 
@@ -200,6 +204,7 @@ Future expanded denied tests should cover every protected endpoint group:
 | Reminders | `GET /api/health-core/patients/{id}/reminders` | `ViewReminders` for reads; reminder write permissions for writes | InternalAdmin / HealthCoreAdmin | Unknown product/role | `200` for reads | `403` | Yes, `View` / `Reminder` | Yes, `AccessDenied` / `Reminder` |
 | Measurements | `GET /api/health-core/patients/{id}/measurements` | `ViewMeasurements` for reads; `CreateMeasurement` / `EditMeasurement` for writes | InternalAdmin / HealthCoreAdmin | Unknown product/role | `200` for reads | `403` | Yes, `View` / `Measurement` | Yes, `AccessDenied` / `Measurement` |
 | Timeline | `GET /api/health-core/patients/{id}/timeline` | `ViewTimeline` for reads; timeline write permissions for writes | InternalAdmin / HealthCoreAdmin | Unknown product/role | `200` for reads | `403` | Yes, `View` / `TimelineEvent` | Yes, `AccessDenied` / `TimelineEvent` |
+| Patient access grants | `GET /api/health-core/patients/{id}/access-grants` | `ViewPatientAccessGrants`; `CreatePatientAccessGrant`; `RevokePatientAccessGrant` | InternalAdmin / HealthCoreAdmin | Unknown product/role or unauthenticated fallback-off request | `200` for reads | `401`/`403` | Yes, `View` / `PatientAccessGrant` | Yes, `AccessDenied` / `PatientAccessGrant` |
 
 The current script intentionally exercises only the safest read checks. Write checks should stay in controller/unit tests or future isolated E2E data setup because create/update/deactivate flows need stable cleanup rules.
 

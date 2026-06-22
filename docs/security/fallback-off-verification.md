@@ -104,6 +104,9 @@ The JWT mode checks:
 - `GET /api/health-core/auth/admin/me` works with the bearer token
 - `GET /api/health-core/patients` works with the bearer token
 - optional patient summary/documents reads work with the bearer token
+- optional patient access grant list checks run when a patient is available:
+  - unauthenticated grant list denied
+  - InternalAdmin JWT grant list allowed
 
 ## Frontend Session Checklist
 
@@ -156,6 +159,8 @@ Production must keep fallback disabled:
 Development fallback can remain for local convenience until the admin login/session path is stable enough for everyday use.
 
 Phase 87E4 adds Production startup validation for these safety requirements. See [Admin session security hardening](admin-session-security-hardening.md).
+
+See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated Phase 89 readiness checklist.
 
 ## Remaining Work
 

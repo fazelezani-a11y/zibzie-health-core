@@ -125,3 +125,5 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 All current implemented patient-record endpoint groups are now protected at the endpoint layer. The next security phase should focus on production identity and grant workflow hardening, or on patient-directory DTO minimization and grant-scoped filtering if endpoint refinement remains the near-term priority.
 
 In parallel, production readiness should prioritize real identity integration, grant-scoped directory filtering, and operational consent/sharing workflows, because the current development fallback is intentionally temporary.
+
+See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated fallback-off and production-blocker checklist.
