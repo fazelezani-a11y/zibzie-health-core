@@ -69,6 +69,9 @@ public static class HealthPermissions
     public const string ManageConsent = "ManageConsent";
     public const string GrantPatientAccess = "GrantPatientAccess";
     public const string RevokePatientAccess = "RevokePatientAccess";
+    public const string ViewPatientAccessGrants = "ViewPatientAccessGrants";
+    public const string CreatePatientAccessGrant = "CreatePatientAccessGrant";
+    public const string RevokePatientAccessGrant = "RevokePatientAccessGrant";
 
     // Record Sharing / Export
     public const string ExportPatientRecord = "ExportPatientRecord";
@@ -133,6 +136,9 @@ public static class HealthPermissions
         ManageConsent,
         GrantPatientAccess,
         RevokePatientAccess,
+        ViewPatientAccessGrants,
+        CreatePatientAccessGrant,
+        RevokePatientAccessGrant,
         ExportPatientRecord,
         SharePatientRecord,
         ManageProductAccessProfiles,
@@ -200,6 +206,9 @@ public static class HealthPermissions
         ManageConsent,
         GrantPatientAccess,
         RevokePatientAccess,
+        ViewPatientAccessGrants,
+        CreatePatientAccessGrant,
+        RevokePatientAccessGrant,
         ExportPatientRecord,
         SharePatientRecord,
         ManageProductAccessProfiles,

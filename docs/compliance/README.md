@@ -12,6 +12,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Permission catalog](../security/permission-catalog.md)
 - [Product access profiles](../security/product-access-profiles.md)
 - [Patient access grants](../security/patient-access-grants.md)
+- [PatientAccessGrant admin workflow](../security/patient-access-grant-admin-workflow.md)
 - [Authorization service](../security/authorization-service.md)
 - [Request context](../security/request-context.md)
 - [Audit log](../security/audit-log.md)
@@ -63,7 +64,7 @@ The strongest remaining readiness work is:
 - implement frontend admin JWT integration and continue hardening admin auth
 - run and automate fallback-off verification for the admin JWT/session/proxy path
 - define and pilot service-to-service auth for product backends without reusing admin tokens
-- implement PatientAccessGrant creation/revocation workflows
+- extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies
 - expand security smoke/E2E tests beyond the current local smoke foundation

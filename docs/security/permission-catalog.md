@@ -50,6 +50,18 @@ Future service role constants may be added after product/service boundaries are
 approved, but they should still map to the central permission catalog rather
 than inventing a second permission system.
 
+## Patient Access Grant Management
+
+Phase 88 adds internal-admin grant workflow permissions:
+
+- `ViewPatientAccessGrants`
+- `CreatePatientAccessGrant`
+- `RevokePatientAccessGrant`
+
+These protect listing, creating, and revoking `PatientAccessGrant` records.
+They are intended for InternalAdmin grant administration and are not assigned to
+non-internal product profiles by default.
+
 ## Patient Summary
 
 Phase 84E5 added `ViewPatientSummary` for the patient summary endpoint.
@@ -102,3 +114,6 @@ grant-scoped directory filtering.
 
 Service-to-service planning is documented in
 [Service-to-service auth strategy](service-to-service-auth-strategy.md).
+
+Grant administration is documented in
+[PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).

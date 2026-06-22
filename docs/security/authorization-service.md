@@ -46,6 +46,16 @@ For service calls:
 
 This lets product backends and workers use scoped patient grants without reusing human `InternalAdmin` tokens.
 
+## Grant Management Authorization
+
+Phase 88 adds internal-admin grant management endpoints. Those endpoints still use this authorization service and require:
+
+- `ViewPatientAccessGrants`
+- `CreatePatientAccessGrant`
+- `RevokePatientAccessGrant`
+
+Only broad InternalAdmin profiles receive these permissions by default. Non-internal products cannot grant themselves access unless a future product access profile explicitly and deliberately adds grant-management permissions.
+
 ## Internal Admin Exception
 
 The only no-grant shortcut is intentionally narrow:
@@ -93,3 +103,5 @@ sensitivity/redaction behavior.
 Production identity planning is documented in [Production auth and JWT strategy](production-auth-jwt-strategy.md).
 
 Service-to-service planning is documented in [Service-to-service auth strategy](service-to-service-auth-strategy.md).
+
+Grant administration is documented in [PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).

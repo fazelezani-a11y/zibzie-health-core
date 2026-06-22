@@ -154,11 +154,14 @@ It supports future access models such as:
 - family-authorized access
 - emergency access with explicit audit
 
-Grant creation and revocation workflows are not implemented yet. This is a key future compliance step.
+Phase 88 adds an internal-admin grant workflow for listing, creating, and revoking patient access grants. It is audited and does not let products or services grant themselves broad access.
+
+Public patient consent/sharing workflows and emergency access workflows remain future compliance steps.
 
 Reference:
 
 - [Patient access grants](../security/patient-access-grants.md)
+- [PatientAccessGrant admin workflow](../security/patient-access-grant-admin-workflow.md)
 
 ## 9. Current Enforcement Coverage
 
@@ -187,7 +190,7 @@ Reference:
 Known intentional future work:
 
 - Complete production JWT/service identity configuration and retire dev/header fallback before production use.
-- Implement grant creation/revocation admin workflows.
+- Extend grant workflows with consent/sharing, emergency access, and service-account lifecycle management.
 - Implement Patient Summary partial filtering/redaction.
 - Improve sensitivity and visibility filtering.
 - Optimize audit volume for frequent dashboard reads.

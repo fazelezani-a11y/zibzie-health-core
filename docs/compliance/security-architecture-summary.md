@@ -61,6 +61,8 @@ The admin login and frontend token adoption path is documented in [Admin login a
 
 Service-to-service auth is documented in [Service-to-service auth strategy](../security/service-to-service-auth-strategy.md). Product services should not reuse `InternalAdmin` human admin tokens. They should present signed service JWTs with product context and service account identity, then rely on product profiles plus patient grants.
 
+Internal administrators can manage patient grants through the Phase 88 grant workflow. See [PatientAccessGrant admin workflow](../security/patient-access-grant-admin-workflow.md). This workflow creates/revokes patient-scoped access; it does not issue service tokens or create broad product access.
+
 ## Data Minimization Notes
 
 Current patient list/detail endpoints preserve existing DTO shapes for frontend compatibility. Future work should minimize directory results so broad list/search does not expose national code, mobile number, email, or address unless the caller has a stronger permission and scope.

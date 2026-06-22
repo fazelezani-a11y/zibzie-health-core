@@ -111,6 +111,7 @@ builder.Services.AddScoped<IParaclinicalResultService, ParaclinicalResultService
 builder.Services.AddScoped<IHealthCoreAuthorizationService, HealthCoreAuthorizationService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IHealthCoreRequestContextProvider, HttpHealthCoreRequestContextProvider>();
+builder.Services.AddScoped<IPatientAccessGrantService, PatientAccessGrantService>();
 builder.Services.AddScoped<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();

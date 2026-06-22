@@ -52,6 +52,31 @@ public class HealthCoreAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task HasPermissionAsync_ForNonInternalRoleWithGrantManagementPermission_Denies()
+    {
+        await using var dbContext = CreateDbContext();
+        var patient = await SeedPatientAsync(dbContext);
+        var userId = Guid.NewGuid();
+        await SeedGrantAsync(
+            dbContext,
+            patient.Id,
+            userId,
+            ProductCodes.DigiCare,
+            ProductRoles.DigiCareCareTeamManager,
+            AccessScopes.AssignedPatientsOnly,
+            AuthorizationReasons.CareTeamOperation);
+        var service = new HealthCoreAuthorizationService(dbContext);
+
+        var decision = await service.HasPermissionAsync(
+            Context(patient.Id, ProductCodes.DigiCare, ProductRoles.DigiCareCareTeamManager, userId),
+            HealthPermissions.CreatePatientAccessGrant,
+            CancellationToken.None);
+
+        Assert.False(decision.IsAllowed);
+        Assert.Equal("Product role does not include the requested permission.", decision.DenialReason);
+    }
+
+    [Fact]
     public async Task HasPermissionAsync_ForNonInternalRoleWithoutGrant_Denies()
     {
         await using var dbContext = CreateDbContext();

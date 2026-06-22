@@ -271,8 +271,8 @@ Recommended next phases:
 
 87F5: Grant workflows
 
-- create/revoke/list service account patient grants
-- audit grant lifecycle
+- implemented by Phase 88 for internal admin grant administration
+- future product-specific consent/sharing workflows still need separate design
 
 87F6: Product integration pilots
 
@@ -289,3 +289,11 @@ Recommended next phases:
 - How will user-initiated product-backend calls preserve both human and service identity?
 - What is the minimum grant workflow needed for DigiCare/HomeVisit pilots?
 - Should emergency service access exist, and who can issue it?
+
+## Phase 88 Update
+
+Phase 88 adds an internal-admin PatientAccessGrant management API. It can create
+patient-scoped grants for service account ids, but it does not issue service
+tokens or create a ServiceAccount lifecycle model.
+
+See [PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).

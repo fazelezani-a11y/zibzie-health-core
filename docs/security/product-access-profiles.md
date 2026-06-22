@@ -24,6 +24,14 @@ Phase 87F keeps service-to-service auth conservative:
 
 See [Service-to-service auth strategy](service-to-service-auth-strategy.md).
 
+Phase 88 adds patient access grant management permissions only to broad
+InternalAdmin profiles through `HealthPermissions.All` / the existing
+HealthCoreAdmin broad profile. Non-internal product roles are not broadened with
+`ViewPatientAccessGrants`, `CreatePatientAccessGrant`, or
+`RevokePatientAccessGrant`.
+
+See [PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).
+
 ## Included Product Contexts
 
 - `InternalAdmin`
