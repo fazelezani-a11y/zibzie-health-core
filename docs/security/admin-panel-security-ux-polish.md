@@ -104,3 +104,17 @@ Still required before production:
 - token revocation/session-store decision if needed
 - fallback-off smoke automation for the login/session/proxy flow
 - broader PatientAccessGrant UX policy for safe grant creation
+
+## Phase 90B - PatientAccessGrant Create UI
+
+Phase 90B added a minimal create workflow for PatientAccessGrant inside the patient record security/access tab.
+
+Admins can now:
+- View existing access grants for a patient.
+- Create a new patient access grant for a user or service account.
+- Select product context, product role, access scope, authorization reason, optional expiration, and notes.
+- Revoke active grants from the same panel.
+
+The UI does not bypass backend security rules. Grant creation remains controlled by backend permissions, ProductAccessProfiles, PatientAccessGrant validation, audit logging, and existing authorization enforcement.
+
+The first manual UI check passed, but this phase should still be reviewed again with Codex before considering it final.

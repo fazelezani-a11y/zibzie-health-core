@@ -21,6 +21,18 @@ export type PatientAccessGrant = {
   revokeReason: string | null;
 };
 
+export type CreatePatientAccessGrantRequest = {
+  granteeUserId?: string | null;
+  serviceAccountId?: string | null;
+  productCode: string;
+  productRole: string;
+  scope: string;
+  reason: string;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  notes?: string | null;
+};
+
 export async function listPatientAccessGrants(
   patientId: string,
 ): Promise<PatientAccessGrant[]> {
@@ -28,6 +40,22 @@ export async function listPatientAccessGrants(
     `/api/health-core/patients/${patientId}/access-grants`,
     {
       cache: "no-store",
+    },
+  );
+}
+
+export async function createPatientAccessGrant(
+  patientId: string,
+  request: CreatePatientAccessGrantRequest,
+): Promise<PatientAccessGrant> {
+  return requestJson<PatientAccessGrant>(
+    `/api/health-core/patients/${patientId}/access-grants`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
     },
   );
 }

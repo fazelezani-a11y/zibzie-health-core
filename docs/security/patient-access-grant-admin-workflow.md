@@ -211,3 +211,18 @@ Before real production use:
 - add emergency access policy if break-glass access is needed
 
 See [Final production readiness checklist](final-production-readiness-checklist.md).
+
+## Admin Panel Create Flow
+
+The admin panel now includes a minimal PatientAccessGrant create form in the patient record security/access tab.
+
+The form supports:
+- Service account or user grantee selection.
+- Product code selection.
+- Product role selection based on product context.
+- Access scope selection.
+- Authorization reason selection.
+- Optional expiration date.
+- Optional notes.
+
+The frontend only submits the create request. The backend remains the source of truth for permission checks, grant validity, product-role/scope compatibility, duplicate active grants, audit logging, and conflict handling.

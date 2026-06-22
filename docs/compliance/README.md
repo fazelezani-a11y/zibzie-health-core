@@ -17,6 +17,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Request context](../security/request-context.md)
 - [Audit log](../security/audit-log.md)
 - [Admin auth backend foundation](../security/admin-auth-backend-foundation.md)
+- Phase 90B added a minimal admin UI for creating PatientAccessGrant records from the patient security/access tab. This improves operational access management while preserving backend authorization, validation, and audit controls.
 
 ## Endpoint Authorization
 
@@ -57,6 +58,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Security enforcement summary](security-enforcement-summary.md)
 - [PGSB and e-health readiness notes](pgsb-readiness-notes.md)
 - [Privacy and data handling principles](privacy-data-handling-principles.md)
+- Phase 90B added a minimal admin UI for creating PatientAccessGrant records from the patient security/access tab. This improves operational access management while preserving backend authorization, validation, and audit controls.
 
 ## Operational Next Steps
 
