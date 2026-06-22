@@ -4,7 +4,9 @@
 
 It represents that a user or service account can access a specific patient record in a specific product context, under a product role, with a defined scope and authorization reason.
 
-This is not endpoint enforcement yet. Controllers do not currently check grants, and no API behavior changes in this phase.
+Current protected endpoints use the authorization service, and the authorization service checks grants for non-internal product access.
+
+Phase 88 adds the first internal-admin API workflow for listing, creating, and revoking grants. See [PatientAccessGrant admin workflow](patient-access-grant-admin-workflow.md).
 
 ## What a Grant Represents
 
@@ -56,13 +58,22 @@ The model supports:
 
 ## Audit Expectations
 
-Grant creation, use, denial, expiry, and revocation should later be recorded in a security `AuditLog`.
+Grant lifecycle actions are now audited by the internal admin grant workflow. Grant use and denied access are audited by protected endpoint controllers when authorization decisions are made.
 
 Timeline is not AuditLog. Timeline is patient/clinical-facing history, while AuditLog is security, legal, and compliance evidence.
 
+## Current Admin Workflow
+
+- `GET /api/health-core/patients/{patientId}/access-grants`
+- `GET /api/health-core/access-grants/{grantId}`
+- `POST /api/health-core/patients/{patientId}/access-grants`
+- `POST /api/health-core/access-grants/{grantId}/revoke`
+
+The workflow is internal-admin oriented and does not let products grant themselves access.
+
 ## Next Steps
 
-- Add an authorization service that checks grants and product access profiles.
-- Add a security audit log model and service.
-- Apply authorization checks to high-risk endpoints first.
-- Add admin tooling later for creating, reviewing, and revoking grants.
+- Add public/patient consent workflows only after product requirements are clear.
+- Add service account lifecycle management.
+- Add grant-scoped patient directory filtering.
+- Add emergency access workflow and policy if needed.
