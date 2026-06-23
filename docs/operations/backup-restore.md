@@ -218,6 +218,10 @@ Backup/restore remains a production blocker until automated encrypted backups,
 offsite storage, monitoring, retention approval, document/file storage backup,
 and repeated production-like restore evidence are in place.
 
+Production backup encryption keys and restore credentials must be handled through
+the same secret-management process described in
+[Production environment and secrets](production-environment-and-secrets.md).
+
 ## Uploaded Medical Documents and File Storage
 
 The current backup scripts only back up PostgreSQL.

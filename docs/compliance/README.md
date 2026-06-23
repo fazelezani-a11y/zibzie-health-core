@@ -77,6 +77,8 @@ This index groups the current Health Core security and compliance documentation 
 ## Operations and Data Safety
 
 - [Backup / restore / data safety runbook](../operations/backup-restore.md)
+- [Production environment and secrets](../operations/production-environment-and-secrets.md)
+- [Environment example](../operations/env.example.md)
 
 Phase 93 adds local PostgreSQL backup/restore scripts and a data-safety runbook.
 This documents restore validation and backup handling expectations, but
@@ -89,6 +91,7 @@ The strongest remaining readiness work is:
 
 - treat the current Health Core baseline as internally release-candidate ready with production blockers, as summarized in the release candidate review
 - address P0 production blockers in the order defined by the production blockers prioritization roadmap
+- complete production environment/secrets readiness with real secret-store evidence and JWT key rotation procedure
 - complete production JWT/service identity adoption and retire development fallback before production
 - continue fallback-off rollout and admin auth/session hardening
 - run and automate fallback-off verification for the admin JWT/session/proxy path

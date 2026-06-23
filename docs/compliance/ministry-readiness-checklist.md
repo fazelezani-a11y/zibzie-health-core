@@ -94,7 +94,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | --- | --- | --- |
 | Header/default fallback | Implemented now: fallback ignored in Production and disabled by base config. | Required before production use: deployment config verification and fallback-off smoke. |
 | Bootstrap admin | Implemented now: Production startup validation rejects bootstrap. | Required before production use: staff provisioning path that does not rely on bootstrap credentials. |
-| JWT config | Implemented now: Production startup validation requires issuer/audience/lifetime/signing-key safety. | Requires infrastructure/operator action: secrets supplied by environment/secret store, not repository. |
+| JWT config | Implemented now: Production startup validation requires issuer/audience/lifetime/signing-key safety. Phase 98 documents required production settings and key rotation expectations. | Requires infrastructure/operator action: secrets supplied by environment/secret store, not repository; rotation evidence required. |
 
 ## 10. Admin Authentication and Session Controls
 
@@ -161,7 +161,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Repository secrets | Base config avoids production JWT secret. | Required before production use: secret store, rotation plan, emergency rotation procedure. |
+| Repository secrets | Base config avoids production JWT secret; `.env`, `.env.*`, and `backups/` are ignored. Phase 98 adds a placeholder-only environment example. | Required before production use: secret store, rotation plan, emergency rotation procedure, and evidence that real secrets are not committed. |
 | JWT keys | Validation exists. | Required before Ministry / PGSB / SHAMS connection: issuer/key management approved for integration path. |
 | Service secrets | Not implemented. | Required before service-to-service production: service-account credential lifecycle and rotation. |
 
@@ -198,6 +198,9 @@ See [Health Core release candidate review](../release/health-core-release-candid
 
 Phase 97 prioritizes production and Ministry-readiness blockers in
 [Production blockers prioritization](../release/production-blockers-prioritization.md).
+
+Phase 98 documents production environment and secret handling in
+[Production environment and secrets](../operations/production-environment-and-secrets.md).
 
 Health Core has a strong internal readiness foundation:
 

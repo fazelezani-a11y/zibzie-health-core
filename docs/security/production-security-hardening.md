@@ -98,6 +98,7 @@ Existing safeguards remain:
 
 Still required before real production:
 
+- production environment variables supplied from an approved secret store
 - persistent/distributed login rate limiting and lockout
 - optional MFA for high-privilege admin roles
 - admin password reset and staff onboarding workflow
@@ -110,6 +111,9 @@ Still required before real production:
 - deployment-level HTTPS, CORS, proxy, and cookie-domain hardening
 - WAF/reverse-proxy rate limiting
 - service-token issuer/lifecycle and central identity integration
+
+Production environment and secret handling requirements are detailed in
+[Production environment and secrets](../operations/production-environment-and-secrets.md).
 
 ## Verification
 
@@ -142,6 +146,9 @@ Backup/restore and data-safety expectations are documented in
 local PostgreSQL backup/restore scripts for development and restore drills, but
 production backup scheduling, encryption, monitoring, retention approval, and
 restore evidence remain operational requirements.
+
+Environment and secret handling expectations are documented in
+[Production environment and secrets](../operations/production-environment-and-secrets.md).
 
 For Ministry / PGSB / SHAMS readiness framing, see
 [Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)
