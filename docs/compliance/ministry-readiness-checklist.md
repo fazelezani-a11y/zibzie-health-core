@@ -108,9 +108,11 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Backup policy | Documented as needed, not implemented in app code. | Requires infrastructure/operator action: encrypted backups, schedule, storage location, restore testing, RPO/RTO targets. |
-| Audit backup | Documented as needed. | Requires legal/regulatory review: audit retention duration and access rules. |
-| Restore evidence | Not available. | Required before production use: documented restore test and validation checklist. |
+| Backup policy | Partially addressed: Phase 93 adds a backup/restore/data-safety runbook and local PostgreSQL backup script. | Requires infrastructure/operator action before production: automated encrypted backups, schedule, storage location, RPO/RTO targets, and backup access policy. |
+| Restore process | Partially addressed: Phase 93 adds a cautious local PostgreSQL restore script and restore validation checklist. | Required before production use: restore drill evidence in staging/production-like environment and documented operator procedure. |
+| Audit backup | Partially addressed: AuditLog is included in PostgreSQL backup scope. | Requires legal/regulatory review: audit retention duration, tamper-resistance/integrity expectations, and access rules. |
+| Uploaded documents | Not complete: current scripts cover PostgreSQL only. | Required before production use if binary document storage exists: object/file storage backup, encryption, retention, and restore order between metadata and files. |
+| Restore evidence | Not yet available from a live drill. | Required before production and Ministry readiness: documented restore test with operator, timestamp, backup file, duration, validation checks, and issues found. |
 
 ## 12. Monitoring and Alerting
 

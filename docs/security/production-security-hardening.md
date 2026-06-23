@@ -105,7 +105,7 @@ Still required before real production:
 - formal CSRF token strategy for cookie-authenticated mutations
 - production secret management and signing-key rotation
 - monitoring/alerting for authentication and audit anomalies
-- backup/restore validation
+- production backup automation, encryption, monitoring, and restore validation evidence
 - legal/privacy review
 - deployment-level HTTPS, CORS, proxy, and cookie-domain hardening
 - WAF/reverse-proxy rate limiting
@@ -127,6 +127,12 @@ dotnet test backend\Zibzie.HealthCore.sln -c Release --no-build
 ```
 
 Fallback-off smoke remains documented in [Fallback-off verification](fallback-off-verification.md) and [Security smoke test plan](security-smoke-test-plan.md).
+
+Backup/restore and data-safety expectations are documented in
+[Backup / restore / data safety](../operations/backup-restore.md). Phase 93 adds
+local PostgreSQL backup/restore scripts for development and restore drills, but
+production backup scheduling, encryption, monitoring, retention approval, and
+restore evidence remain operational requirements.
 
 For Ministry / PGSB / SHAMS readiness framing, see
 [Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)

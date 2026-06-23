@@ -63,6 +63,15 @@ This index groups the current Health Core security and compliance documentation 
 - [PGSB / GSB / SHAMS readiness notes](pgsb-shams-readiness-notes.md)
 - [Privacy and data handling principles](privacy-data-handling-principles.md)
 
+## Operations and Data Safety
+
+- [Backup / restore / data safety runbook](../operations/backup-restore.md)
+
+Phase 93 adds local PostgreSQL backup/restore scripts and a data-safety runbook.
+This documents restore validation and backup handling expectations, but
+production backup automation, encryption, monitoring, retention approval, and
+restore evidence still require operational setup.
+
 ## Operational Next Steps
 
 The strongest remaining readiness work is:
@@ -73,6 +82,6 @@ The strongest remaining readiness work is:
 - define and pilot service-to-service auth for product backends without reusing admin tokens
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - add grant-scoped patient directory filtering
-- define retention, backup, restore, and incident response policies
+- implement production backup automation, encryption, monitoring, restore drills, retention policy, and incident response evidence
 - prepare Ministry / PGSB / GSB / SHAMS readiness evidence without claiming certification or live connectivity
 - expand security smoke/E2E tests beyond the current local smoke foundation
