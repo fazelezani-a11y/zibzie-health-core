@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import SharedNotice from "@/components/ui/Notice";
 import {
   createParaclinicalResult,
   getPatientParaclinicalResults,
@@ -815,21 +816,19 @@ export default function PatientParaclinicalResults({
 
       <div className="mt-5 space-y-3">
         {isLoading ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <SharedNotice variant="loading">
             در حال دریافت نتایج پاراکلینیک...
-          </div>
+          </SharedNotice>
         ) : null}
 
         {!isLoading && errorMessage ? (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm leading-7 text-rose-900">
-            {errorMessage}
-          </div>
+          <SharedNotice variant="error">{errorMessage}</SharedNotice>
         ) : null}
 
         {!isLoading && !errorMessage && results.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+          <SharedNotice variant="empty">
             هنوز نتیجه‌ای ثبت نشده است.
-          </div>
+          </SharedNotice>
         ) : null}
 
         {!isLoading && !errorMessage

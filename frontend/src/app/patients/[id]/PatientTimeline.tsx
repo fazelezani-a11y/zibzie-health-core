@@ -560,6 +560,13 @@ export default function PatientTimeline({
         </button>
       </div>
 
+      <div className="mt-4">
+        <Notice variant="info">
+          خط زمانی، تاریخچه بالینی و عملیاتی پرونده بیمار است و جایگزین AuditLog
+          امنیتی نیست.
+        </Notice>
+      </div>
+
       {showCreateForm ? (
         <div className="mt-5">
           <TimelineCreateForm patientId={patientId} onCreated={loadTimeline} />

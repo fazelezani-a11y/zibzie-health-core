@@ -955,7 +955,7 @@ export default function PatientRecordShell({
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-5 lg:self-start">
+        <aside className="lg:sticky lg:top-5 lg:max-h-[calc(100vh-2.5rem)] lg:self-start lg:overflow-y-auto">
           <nav
             aria-label="ناوبری داخلی پرونده بیمار"
             className="flex gap-2 overflow-x-auto rounded-md border border-slate-200 bg-white p-2 lg:flex-col lg:overflow-visible"
