@@ -100,6 +100,7 @@ The JWT mode checks:
 
 - `/health` is reachable
 - unauthenticated `GET /api/health-core/patients` returns `401` or `403`
+- InternalAdmin development headers are denied when fallback is off
 - backend admin login succeeds
 - `GET /api/health-core/auth/admin/me` works with the bearer token
 - `GET /api/health-core/patients` works with the bearer token
@@ -107,6 +108,38 @@ The JWT mode checks:
 - optional patient access grant list checks run when a patient is available:
   - unauthenticated grant list denied
   - InternalAdmin JWT grant list allowed
+- optional patient AuditLog review checks run when a patient is available:
+  - unauthenticated audit review denied
+  - InternalAdmin JWT audit review allowed
+
+The script does not print the admin password or JWT.
+
+## Phase 99 Evidence Status
+
+Phase 99 strengthens the fallback-off smoke script so it can produce local or
+staging evidence that both default fallback and header fallback are disabled.
+
+Current Phase 99 local status:
+
+| Field | Result |
+| --- | --- |
+| Date | 2026-06-23 |
+| Script syntax | PowerShell parser check passed for `scripts/smoke-security-healthcore.ps1` |
+| Live backend probe | `GET http://localhost:5230/health` failed because no local backend was listening |
+| Live JWT smoke | Not run |
+| Reason live smoke was not run | local backend unavailable and no non-secret local admin credentials were supplied |
+| Evidence status | Tooling ready; staging/prod-like execution evidence still required |
+
+Evidence is complete only after the script is run against a backend started with:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:HealthCoreAuth__AllowHeaderFallback = "false"
+$env:HealthCoreAuth__AllowDefaultDevFallback = "false"
+```
+
+and valid local/staging admin credentials supplied at runtime. Do not record the
+password or bearer token in evidence.
 
 ## Frontend Session Checklist
 

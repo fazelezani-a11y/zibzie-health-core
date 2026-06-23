@@ -141,6 +141,17 @@ dotnet test backend\Zibzie.HealthCore.sln -c Release --no-build
 
 Fallback-off smoke remains documented in [Fallback-off verification](fallback-off-verification.md) and [Security smoke test plan](security-smoke-test-plan.md).
 
+Phase 99 updates `scripts/smoke-security-healthcore.ps1` so JWT mode fails if
+unauthenticated default fallback or InternalAdmin development header fallback
+still works while fallback is supposed to be disabled. The same mode verifies
+admin JWT login, `/me`, protected patient directory access, and optional
+patient-scoped summary/documents/access-grant/audit-log checks.
+
+The Phase 99 script parser check passed on 2026-06-23. Live fallback-off smoke
+was not run in that phase because no local backend was listening on
+`http://localhost:5230` and no non-secret local admin credentials were supplied.
+Staging/prod-like execution evidence is still required.
+
 Backup/restore and data-safety expectations are documented in
 [Backup / restore / data safety](../operations/backup-restore.md). Phase 93 adds
 local PostgreSQL backup/restore scripts for development and restore drills, but

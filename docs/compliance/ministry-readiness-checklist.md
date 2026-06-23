@@ -25,7 +25,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | --- | --- | --- |
 | Admin identity | Implemented now: internal admin login, password hashing, JWT issuing, httpOnly frontend session cookie. | Required before production use: staff onboarding/offboarding, password reset, MFA decision for high-privilege users, persistent lockout/rate limiting. |
 | Product/service identity | Implemented now: JWT bearer validation foundation and request context support for `service_account_id` / `client_id`. | Required before Ministry / PGSB / SHAMS connection: approved service-account lifecycle, service-token issuer or trusted identity provider, key rotation, disabled/revoked service behavior. |
-| Development fallback | Implemented now: config-gated fallback; Production startup validation rejects fallback. | Required before production use: fallback-off smoke must pass in staging and production-like deployments. |
+| Development fallback | Implemented now: config-gated fallback; Production startup validation rejects fallback. Phase 99 smoke tooling verifies default fallback and header fallback are denied when disabled, and the script parser check passed. | Required before production use: fallback-off smoke must pass in staging and production-like deployments with evidence. |
 | Patient/family identity | Not implemented. | Required before patient-facing or family-facing production workflows: formal identity proofing and authentication model. |
 
 ## 2. Role / Permission / Scope Model
@@ -201,6 +201,9 @@ Phase 97 prioritizes production and Ministry-readiness blockers in
 
 Phase 98 documents production environment and secret handling in
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
+
+Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling.
+Staging/prod-like execution evidence remains required before production use.
 
 Health Core has a strong internal readiness foundation:
 

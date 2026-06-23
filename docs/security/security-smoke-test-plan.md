@@ -22,7 +22,7 @@ This plan does not replace unit/controller tests. It gives developers a repeatab
 - Protected endpoints currently support a header-based development context.
 - JWT-backed internal admin login exists and can be used for fallback-off verification.
 - The frontend has Next route handlers and a same-origin Health Core proxy for cookie-backed session testing.
-- No public AuditLog read endpoint exists.
+- A strict internal-admin AuditLog review endpoint exists; it is not public and must not be exposed through Timeline or patient-facing APIs.
 - The existing API smoke script can create a test patient and exercise module workflows.
 
 ## 3. Local Prerequisites
@@ -160,6 +160,7 @@ Minimum local smoke:
   - `GET /api/health-core/patients/{id}/summary` with InternalAdmin headers returns `200`.
   - `GET /api/health-core/patients/{id}/documents` with InternalAdmin headers returns `200`.
   - `GET /api/health-core/patients/{id}/access-grants` with InternalAdmin JWT returns `200` in JWT mode.
+  - `GET /api/health-core/audit-log?patientId={id}` with InternalAdmin JWT returns `200` in JWT mode.
 
 Extended positive path:
 
@@ -176,6 +177,7 @@ Minimum local smoke:
   - `GET /api/health-core/patients/{id}/summary` with unknown product/role returns `403`.
   - `GET /api/health-core/patients/{id}/documents` with unknown product/role returns `403`.
   - unauthenticated `GET /api/health-core/patients/{id}/access-grants` returns `401` or `403` in fallback-off JWT mode.
+  - unauthenticated `GET /api/health-core/audit-log?patientId={id}` returns `401` or `403` in fallback-off JWT mode.
 
 Future expanded denied tests should cover every protected endpoint group:
 
@@ -207,12 +209,13 @@ Future expanded denied tests should cover every protected endpoint group:
 | Measurements | `GET /api/health-core/patients/{id}/measurements` | `ViewMeasurements` for reads; `CreateMeasurement` / `EditMeasurement` for writes | InternalAdmin / HealthCoreAdmin | Unknown product/role | `200` for reads | `403` | Yes, `View` / `Measurement` | Yes, `AccessDenied` / `Measurement` |
 | Timeline | `GET /api/health-core/patients/{id}/timeline` | `ViewTimeline` for reads; timeline write permissions for writes | InternalAdmin / HealthCoreAdmin | Unknown product/role | `200` for reads | `403` | Yes, `View` / `TimelineEvent` | Yes, `AccessDenied` / `TimelineEvent` |
 | Patient access grants | `GET /api/health-core/patients/{id}/access-grants` | `ViewPatientAccessGrants`; `CreatePatientAccessGrant`; `RevokePatientAccessGrant` | InternalAdmin / HealthCoreAdmin | Unknown product/role or unauthenticated fallback-off request | `200` for reads | `401`/`403` | Yes, `View` / `PatientAccessGrant` | Yes, `AccessDenied` / `PatientAccessGrant` |
+| Audit log review | `GET /api/health-core/audit-log?patientId={id}` | `ViewAuditLogs` | InternalAdmin / HealthCoreAdmin | Unknown product/role or unauthenticated fallback-off request | `200` | `401`/`403` | Yes, `View` / `AuditLog` | Yes, `AccessDenied` / `AuditLog` |
 
 The current script intentionally exercises only the safest read checks. Write checks should stay in controller/unit tests or future isolated E2E data setup because create/update/deactivate flows need stable cleanup rules.
 
 ## 9. Audit-Log Verification Strategy
 
-AuditLog is not exposed through a public endpoint and must not be exposed casually through Timeline or patient-facing APIs.
+AuditLog is available through a strict internal-admin review endpoint. It must not be exposed through Timeline, patient-facing APIs, or broad product roles.
 
 Verification options:
 
@@ -221,8 +224,8 @@ Verification options:
 2. Local database query:
    - useful for developer verification.
    - do not store secrets in scripts or docs.
-3. Future strict admin-only AuditLog endpoint:
-   - if implemented, must require `ViewAuditLog`.
+3. Strict admin-only AuditLog review endpoint:
+   - requires `ViewAuditLogs`.
    - access to audit logs must itself be audited.
 
 Example local SQL for recent denied access checks:
@@ -325,19 +328,19 @@ Recommended stages:
 2. Add database-level AuditLog verification for local/dev CI where DB access is available.
 3. Add API integration tests with a real test server and test authentication handler.
 4. Add product-specific E2E tests for DigiCare, HomeVisit, Second Opinion, Personal Health Record, and Clinic Queue.
-5. Add grant lifecycle tests after grant creation/revocation APIs exist.
+5. Expand grant lifecycle smoke with isolated, non-destructive test data.
 6. Add service-token smoke after product service roles and a safe test issuer are available.
 7. Add CI-friendly security smoke that provisions test data and cleans it up safely.
 
 ## 13. Known Limitations
 
-- Current security smoke script does not verify AuditLog rows directly.
+- Current security smoke script can verify the admin AuditLog review endpoint in JWT mode when a patient is available, but it does not verify AuditLog rows directly through the database.
 - Current script does not test every protected endpoint group.
-- Current script depends on local dev/header fallback.
+- `Fallback` mode depends on local dev/header fallback; `Jwt` mode is the fallback-off verification path.
 - Product service-token issuer/lifecycle flows are not complete yet.
 - localStorage is no longer the primary frontend auth path; it remains only as legacy cleanup.
-- See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the planned SSR/session test path.
-- See [Next admin session route handlers](next-admin-session-route-handlers.md) for the first cookie-backed route-handler layer.
+- See [Server-side admin auth and session strategy](server-side-admin-auth-session-strategy.md) for the SSR/session verification model.
+- See [Next admin session route handlers](next-admin-session-route-handlers.md) for the cookie-backed route-handler layer.
 - See [Server-side authenticated API helper](server-side-authenticated-api-helper.md) for the migrated SSR fetch path.
 - See [Client API session proxy migration](client-api-session-proxy-migration.md) for the browser proxy path.
 - No grant creation/revocation workflow exists yet.

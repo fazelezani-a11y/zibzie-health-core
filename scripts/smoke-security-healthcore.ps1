@@ -299,6 +299,16 @@ function Invoke-JwtRequiredSmoke {
         Write-Pass "Unauthenticated patient directory request is denied when fallback is off"
     }
 
+    Invoke-Section "Fallback-off header fallback check" {
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/patients?page=1&pageSize=5" `
+            -Headers (New-AllowedHeaders) `
+            -ExpectedStatus @(401, 403) | Out-Null
+
+        Write-Pass "InternalAdmin development header fallback is denied when fallback is off"
+    }
+
     $accessToken = $null
 
     Invoke-Section "Admin JWT login" {
@@ -371,6 +381,20 @@ function Invoke-JwtRequiredSmoke {
             -Headers $script:JwtHeaders | Out-Null
 
         Write-Pass "JWT-backed InternalAdmin patient access grant list request is allowed"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/audit-log?patientId=$patientIdForChecks&page=1&pageSize=5" `
+            -ExpectedStatus @(401, 403) | Out-Null
+
+        Write-Pass "Unauthenticated patient audit log review request is denied"
+
+        Invoke-HealthCoreApi `
+            -Method GET `
+            -Path "/api/health-core/audit-log?patientId=$patientIdForChecks&page=1&pageSize=5" `
+            -Headers $script:JwtHeaders | Out-Null
+
+        Write-Pass "JWT-backed InternalAdmin patient audit log review request is allowed"
     }
 }
 

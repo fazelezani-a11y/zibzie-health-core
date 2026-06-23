@@ -212,6 +212,23 @@ Before production:
 
 See [Fallback-off verification](../security/fallback-off-verification.md).
 
+Phase 99 script support:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1 `
+  -Mode Jwt `
+  -BaseUrl http://localhost:5230 `
+  -AdminUsername "<local-admin-username>" `
+  -AdminPassword "<local-admin-password>"
+```
+
+The script must be run with credentials supplied at runtime. Do not store or
+publish the password or JWT. The script fails if unauthenticated default fallback
+or InternalAdmin development header fallback is still accepted.
+
+Phase 99 syntax-checked this script, but did not produce live smoke evidence
+because no local backend/admin credential set was available during the phase.
+
 ## Deployment Checklist
 
 | Item | Required before production | Evidence |

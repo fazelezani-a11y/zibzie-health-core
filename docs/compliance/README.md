@@ -94,7 +94,7 @@ The strongest remaining readiness work is:
 - complete production environment/secrets readiness with real secret-store evidence and JWT key rotation procedure
 - complete production JWT/service identity adoption and retire development fallback before production
 - continue fallback-off rollout and admin auth/session hardening
-- run and automate fallback-off verification for the admin JWT/session/proxy path
+- run and automate the Phase 99 fallback-off JWT smoke for the admin JWT/session/proxy path
 - define and pilot service-to-service auth for product backends without reusing admin tokens
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - define consumer-safe API contracts before any Family Health Record / Family Health Badge implementation

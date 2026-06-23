@@ -76,9 +76,56 @@ security smoke to create a local test patient:
 .\scripts\smoke-security-healthcore.ps1 -CreatePatientIfMissing
 ```
 
-The security smoke does not directly verify `AuditLog` rows because no public
-AuditLog read endpoint exists. See `docs/security/security-smoke-test-plan.md`
-for database-query verification options.
+Fallback mode does not directly verify `AuditLog` rows. JWT mode can verify the
+protected AuditLog review endpoint when a patient is available. See
+`docs/security/security-smoke-test-plan.md` for deeper database-query
+verification options.
+
+## Fallback-Off JWT Smoke
+
+For production-like local or staging verification, run the backend with
+development auth fallback disabled:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:HealthCoreAuth__AllowHeaderFallback = "false"
+$env:HealthCoreAuth__AllowDefaultDevFallback = "false"
+dotnet run --project .\backend\Zibzie.HealthCore.Api\Zibzie.HealthCore.Api.csproj
+```
+
+Then run JWT-required smoke from another PowerShell session:
+
+```powershell
+.\scripts\smoke-security-healthcore.ps1 `
+  -Mode Jwt `
+  -BaseUrl http://localhost:5230 `
+  -AdminUsername "<local-admin-username>" `
+  -AdminPassword "<local-admin-password>"
+```
+
+Do not commit or document real usernames, passwords, or JWTs.
+
+JWT mode verifies:
+
+- `/health` is healthy.
+- unauthenticated patient directory is denied.
+- InternalAdmin development headers are denied when fallback is off.
+- admin login returns a bearer token without printing it.
+- `/api/health-core/auth/admin/me` works with the bearer token.
+- patient directory works with the bearer token.
+- if a patient exists, summary, documents, access-grant list, and audit-log review work with the bearer token.
+- if a patient exists, unauthenticated access-grant and audit-log review requests are denied.
+
+Use `-PatientId "<existing-patient-id>"` for deterministic patient-scoped checks,
+or `-CreatePatientIfMissing` only in local development when creating a test
+patient is acceptable.
+
+Phase 99 status:
+
+- script parser check passed on 2026-06-23
+- live JWT smoke was not run because no local backend was listening on `http://localhost:5230`
+- no admin username, password, or JWT was recorded
+- staging/prod-like execution evidence is still required before production use
 
 ## Coverage
 

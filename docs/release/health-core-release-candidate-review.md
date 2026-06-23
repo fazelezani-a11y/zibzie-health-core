@@ -224,6 +224,7 @@ Recommended next work after closing the Health Core internal baseline:
 
 Phase 97 prioritizes these blockers in [Production blockers prioritization](production-blockers-prioritization.md).
 Phase 98 documents environment and secret handling in [Production environment and secrets](../operations/production-environment-and-secrets.md).
+Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling; live staging/prod-like execution evidence is still required before production use.
 
 ## Final Verdict
 

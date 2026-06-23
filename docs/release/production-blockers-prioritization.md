@@ -13,6 +13,10 @@ Phase 96 verdict:
 Phase 98 adds the production environment and secrets readiness runbook:
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
 
+Phase 99 strengthens fallback-off smoke evidence tooling and syntax-checks the
+script. The P0 blocker is closed only after the smoke is run successfully in a
+staging or production-like environment and evidence is recorded.
+
 Health Core is internally release-candidate ready for the admin/care-team baseline, but it should not handle real production health data until the P0 blockers below are addressed. Ministry / PGSB / SHAMS readiness requires additional P2 work and external review. Consumer app design can begin in parallel only as contract/product design, not public exposure of current Health Core endpoints.
 
 Recommended next blocker to tackle:
@@ -40,7 +44,7 @@ Why this should be next:
 | Blocker | Risk | Why it matters | Recommended next phase | Implementation type | Dependencies | Blocks consumer app planning | Blocks production | Blocks Ministry readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Secret management and JWT key rotation | Token signing keys or DB credentials could leak, be reused, or become unrotatable. | Production auth cannot be trusted without controlled secrets and rotation. | Phase 98: Production environment and secrets readiness documented; evidence still required | Infra / config / operator / docs | Deployment target decision, secret store choice | No, design can proceed | Yes | Yes |
-| Fallback-off staging/prod-like smoke evidence | Protected endpoints might still rely on dev/header fallback. | Production must prove JWT/session/proxy flow works with fallback disabled. | Phase 99: Fallback-off staging smoke and release gate | Config / scripts / operator / docs | Phase 98 secrets/config baseline | No | Yes | Yes |
+| Fallback-off staging/prod-like smoke evidence | Protected endpoints might still rely on dev/header fallback. | Production must prove JWT/session/proxy flow works with fallback disabled. | Phase 99: smoke script enhanced; staging/prod-like run evidence still required | Config / scripts / operator / docs | Phase 98 secrets/config baseline | No | Yes | Yes |
 | Legal/privacy/retention baseline | Health data handling may lack approved lawful basis, retention, deletion, and disclosure rules. | Compliance posture cannot be claimed without legal/privacy approval. | Phase 100: Legal/privacy/retention baseline package | Legal / compliance / docs | Product policy owner and jurisdiction review | Yes, for real product launch | Yes | Yes |
 | Production backup/offsite/restore policy | Data loss or untested restore could make Health Core unsafe for real health records. | Local drill exists, but production needs automated encrypted backup and restore evidence. | Phase 101: Production backup and restore operations | Infra / operator / docs / scripts | Secret/encryption key strategy, storage location | No | Yes | Yes |
 | Admin/staff lifecycle basics | Orphaned admin accounts, weak onboarding/offboarding, and no reset path create account risk. | Internal admin access is powerful and must be operationally controlled. | Phase 102: Admin staff lifecycle and MFA decision | Backend / frontend / legal / operator / docs | Identity policy decision, email/SMS/IdP direction | No | Yes | Yes |
