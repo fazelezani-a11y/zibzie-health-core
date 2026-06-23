@@ -127,3 +127,7 @@ dotnet test backend\Zibzie.HealthCore.sln -c Release --no-build
 ```
 
 Fallback-off smoke remains documented in [Fallback-off verification](fallback-off-verification.md) and [Security smoke test plan](security-smoke-test-plan.md).
+
+For Ministry / PGSB / SHAMS readiness framing, see
+[Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)
+and [PGSB / GSB / SHAMS readiness notes](../compliance/pgsb-shams-readiness-notes.md).

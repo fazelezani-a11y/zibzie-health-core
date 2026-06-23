@@ -59,6 +59,8 @@ This index groups the current Health Core security and compliance documentation 
 - [Security architecture summary](security-architecture-summary.md)
 - [Security enforcement summary](security-enforcement-summary.md)
 - [PGSB and e-health readiness notes](pgsb-readiness-notes.md)
+- [Ministry / PGSB / SHAMS readiness checklist](ministry-readiness-checklist.md)
+- [PGSB / GSB / SHAMS readiness notes](pgsb-shams-readiness-notes.md)
 - [Privacy and data handling principles](privacy-data-handling-principles.md)
 
 ## Operational Next Steps
@@ -72,4 +74,5 @@ The strongest remaining readiness work is:
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - add grant-scoped patient directory filtering
 - define retention, backup, restore, and incident response policies
+- prepare Ministry / PGSB / GSB / SHAMS readiness evidence without claiming certification or live connectivity
 - expand security smoke/E2E tests beyond the current local smoke foundation

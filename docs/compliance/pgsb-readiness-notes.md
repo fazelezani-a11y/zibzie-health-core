@@ -51,6 +51,11 @@ Before any real external health exchange integration, Health Core should complet
 
 The recommended production authentication path is documented in [Production auth and JWT strategy](../security/production-auth-jwt-strategy.md).
 
+For the newer structured Ministry / PGSB / GSB / SHAMS readiness view, see:
+
+- [Ministry / PGSB / SHAMS readiness checklist](ministry-readiness-checklist.md)
+- [PGSB / GSB / SHAMS readiness notes](pgsb-shams-readiness-notes.md)
+
 ## PGSB Readiness Framing
 
 The current state should be described as:

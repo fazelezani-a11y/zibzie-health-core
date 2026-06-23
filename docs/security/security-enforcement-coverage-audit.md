@@ -127,3 +127,7 @@ All current implemented patient-record endpoint groups are now protected at the 
 In parallel, production readiness should prioritize real identity integration, grant-scoped directory filtering, and operational consent/sharing workflows, because the current development fallback is intentionally temporary.
 
 See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated fallback-off and production-blocker checklist.
+
+For external regulatory-readiness framing, see
+[Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)
+and [PGSB / GSB / SHAMS readiness notes](../compliance/pgsb-shams-readiness-notes.md).
