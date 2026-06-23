@@ -46,6 +46,9 @@ Production safety now includes startup validation:
 - bootstrap admin must be disabled in Production
 - JWT authority or signing key must be configured in Production
 - configured symmetric signing key must be at least 32 bytes
+- JWT issuer, audience, and lifetime validation must be enabled in Production
+- signing-key validation must be enabled when a symmetric key is configured
+- authority metadata must require HTTPS in Production
 
 Base configuration does not contain a production secret. Production JWT signing keys or authority settings must come from environment variables, a secret store, or deployment configuration.
 
@@ -76,6 +79,8 @@ This applies to:
 - `/api/admin-auth/logout`
 - `/api/health-core/[...path]`
 
+Phase 92 also adds `Pragma: no-cache`, `Expires: 0`, `X-Content-Type-Options`, `Referrer-Policy`, and `X-Frame-Options` to the Next admin/session/proxy responses. The Next app sets the basic browser security headers for pages through `next.config.ts`. The backend adds basic security headers and `no-store` for `/api/health-core` responses.
+
 ## Logout and Session Clearing
 
 `POST /api/admin-auth/logout` clears the httpOnly cookie with matching cookie options and returns a simple success response.
@@ -104,18 +109,22 @@ Current behavior:
 - inactive admin users receive the same generic response
 - successful and failed login attempts are audited
 - passwords are never logged
+- repeated failed login attempts are throttled in memory
 
-Full rate limiting and account lockout are not implemented in this phase.
+Phase 92 adds a minimal in-memory admin login throttle:
 
-Decision:
+- default failed attempts: `5`
+- default window: `15` minutes
+- default lockout: `5` minutes
+- throttled attempts return the same generic login failure
+- throttled attempts are audited as failed login attempts
 
-- Do not add ad hoc in-memory rate limiting yet.
-- Add proper rate limiting/lockout before production using a deliberate policy that works in multi-instance deployments.
+This is not a final production lockout system because it is process-local and does not coordinate across multiple backend instances.
 
 Recommended future controls:
 
-- IP/user-based login throttling
-- temporary lockout after repeated failures
+- persistent/shared IP/user-based login throttling
+- persistent/shared temporary lockout after repeated failures
 - alerting for repeated failures
 - optional MFA for `SuperAdmin`
 - audit of lockout and unlock events
@@ -127,18 +136,21 @@ The frontend now sends browser mutations through a cookie-backed proxy. This imp
 Current mitigations:
 
 - `SameSite=Lax` cookie policy
+- Phase 92 same-origin mutation guard for `POST /api/admin-auth/login`
+- Phase 92 same-origin mutation guard for `POST /api/admin-auth/logout`
+- Phase 92 same-origin mutation guard for `POST`, `PUT`, `PATCH`, and `DELETE` through `/api/health-core/[...path]`
 - no cross-origin credentialed frontend flow is introduced
 - backend CORS still does not need to trust browser identity headers for the Next proxy path
 
 Required before public production:
 
-- define CSRF token strategy for state-changing proxy requests
+- consider a formal CSRF token strategy for state-changing proxy requests
 - ensure deployment does not allow cross-site credentialed requests unexpectedly
 - keep `Secure` cookies outside Development
 - confirm CORS policy matches the final deployment model
 - avoid logging request cookies or bearer tokens
 
-Full CSRF protection is intentionally documented, not implemented, in this phase to avoid breaking existing forms.
+The current origin/fetch-site guard is a practical minimum. It is not a replacement for a deliberate CSRF policy if the admin panel becomes publicly exposed or spans multiple trusted domains.
 
 ## Legacy localStorage Status
 
@@ -171,11 +183,13 @@ Before production:
 - frontend login/session smoke passes
 - no ordinary admin workflow depends on localStorage auth
 - logout UI exists and clears session
-- rate limiting/lockout plan implemented or explicitly accepted before launch
-- CSRF strategy implemented for cookie-backed mutations
+- process-local login throttle reviewed and a distributed production throttle implemented or explicitly accepted before launch
+- same-origin mutation guard reviewed and a formal CSRF token strategy implemented or explicitly accepted before launch
 - audit log access remains admin-only if exposed later
 
 See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated pre-deployment checklist across backend, frontend session/proxy, service auth, grants, and audit logging.
+
+See [Production security hardening](production-security-hardening.md) for the Phase 92 implementation details.
 
 ## Remaining Work
 

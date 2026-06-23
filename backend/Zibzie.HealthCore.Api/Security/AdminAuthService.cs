@@ -15,17 +15,20 @@ public class AdminAuthService : IAdminAuthService
     private readonly IPasswordHasher<AdminUser> _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IAdminLoginThrottle _loginThrottle;
 
     public AdminAuthService(
         AppDbContext dbContext,
         IPasswordHasher<AdminUser> passwordHasher,
         IJwtTokenService jwtTokenService,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IAdminLoginThrottle loginThrottle)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _auditLogService = auditLogService;
+        _loginThrottle = loginThrottle;
     }
 
     public async Task<AdminLoginResult> LoginAsync(
@@ -35,9 +38,21 @@ public class AdminAuthService : IAdminAuthService
         CancellationToken cancellationToken = default)
     {
         var normalizedUsername = NormalizeUsername(username);
+        var now = DateTimeOffset.UtcNow;
+
+        if (_loginThrottle.IsBlocked(normalizedUsername, requestContext, now))
+        {
+            await AuditFailedLoginAsync(
+                requestContext,
+                "Admin login temporarily throttled.",
+                cancellationToken);
+
+            return AdminLoginResult.Failed(GenericLoginFailure);
+        }
 
         if (normalizedUsername is null || string.IsNullOrWhiteSpace(password))
         {
+            _loginThrottle.RecordFailure(normalizedUsername, requestContext, now);
             await AuditFailedLoginAsync(requestContext, "Missing admin credentials.", cancellationToken);
             return AdminLoginResult.Failed(GenericLoginFailure);
         }
@@ -47,18 +62,21 @@ public class AdminAuthService : IAdminAuthService
 
         if (adminUser is null)
         {
+            _loginThrottle.RecordFailure(normalizedUsername, requestContext, now);
             await AuditFailedLoginAsync(requestContext, "Invalid admin credentials.", cancellationToken);
             return AdminLoginResult.Failed(GenericLoginFailure);
         }
 
         if (!adminUser.IsActive)
         {
+            _loginThrottle.RecordFailure(normalizedUsername, requestContext, now);
             await AuditFailedLoginAsync(requestContext, "Admin user is inactive.", cancellationToken);
             return AdminLoginResult.Failed(GenericLoginFailure);
         }
 
         if (!ProductRoles.InternalAdminRoles.Contains(adminUser.ProductRole))
         {
+            _loginThrottle.RecordFailure(normalizedUsername, requestContext, now);
             await AuditFailedLoginAsync(requestContext, "Admin user role is not an internal admin role.", cancellationToken);
             return AdminLoginResult.Failed(GenericLoginFailure);
         }
@@ -70,9 +88,12 @@ public class AdminAuthService : IAdminAuthService
 
         if (verificationResult == PasswordVerificationResult.Failed)
         {
+            _loginThrottle.RecordFailure(normalizedUsername, requestContext, now);
             await AuditFailedLoginAsync(requestContext, "Invalid admin credentials.", cancellationToken);
             return AdminLoginResult.Failed(GenericLoginFailure);
         }
+
+        _loginThrottle.RecordSuccess(normalizedUsername, requestContext);
 
         if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
         {

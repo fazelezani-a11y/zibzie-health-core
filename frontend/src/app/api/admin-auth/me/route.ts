@@ -4,10 +4,10 @@ import {
   clearAdminSessionCookieOptions,
   healthCoreBackendUrl,
 } from "@/lib/auth/admin-session";
+import { withSensitiveRouteHeaders } from "@/lib/auth/route-security";
 
 function withNoStore(response: NextResponse) {
-  response.headers.set("Cache-Control", "no-store");
-  return response;
+  return withSensitiveRouteHeaders(response);
 }
 
 export async function GET(request: NextRequest) {

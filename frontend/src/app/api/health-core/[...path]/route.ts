@@ -4,6 +4,11 @@ import {
   clearAdminSessionCookieOptions,
   healthCoreBackendUrl,
 } from "@/lib/auth/admin-session";
+import {
+  crossSiteMutationResponse,
+  shouldRejectCrossSiteMutation,
+  withSensitiveRouteHeaders,
+} from "@/lib/auth/route-security";
 
 type ProxyContext = {
   params: Promise<{
@@ -14,8 +19,7 @@ type ProxyContext = {
 const supportedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 function withNoStore(response: NextResponse) {
-  response.headers.set("Cache-Control", "no-store");
-  return response;
+  return withSensitiveRouteHeaders(response);
 }
 
 async function proxyHealthCoreRequest(
@@ -29,6 +33,10 @@ async function proxyHealthCoreRequest(
         { status: 405 },
       ),
     );
+  }
+
+  if (shouldRejectCrossSiteMutation(request)) {
+    return crossSiteMutationResponse();
   }
 
   const { path } = await context.params;
@@ -81,6 +89,11 @@ async function proxyHealthCoreRequest(
   }
 
   responseHeaders.set("Cache-Control", "no-store");
+  responseHeaders.set("Pragma", "no-cache");
+  responseHeaders.set("Expires", "0");
+  responseHeaders.set("X-Content-Type-Options", "nosniff");
+  responseHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  responseHeaders.set("X-Frame-Options", "DENY");
 
   const responseBody = await backendResponse.arrayBuffer();
   const response = new NextResponse(responseBody, {

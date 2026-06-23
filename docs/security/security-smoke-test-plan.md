@@ -73,6 +73,8 @@ See [Admin session security hardening](admin-session-security-hardening.md) for 
 
 See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated Phase 89 pre-deployment checklist.
 
+See [Production security hardening](production-security-hardening.md) for the Phase 92 same-origin mutation guard, sensitive-response headers, admin login throttle, and stricter Production JWT validation notes.
+
 ## 4. Protected Endpoint Groups
 
 Current protected groups:

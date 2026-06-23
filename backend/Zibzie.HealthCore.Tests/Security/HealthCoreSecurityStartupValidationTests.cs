@@ -79,6 +79,49 @@ public class HealthCoreSecurityStartupValidationTests
     }
 
     [Fact]
+    public void Validate_ThrowsInProductionWhenJwtCoreValidationIsDisabled()
+    {
+        var jwtOptions = CreateSafeJwtOptions();
+        jwtOptions.ValidateLifetime = false;
+
+        Assert.Throws<InvalidOperationException>(() =>
+            HealthCoreSecurityStartupValidation.Validate(
+                new TestHostEnvironment(Environments.Production),
+                new HealthCoreAuthOptions(),
+                jwtOptions,
+                new AdminAuthOptions()));
+    }
+
+    [Fact]
+    public void Validate_ThrowsInProductionWhenSigningKeyValidationIsDisabled()
+    {
+        var jwtOptions = CreateSafeJwtOptions();
+        jwtOptions.ValidateIssuerSigningKey = false;
+
+        Assert.Throws<InvalidOperationException>(() =>
+            HealthCoreSecurityStartupValidation.Validate(
+                new TestHostEnvironment(Environments.Production),
+                new HealthCoreAuthOptions(),
+                jwtOptions,
+                new AdminAuthOptions()));
+    }
+
+    [Fact]
+    public void Validate_ThrowsInProductionWhenAuthorityHttpsMetadataIsDisabled()
+    {
+        var jwtOptions = CreateSafeJwtOptions();
+        jwtOptions.Authority = "https://auth.example.test";
+        jwtOptions.RequireHttpsMetadata = false;
+
+        Assert.Throws<InvalidOperationException>(() =>
+            HealthCoreSecurityStartupValidation.Validate(
+                new TestHostEnvironment(Environments.Production),
+                new HealthCoreAuthOptions(),
+                jwtOptions,
+                new AdminAuthOptions()));
+    }
+
+    [Fact]
     public void Validate_AllowsProductionWithSafeJwtConfiguration()
     {
         HealthCoreSecurityStartupValidation.Validate(

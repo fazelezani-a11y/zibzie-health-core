@@ -201,6 +201,7 @@ Known intentional future work:
 Phase 89 consolidates these items into a deployment-oriented readiness checklist:
 
 - [Final production readiness checklist](../security/final-production-readiness-checklist.md)
+- [Production security hardening](../security/production-security-hardening.md)
 
 ## 11. Future Production Auth/JWT Requirements
 

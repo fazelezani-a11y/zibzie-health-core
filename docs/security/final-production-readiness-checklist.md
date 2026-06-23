@@ -38,6 +38,7 @@ Completed:
 - fallback-off verification docs and smoke mode
 - service-to-service strategy and service-account grant tests
 - internal-admin PatientAccessGrant list/create/revoke workflow
+- Phase 92 production hardening for same-origin mutation checks, sensitive-response headers, process-local admin login throttling, and stricter Production JWT validation
 
 Protected and audited endpoint groups:
 
@@ -89,7 +90,7 @@ Current admin flow:
 Remaining production work:
 
 - admin password reset/provisioning lifecycle
-- rate limiting and lockout
+- distributed rate limiting and lockout beyond the current process-local throttle
 - optional MFA for high-privilege roles
 - token revocation/session store decision
 
@@ -198,6 +199,8 @@ Backend:
 - production secrets outside repository
 - database connection configured through secrets/deployment config
 - HTTPS enabled
+- JWT issuer, audience, lifetime, and signing-key validation enabled
+- HTTPS metadata required when an authority is configured
 - logs do not contain tokens/passwords/secrets
 
 Frontend:
@@ -268,8 +271,8 @@ Audit verification:
 Real production blockers:
 
 - admin credential lifecycle / staff onboarding / password reset
-- rate limiting and lockout for admin login
-- CSRF protection for cookie-authenticated mutation proxy
+- distributed rate limiting and lockout for admin login beyond the current process-local throttle
+- formal CSRF token policy if the same-origin mutation guard is not sufficient for deployment topology
 - token revocation/session store decision
 - secret management and signing key rotation
 - production monitoring/alerting for auth failures and audit failures
@@ -288,11 +291,10 @@ Real production blockers:
 Recommended sequence:
 
 1. Admin operational hardening:
-   - rate limiting
-   - lockout
-   - logout UI
+   - distributed rate limiting
+   - persistent lockout
    - password reset/provisioning
-2. CSRF protection for cookie-backed mutation proxy.
+2. CSRF token decision for cookie-backed mutation proxy beyond the Phase 92 same-origin guard.
 3. Secret/key rotation and deployment hardening.
 4. Grant-scoped patient directory filtering.
 5. Service account lifecycle and product service-role catalog.

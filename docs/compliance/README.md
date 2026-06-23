@@ -46,6 +46,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Client API session proxy migration](../security/client-api-session-proxy-migration.md)
 - [Fallback-off verification](../security/fallback-off-verification.md)
 - [Admin session security hardening](../security/admin-session-security-hardening.md)
+- [Production security hardening](../security/production-security-hardening.md)
 - [Admin panel security UX polish](../security/admin-panel-security-ux-polish.md)
 - [Admin panel UI/UX final review](../security/admin-panel-ui-ux-final-review.md)
 - [Final production readiness checklist](../security/final-production-readiness-checklist.md)

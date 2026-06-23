@@ -4,6 +4,11 @@ import {
   adminSessionCookieOptions,
   healthCoreBackendUrl,
 } from "@/lib/auth/admin-session";
+import {
+  crossSiteMutationResponse,
+  shouldRejectCrossSiteMutation,
+  withSensitiveRouteHeaders,
+} from "@/lib/auth/route-security";
 
 type BackendAdminLoginResponse = {
   accessToken?: string;
@@ -19,13 +24,8 @@ type BackendAdminLoginResponse = {
   };
 };
 
-function withNoStore(response: NextResponse) {
-  response.headers.set("Cache-Control", "no-store");
-  return response;
-}
-
 const invalidLoginResponse = () =>
-  withNoStore(
+  withSensitiveRouteHeaders(
     NextResponse.json(
       { message: "Invalid username or password." },
       { status: 401 },
@@ -33,6 +33,10 @@ const invalidLoginResponse = () =>
   );
 
 export async function POST(request: NextRequest) {
+  if (shouldRejectCrossSiteMutation(request)) {
+    return crossSiteMutationResponse();
+  }
+
   let credentials: { username?: string; password?: string };
 
   try {
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch {
-    return withNoStore(
+    return withSensitiveRouteHeaders(
       NextResponse.json(
         { message: "Authentication service is unavailable." },
         { status: 502 },
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!backendResponse.ok) {
-    return withNoStore(
+    return withSensitiveRouteHeaders(
       NextResponse.json(
         { message: "Authentication service is unavailable." },
         { status: 502 },
@@ -93,7 +97,7 @@ export async function POST(request: NextRequest) {
   try {
     body = (await backendResponse.json()) as BackendAdminLoginResponse;
   } catch {
-    return withNoStore(
+    return withSensitiveRouteHeaders(
       NextResponse.json(
         { message: "Authentication service returned an invalid response." },
         { status: 502 },
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!body.accessToken) {
-    return withNoStore(
+    return withSensitiveRouteHeaders(
       NextResponse.json(
         { message: "Authentication service returned an invalid response." },
         { status: 502 },
@@ -128,5 +132,5 @@ export async function POST(request: NextRequest) {
     adminSessionCookieOptions(body.expiresAt),
   );
 
-  return withNoStore(response);
+  return withSensitiveRouteHeaders(response);
 }

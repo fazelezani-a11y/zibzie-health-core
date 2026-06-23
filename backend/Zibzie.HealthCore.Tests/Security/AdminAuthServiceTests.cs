@@ -111,6 +111,49 @@ public class AdminAuthServiceTests
     }
 
     [Fact]
+    public async Task LoginAsync_AfterRepeatedFailures_ReturnsGenericFailureAndAuditsThrottle()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedAdminAsync(dbContext, "admin", "correct-password");
+        var service = CreateService(
+            dbContext,
+            new AdminLoginThrottleOptions
+            {
+                MaxFailedAttempts = 2,
+                WindowMinutes = 15,
+                LockoutMinutes = 5
+            });
+
+        await service.LoginAsync(
+            "admin",
+            "wrong-password",
+            RequestContext(),
+            CancellationToken.None);
+        await service.LoginAsync(
+            "admin",
+            "wrong-password",
+            RequestContext(),
+            CancellationToken.None);
+
+        var throttledResult = await service.LoginAsync(
+            "admin",
+            "correct-password",
+            RequestContext(),
+            CancellationToken.None);
+
+        Assert.False(throttledResult.Succeeded);
+        Assert.Equal("Invalid username or password.", throttledResult.FailureReason);
+        Assert.Null(throttledResult.Token);
+
+        var auditEntries = await dbContext.AuditLogEntries
+            .OrderBy(x => x.CreatedAt)
+            .ToListAsync();
+        Assert.Equal(3, auditEntries.Count);
+        Assert.Equal("Admin login temporarily throttled.", auditEntries.Last().FailureReason);
+        Assert.False(auditEntries.Last().Succeeded);
+    }
+
+    [Fact]
     public async Task GeneratedAdminTokenClaims_MapIntoRequestContext()
     {
         await using var dbContext = CreateDbContext();
@@ -146,7 +189,9 @@ public class AdminAuthServiceTests
         Assert.False(requestContext.IsFallbackContext);
     }
 
-    private static AdminAuthService CreateService(AppDbContext dbContext)
+    private static AdminAuthService CreateService(
+        AppDbContext dbContext,
+        AdminLoginThrottleOptions? throttleOptions = null)
     {
         return new AdminAuthService(
             dbContext,
@@ -158,7 +203,11 @@ public class AdminAuthServiceTests
                 SigningKey = SigningKey,
                 AccessTokenMinutes = 60
             })),
-            new AuditLogService(dbContext));
+            new AuditLogService(dbContext),
+            new InMemoryAdminLoginThrottle(Options.Create(new AdminAuthOptions
+            {
+                LoginThrottle = throttleOptions ?? new AdminLoginThrottleOptions()
+            })));
     }
 
     private static async Task<AdminUser> SeedAdminAsync(

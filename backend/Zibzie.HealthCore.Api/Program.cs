@@ -113,6 +113,7 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IHealthCoreRequestContextProvider, HttpHealthCoreRequestContextProvider>();
 builder.Services.AddScoped<IPatientAccessGrantService, PatientAccessGrantService>();
 builder.Services.AddScoped<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
+builder.Services.AddSingleton<IAdminLoginThrottle, InMemoryAdminLoginThrottle>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 
@@ -130,6 +131,27 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 await AdminUserBootstrapper.SeedAsync(app.Services, app.Environment);
+
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        context.Response.Headers["X-Frame-Options"] = "DENY";
+
+        if (context.Request.Path.StartsWithSegments("/api/health-core"))
+        {
+            context.Response.Headers["Cache-Control"] = "no-store";
+            context.Response.Headers["Pragma"] = "no-cache";
+            context.Response.Headers["Expires"] = "0";
+        }
+
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
 
 app.UseSwagger();
 app.UseSwaggerUI();
