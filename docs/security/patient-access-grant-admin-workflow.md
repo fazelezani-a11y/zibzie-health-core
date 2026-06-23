@@ -193,10 +193,13 @@ The grant workflow can create patient-scoped grants for those service account id
 Phase 90 adds a limited frontend surface in the patient record shell:
 
 - list grants for the current patient
+- create a grant for a user or service account
 - show grant status, product context, grantee/service account, validity, and revoke metadata
 - revoke active grants with an optional reason
 
-The UI does not create grants. Grant creation remains backend/API-only until product-role guardrails, consent/sharing policy, and emergency-access policy are clearer.
+The create UI exposes only non-internal product contexts. It does not expose `InternalAdmin`, `AllPatients`, or `InternalAdmin` authorization reason options.
+
+Scope is constrained to the selected product role's configured profile scope. The backend remains the source of truth for permission checks, profile/scope compatibility, duplicate prevention, and audit logging.
 
 See [Admin panel security UX polish](admin-panel-security-ux-polish.md).
 
@@ -220,7 +223,7 @@ The form supports:
 - Service account or user grantee selection.
 - Product code selection.
 - Product role selection based on product context.
-- Access scope selection.
+- Access scope selection constrained by selected product-role profile.
 - Authorization reason selection.
 - Optional expiration date.
 - Optional notes.

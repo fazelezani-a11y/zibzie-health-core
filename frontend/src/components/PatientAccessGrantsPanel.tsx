@@ -26,6 +26,11 @@ type CreateGrantFormState = {
   notes: string;
 };
 
+type RoleProfileDefaults = {
+  scope: string;
+  reason: string;
+};
+
 const PRODUCT_OPTIONS = [
   { value: "DigiCare", label: "دیجی‌مراقب" },
   { value: "HomeVisit", label: "ویزیت در منزل" },
@@ -90,6 +95,97 @@ const REASON_OPTIONS = [
   { value: "SystemAutomation", label: "اتوماسیون سیستمی" },
 ];
 
+const ROLE_PROFILE_DEFAULTS: Record<string, RoleProfileDefaults> = {
+  DigiCareCaseManager: {
+    scope: "AssignedPatientsOnly",
+    reason: "CareTeamOperation",
+  },
+  DigiCareCareTeamManager: {
+    scope: "AssignedPatientsOnly",
+    reason: "CareTeamOperation",
+  },
+  DigiCareClinician: {
+    scope: "AssignedPatientsOnly",
+    reason: "ActiveCare",
+  },
+  DigiCarePersonalDoctor: {
+    scope: "AssignedPatientsOnly",
+    reason: "ActiveCare",
+  },
+  DigiCarePersonalCounselor: {
+    scope: "AssignedPatientsOnly",
+    reason: "ActiveCare",
+  },
+  DigiCareNutritionSpecialist: {
+    scope: "AssignedPatientsOnly",
+    reason: "ActiveCare",
+  },
+  DigiCareExerciseSpecialist: {
+    scope: "AssignedPatientsOnly",
+    reason: "ActiveCare",
+  },
+  DigiCareOperations: {
+    scope: "AssignedPatientsOnly",
+    reason: "CareTeamOperation",
+  },
+  DigiCareTransportCoordinator: {
+    scope: "AssignedPatientsOnly",
+    reason: "CareTeamOperation",
+  },
+  HomeVisitDoctor: {
+    scope: "TemporaryAccess",
+    reason: "HomeVisit",
+  },
+  HomeVisitDispatcher: {
+    scope: "AssignedPatientsOnly",
+    reason: "HomeVisit",
+  },
+  HomeVisitPatient: {
+    scope: "OwnRecordOnly",
+    reason: "HomeVisit",
+  },
+  SecondOpinionCaseManager: {
+    scope: "InvitedCasesOnly",
+    reason: "SecondOpinion",
+  },
+  SecondOpinionLeadSpecialist: {
+    scope: "InvitedCasesOnly",
+    reason: "SecondOpinion",
+  },
+  SecondOpinionInvitedSpecialist: {
+    scope: "InvitedCasesOnly",
+    reason: "SecondOpinion",
+  },
+  SecondOpinionPatient: {
+    scope: "OwnRecordOnly",
+    reason: "SecondOpinion",
+  },
+  PersonalHealthRecordOwner: {
+    scope: "OwnRecordOnly",
+    reason: "PatientShared",
+  },
+  PersonalHealthRecordFamilyViewer: {
+    scope: "FamilyAuthorizedRecords",
+    reason: "PatientShared",
+  },
+  PersonalHealthRecordSharedProvider: {
+    scope: "TemporaryAccess",
+    reason: "PatientShared",
+  },
+  ClinicQueueReceptionist: {
+    scope: "OrganizationPatients",
+    reason: "CareTeamOperation",
+  },
+  ClinicQueueClinicAdmin: {
+    scope: "OrganizationPatients",
+    reason: "CareTeamOperation",
+  },
+  ClinicQueuePatient: {
+    scope: "OwnRecordOnly",
+    reason: "PatientShared",
+  },
+};
+
 const INITIAL_CREATE_FORM: CreateGrantFormState = {
   recipientType: "service",
   serviceAccountId: "",
@@ -97,7 +193,7 @@ const INITIAL_CREATE_FORM: CreateGrantFormState = {
   productCode: "DigiCare",
   productRole: "DigiCareCaseManager",
   scope: "AssignedPatientsOnly",
-  reason: "ActiveCare",
+  reason: "CareTeamOperation",
   validUntil: "",
   notes: "",
 };
@@ -127,6 +223,12 @@ function toIsoDateTimeOrNull(value: string) {
   }
 
   return date.toISOString();
+}
+
+function isGuidLike(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim(),
+  );
 }
 
 function grantStatus(grant: PatientAccessGrant) {
@@ -189,6 +291,10 @@ export default function PatientAccessGrantsPanel({
 
   const availableProductRoles =
     PRODUCT_ROLE_OPTIONS[createForm.productCode] ?? [];
+  const selectedRoleDefaults = ROLE_PROFILE_DEFAULTS[createForm.productRole];
+  const availableScopeOptions = selectedRoleDefaults
+    ? SCOPE_OPTIONS.filter((option) => option.value === selectedRoleDefaults.scope)
+    : SCOPE_OPTIONS;
 
   const sortedGrants = useMemo(
     () =>
@@ -204,27 +310,7 @@ export default function PatientAccessGrantsPanel({
     [grants],
   );
 
-  async function loadGrants() {
-    setIsLoading(true);
-    setLoadErrorMessage(null);
-
-    try {
-      const items = await listPatientAccessGrants(patientId);
-      setGrants(items);
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        setLoadErrorMessage("برای مشاهده دسترسی‌های بیمار ابتدا وارد شوید.");
-      } else if (error instanceof ApiError && error.status === 403) {
-        setLoadErrorMessage("حساب فعلی مجوز مشاهده دسترسی‌های بیمار را ندارد.");
-      } else {
-        setLoadErrorMessage("دریافت دسترسی‌های بیمار با خطا روبه‌رو شد.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-    useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
 
     listPatientAccessGrants(patientId)
@@ -255,7 +341,7 @@ export default function PatientAccessGrantsPanel({
     return () => {
       isMounted = false;
     };
-  }, [patientId]);;
+  }, [patientId]);
 
   function updateCreateForm<Key extends keyof CreateGrantFormState>(
     key: Key,
@@ -264,11 +350,26 @@ export default function PatientAccessGrantsPanel({
     setCreateForm((current) => {
       if (key === "productCode") {
         const nextRoles = PRODUCT_ROLE_OPTIONS[String(value)] ?? [];
+        const nextRole = nextRoles[0]?.value ?? "";
+        const nextDefaults = ROLE_PROFILE_DEFAULTS[nextRole];
 
         return {
           ...current,
           productCode: String(value),
-          productRole: nextRoles[0]?.value ?? "",
+          productRole: nextRole,
+          scope: nextDefaults?.scope ?? current.scope,
+          reason: nextDefaults?.reason ?? current.reason,
+        };
+      }
+
+      if (key === "productRole") {
+        const nextDefaults = ROLE_PROFILE_DEFAULTS[String(value)];
+
+        return {
+          ...current,
+          productRole: String(value),
+          scope: nextDefaults?.scope ?? current.scope,
+          reason: nextDefaults?.reason ?? current.reason,
         };
       }
 
@@ -279,7 +380,7 @@ export default function PatientAccessGrantsPanel({
     });
   }
 
-  function validateCreateForm() {
+  function validateCreateForm(nowMs: number) {
     if (!createForm.productCode) {
       return "لطفاً محصول مقصد را انتخاب کنید.";
     }
@@ -288,8 +389,19 @@ export default function PatientAccessGrantsPanel({
       return "لطفاً نقش دسترسی را انتخاب کنید.";
     }
 
+    if (!availableProductRoles.some((role) => role.value === createForm.productRole)) {
+      return "نقش انتخاب‌شده با محصول مقصد سازگار نیست.";
+    }
+
     if (!createForm.scope) {
       return "لطفاً محدوده دسترسی را انتخاب کنید.";
+    }
+
+    if (
+      selectedRoleDefaults &&
+      createForm.scope !== selectedRoleDefaults.scope
+    ) {
+      return "محدوده دسترسی باید با نقش انتخاب‌شده هماهنگ باشد.";
     }
 
     if (!createForm.reason) {
@@ -310,6 +422,13 @@ export default function PatientAccessGrantsPanel({
       return "شناسه کاربر الزامی است.";
     }
 
+    if (
+      createForm.recipientType === "user" &&
+      !isGuidLike(createForm.granteeUserId)
+    ) {
+      return "شناسه کاربر باید یک GUID معتبر باشد.";
+    }
+
     if (createForm.validUntil) {
       const validUntil = new Date(createForm.validUntil);
 
@@ -317,7 +436,7 @@ export default function PatientAccessGrantsPanel({
         return "تاریخ پایان اعتبار معتبر نیست.";
       }
 
-      if (validUntil.getTime() <= Date.now()) {
+      if (validUntil.getTime() <= nowMs) {
         return "تاریخ پایان اعتبار باید در آینده باشد.";
       }
     }
@@ -326,7 +445,7 @@ export default function PatientAccessGrantsPanel({
   }
 
   async function handleCreateGrant() {
-    const validationMessage = validateCreateForm();
+    const validationMessage = validateCreateForm(new Date().getTime());
 
     setActionErrorMessage(null);
     setSuccessMessage(null);
@@ -356,22 +475,28 @@ export default function PatientAccessGrantsPanel({
     setIsCreating(true);
 
     try {
-      await createPatientAccessGrant(patientId, request);
+      const createdGrant = await createPatientAccessGrant(patientId, request);
+      setGrants((current) => [createdGrant, ...current]);
       setCreateForm(INITIAL_CREATE_FORM);
       setIsCreateOpen(false);
       setSuccessMessage("دسترسی جدید با موفقیت ایجاد شد.");
-      await loadGrants();
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
         setActionErrorMessage(
           "اطلاعات واردشده معتبر نیست. لطفاً فیلدها را بررسی کنید.",
         );
+      } else if (error instanceof ApiError && error.status === 401) {
+        setActionErrorMessage("برای ایجاد دسترسی ابتدا وارد شوید.");
       } else if (error instanceof ApiError && error.status === 403) {
         setActionErrorMessage("حساب فعلی مجوز ایجاد دسترسی برای این پرونده را ندارد.");
+      } else if (error instanceof ApiError && error.status === 404) {
+        setActionErrorMessage("بیمار مورد نظر پیدا نشد یا فعال نیست.");
       } else if (error instanceof ApiError && error.status === 409) {
         setActionErrorMessage(
           "برای این گیرنده و محدوده، یک دسترسی فعال مشابه وجود دارد.",
         );
+      } else if (error instanceof ApiError && error.status === 502) {
+        setActionErrorMessage("سرویس پرونده سلامت در دسترس نیست.");
       } else {
         setActionErrorMessage("ایجاد دسترسی با خطا روبه‌رو شد.");
       }
@@ -395,10 +520,16 @@ export default function PatientAccessGrantsPanel({
       setRevokeReason("");
       setSuccessMessage("دسترسی با موفقیت لغو شد.");
     } catch (error) {
-      if (error instanceof ApiError && error.status === 403) {
+      if (error instanceof ApiError && error.status === 401) {
+        setActionErrorMessage("برای لغو دسترسی ابتدا وارد شوید.");
+      } else if (error instanceof ApiError && error.status === 403) {
         setActionErrorMessage("حساب فعلی مجوز لغو این دسترسی را ندارد.");
+      } else if (error instanceof ApiError && error.status === 404) {
+        setActionErrorMessage("این دسترسی پیدا نشد.");
       } else if (error instanceof ApiError && error.status === 409) {
         setActionErrorMessage("این دسترسی قبلاً لغو شده یا دیگر فعال نیست.");
+      } else if (error instanceof ApiError && error.status === 502) {
+        setActionErrorMessage("سرویس پرونده سلامت در دسترس نیست.");
       } else {
         setActionErrorMessage("لغو دسترسی با خطا روبه‌رو شد.");
       }
@@ -550,12 +681,15 @@ export default function PatientAccessGrantsPanel({
                   }
                   value={createForm.scope}
                 >
-                  {SCOPE_OPTIONS.map((option) => (
+                  {availableScopeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
+                <span className="text-xs leading-6 text-slate-500">
+                  محدوده بر اساس نقش انتخاب‌شده تنظیم می‌شود.
+                </span>
               </label>
 
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
