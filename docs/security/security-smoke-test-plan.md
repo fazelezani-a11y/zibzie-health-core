@@ -69,6 +69,14 @@ Run the fallback-off JWT-required smoke after starting the backend with `HealthC
 
 See [Fallback-off verification](fallback-off-verification.md) for the exact environment overrides and frontend session checklist.
 
+Phase 99B recorded a successful local fallback-off JWT smoke against
+`http://localhost:5230`. The run proved health, unauthenticated patient
+directory denial, InternalAdmin development header denial, admin login, `/me`,
+JWT patient directory authorization, and patient-scoped summary/documents,
+access-grants, and audit-log review checks for one local test patient. No
+password, JWT, secret value, patient id, or patient data was recorded. Real
+staging and production smoke evidence remain required.
+
 See [Admin session security hardening](admin-session-security-hardening.md) for the production safety checklist that should be reviewed after smoke passes.
 
 See [Final production readiness checklist](final-production-readiness-checklist.md) for the consolidated Phase 89 pre-deployment checklist.

@@ -147,10 +147,13 @@ still works while fallback is supposed to be disabled. The same mode verifies
 admin JWT login, `/me`, protected patient directory access, and optional
 patient-scoped summary/documents/access-grant/audit-log checks.
 
-The Phase 99 script parser check passed on 2026-06-23. Live fallback-off smoke
-was not run in that phase because no local backend was listening on
-`http://localhost:5230` and no non-secret local admin credentials were supplied.
-Staging/prod-like execution evidence is still required.
+The Phase 99 script parser check passed on 2026-06-23. Phase 99B local
+fallback-off JWT smoke passed against `http://localhost:5230`, including
+unauthenticated patient directory rejection, InternalAdmin development header
+rejection, admin login, `/me`, JWT patient directory authorization, and
+patient-scoped summary/documents/access-grant/audit-log checks for one local
+test patient. No password, JWT, secret value, patient id, or patient data was
+recorded. Real staging and production smoke evidence remains required.
 
 Backup/restore and data-safety expectations are documented in
 [Backup / restore / data safety](../operations/backup-restore.md). Phase 93 adds

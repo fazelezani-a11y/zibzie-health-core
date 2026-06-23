@@ -25,7 +25,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | --- | --- | --- |
 | Admin identity | Implemented now: internal admin login, password hashing, JWT issuing, httpOnly frontend session cookie. | Required before production use: staff onboarding/offboarding, password reset, MFA decision for high-privilege users, persistent lockout/rate limiting. |
 | Product/service identity | Implemented now: JWT bearer validation foundation and request context support for `service_account_id` / `client_id`. | Required before Ministry / PGSB / SHAMS connection: approved service-account lifecycle, service-token issuer or trusted identity provider, key rotation, disabled/revoked service behavior. |
-| Development fallback | Implemented now: config-gated fallback; Production startup validation rejects fallback. Phase 99 smoke tooling verifies default fallback and header fallback are denied when disabled, and the script parser check passed. | Required before production use: fallback-off smoke must pass in staging and production-like deployments with evidence. |
+| Development fallback | Implemented now: config-gated fallback; Production startup validation rejects fallback. Phase 99 smoke tooling verifies default fallback and header fallback are denied when disabled, and Phase 99B local fallback-off JWT smoke passed. | Required before production use: fallback-off smoke must pass in real staging and production deployments with evidence. |
 | Patient/family identity | Not implemented. | Required before patient-facing or family-facing production workflows: formal identity proofing and authentication model. |
 
 ## 2. Role / Permission / Scope Model
@@ -92,7 +92,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Header/default fallback | Implemented now: fallback ignored in Production and disabled by base config. | Required before production use: deployment config verification and fallback-off smoke. |
+| Header/default fallback | Implemented now: fallback ignored in Production and disabled by base config. Phase 99B local smoke verified unauthenticated fallback and InternalAdmin development headers are rejected when fallback is disabled. | Required before production use: deployment config verification and real staging/production fallback-off smoke. |
 | Bootstrap admin | Implemented now: Production startup validation rejects bootstrap. | Required before production use: staff provisioning path that does not rely on bootstrap credentials. |
 | JWT config | Implemented now: Production startup validation requires issuer/audience/lifetime/signing-key safety. Phase 98 documents required production settings and key rotation expectations. | Requires infrastructure/operator action: secrets supplied by environment/secret store, not repository; rotation evidence required. |
 
@@ -203,7 +203,9 @@ Phase 98 documents production environment and secret handling in
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
 
 Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling.
-Staging/prod-like execution evidence remains required before production use.
+Phase 99B records successful local fallback-off JWT smoke without recording
+passwords, JWTs, secret values, patient ids, or patient data. Real staging and
+production execution evidence remains required before production use.
 
 Health Core has a strong internal readiness foundation:
 

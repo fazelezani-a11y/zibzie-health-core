@@ -81,7 +81,7 @@ Blocking before production use:
 - token revocation/session-version strategy if required
 - production secret management and key rotation
 - final HTTPS/CORS/proxy/cookie-domain deployment review
-- fallback-off smoke in staging/production-like environments
+- fallback-off smoke in real staging and production environments
 
 ## Audit Readiness Status
 
@@ -183,7 +183,7 @@ These do not block the internal RC verdict, but should stay visible:
 Health Core should not be used with real production health data until these are handled:
 
 - production identity/service account lifecycle
-- fallback-off production-like smoke
+- fallback-off real staging and production smoke
 - secret management and JWT key rotation
 - staff onboarding/offboarding and admin credential lifecycle
 - persistent rate limiting/lockout or WAF/reverse-proxy equivalent
@@ -215,7 +215,7 @@ Before any Ministry / PGSB / SHAMS readiness claim:
 Recommended next work after closing the Health Core internal baseline:
 
 1. Freeze the Health Core admin/care-team baseline as an internal RC.
-2. Run fallback-off smoke in a staging-like environment.
+2. Repeat fallback-off smoke in real staging and production environments.
 3. Produce deployment-specific security and backup evidence.
 4. Decide production identity and service-token lifecycle.
 5. Draft consumer-safe DTOs and ownership/guardian model before starting the Family Health Record / Badge app.
@@ -224,7 +224,7 @@ Recommended next work after closing the Health Core internal baseline:
 
 Phase 97 prioritizes these blockers in [Production blockers prioritization](production-blockers-prioritization.md).
 Phase 98 documents environment and secret handling in [Production environment and secrets](../operations/production-environment-and-secrets.md).
-Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling; live staging/prod-like execution evidence is still required before production use.
+Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling. Phase 99B records successful local fallback-off JWT smoke against `http://localhost:5230` without recording secrets, tokens, or patient data; real staging and production execution evidence is still required before production use.
 
 ## Final Verdict
 

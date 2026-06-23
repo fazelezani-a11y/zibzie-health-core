@@ -120,12 +120,14 @@ Use `-PatientId "<existing-patient-id>"` for deterministic patient-scoped checks
 or `-CreatePatientIfMissing` only in local development when creating a test
 patient is acceptable.
 
-Phase 99 status:
+Phase 99 / 99B status:
 
 - script parser check passed on 2026-06-23
-- live JWT smoke was not run because no local backend was listening on `http://localhost:5230`
-- no admin username, password, or JWT was recorded
-- staging/prod-like execution evidence is still required before production use
+- Phase 99B local fallback-off JWT smoke passed against `http://localhost:5230`
+- health, unauthenticated patient directory denial, InternalAdmin development header denial, admin login, `/me`, and JWT patient directory authorization passed
+- patient-scoped summary, documents, access-grants, and audit-log review checks passed for one local test patient
+- no admin password, JWT, secret value, patient id, or patient data was recorded
+- real staging and production smoke evidence is still required before production use
 
 ## Coverage
 

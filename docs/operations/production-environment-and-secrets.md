@@ -226,8 +226,13 @@ The script must be run with credentials supplied at runtime. Do not store or
 publish the password or JWT. The script fails if unauthenticated default fallback
 or InternalAdmin development header fallback is still accepted.
 
-Phase 99 syntax-checked this script, but did not produce live smoke evidence
-because no local backend/admin credential set was available during the phase.
+Phase 99B local fallback-off JWT smoke passed against `http://localhost:5230`.
+The run verified unauthenticated denial, InternalAdmin development header
+denial, admin JWT login, `/me`, JWT patient directory authorization, and
+patient-scoped summary/documents/access-grant/audit-log checks for one local
+test patient. No password, JWT, secret value, patient id, or patient data was
+recorded. Real staging and production smoke evidence still requires operator
+execution and documentation.
 
 ## Deployment Checklist
 

@@ -119,18 +119,26 @@ The script does not print the admin password or JWT.
 Phase 99 strengthens the fallback-off smoke script so it can produce local or
 staging evidence that both default fallback and header fallback are disabled.
 
-Current Phase 99 local status:
+Current Phase 99B local status:
 
 | Field | Result |
 | --- | --- |
 | Date | 2026-06-23 |
 | Script syntax | PowerShell parser check passed for `scripts/smoke-security-healthcore.ps1` |
-| Live backend probe | `GET http://localhost:5230/health` failed because no local backend was listening |
-| Live JWT smoke | Not run |
-| Reason live smoke was not run | local backend unavailable and no non-secret local admin credentials were supplied |
-| Evidence status | Tooling ready; staging/prod-like execution evidence still required |
+| Base URL | `http://localhost:5230` |
+| Mode | `Jwt` |
+| Health endpoint | Passed |
+| Unauthenticated patient directory rejection | Passed |
+| InternalAdmin development header rejection | Passed |
+| Admin JWT login | Passed |
+| Admin `/me` InternalAdmin product context | Passed |
+| JWT patient directory authorization | Passed |
+| Patient-scoped checks | Passed for one local test patient: summary, documents, access-grants, and audit-log review |
+| Sensitive evidence handling | No admin password, JWT, secret value, patient id, or patient data recorded |
+| Evidence status | Local fallback-off smoke evidence complete; real staging and production smoke evidence still required |
 
-Evidence is complete only after the script is run against a backend started with:
+Repeat local, staging, or production evidence should run the script against a
+backend started with:
 
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT = "Development"
@@ -138,8 +146,8 @@ $env:HealthCoreAuth__AllowHeaderFallback = "false"
 $env:HealthCoreAuth__AllowDefaultDevFallback = "false"
 ```
 
-and valid local/staging admin credentials supplied at runtime. Do not record the
-password or bearer token in evidence.
+and valid admin credentials supplied at runtime. Do not record the password or
+bearer token in evidence.
 
 ## Frontend Session Checklist
 
