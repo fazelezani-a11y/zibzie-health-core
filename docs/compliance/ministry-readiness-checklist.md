@@ -190,6 +190,12 @@ Operators must own:
 
 ## 20. Current Readiness Summary
 
+Phase 96 release-candidate verdict:
+
+**Internal Release Candidate Ready with Production Blockers**
+
+See [Health Core release candidate review](../release/health-core-release-candidate-review.md).
+
 Health Core has a strong internal readiness foundation:
 
 - centralized access model

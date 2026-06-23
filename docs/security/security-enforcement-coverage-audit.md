@@ -22,6 +22,8 @@ Phase 84H2 protected patient list/search and patient detail reads. Phase 84H3 pr
 
 Phase 88 adds the first internal-admin access grant list/create/revoke workflow. Phase 94 adds a strict read-only AuditLog review endpoint and a patient-scoped admin review UI.
 
+Phase 96 release-candidate verdict: **Internal Release Candidate Ready with Production Blockers**. See [Health Core release candidate review](../release/health-core-release-candidate-review.md).
+
 ## 2. Controller and endpoint inventory
 
 | Controller | Endpoint group | Current classification | Notes |

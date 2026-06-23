@@ -113,6 +113,15 @@ Still required before real production:
 
 ## Verification
 
+Phase 96 release-candidate verification passed:
+
+- `dotnet build backend\Zibzie.HealthCore.sln -c Release`
+- `dotnet test backend\Zibzie.HealthCore.sln -c Release --no-build`
+- `npm.cmd run lint`
+- `npm.cmd run build`
+
+This supports the internal release-candidate verdict, but does not remove the production backlog above.
+
 Recommended checks after this phase:
 
 ```powershell

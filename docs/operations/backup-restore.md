@@ -208,6 +208,16 @@ Limitations:
 - It does not validate encrypted/offsite backups.
 - It does not replace periodic staging/production-like restore drills.
 
+## Release Candidate Status
+
+Phase 96 treats backup/restore as acceptable for the internal release-candidate
+baseline because local PostgreSQL backup and restore mechanics have been
+documented and drilled.
+
+Backup/restore remains a production blocker until automated encrypted backups,
+offsite storage, monitoring, retention approval, document/file storage backup,
+and repeated production-like restore evidence are in place.
+
 ## Uploaded Medical Documents and File Storage
 
 The current backup scripts only back up PostgreSQL.
