@@ -16,6 +16,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Authorization service](../security/authorization-service.md)
 - [Request context](../security/request-context.md)
 - [Audit log](../security/audit-log.md)
+- [Audit review tools](../security/audit-review-tools.md)
 - [Admin auth backend foundation](../security/admin-auth-backend-foundation.md)
 - Phase 90B added a minimal admin UI for creating PatientAccessGrant records from the patient security/access tab. This improves operational access management while preserving backend authorization, validation, and audit controls.
 
@@ -77,11 +78,12 @@ restore evidence still require operational setup.
 The strongest remaining readiness work is:
 
 - complete production JWT/service identity adoption and retire development fallback before production
-- implement frontend admin JWT integration and continue hardening admin auth
+- continue fallback-off rollout and admin auth/session hardening
 - run and automate fallback-off verification for the admin JWT/session/proxy path
 - define and pilot service-to-service auth for product backends without reusing admin tokens
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - add grant-scoped patient directory filtering
 - implement production backup automation, encryption, monitoring, restore drills, retention policy, and incident response evidence
+- add centralized monitoring/alerting around audit anomalies, failed login bursts, denied access spikes, backup failures, and uptime
 - prepare Ministry / PGSB / GSB / SHAMS readiness evidence without claiming certification or live connectivity
 - expand security smoke/E2E tests beyond the current local smoke foundation

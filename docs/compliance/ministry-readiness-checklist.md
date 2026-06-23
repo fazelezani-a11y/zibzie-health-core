@@ -50,7 +50,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| AuditLog foundation | Implemented now: `AuditLogEntry`, EF mapping, audit service, action/resource constants. | Required before production use: retention policy, audit review process, tamper-resistance plan, monitoring of audit write failures. |
+| AuditLog foundation | Implemented now: `AuditLogEntry`, EF mapping, audit service, action/resource constants, and a strict read-only audit review endpoint/UI. | Required before production use: retention policy, formal review process, tamper-resistance plan, monitoring of audit write failures. |
 | Endpoint audit coverage | Implemented now: protected health-record endpoints audit success and denied access. | Required before external review: evidence report showing endpoint coverage, sample audit rows, and denied-access cases. |
 | Admin auth audit | Implemented now: login success/failure audited; throttled login attempts audited. | Required before production use: alerting on repeated failed login attempts. |
 | Non-repudiation | Partially ready: audit captures user/service ids, product context, request metadata, action, resource, and success/failure. | Required before Ministry / PGSB / SHAMS connection: trusted time source, log integrity controls, retention requirements, and operator review procedure. |
@@ -118,7 +118,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Audit data | Implemented now. | Required before production use: dashboards/alerts for denied access, failed login bursts, audit write failures, grant changes, unexpected fallback attempts. |
+| Audit data | Implemented now with human review capability for protected audit events. | Required before production use: dashboards/alerts for denied access, failed login bursts, audit write failures, grant changes, unexpected fallback attempts. |
 | Operational logs | Basic app logging exists. | Requires infrastructure/operator action: centralized logging, retention, redaction rules, alert routing. |
 | Health checks | Basic `/health` exists. | Required before production use: readiness/liveness probes, database dependency checks if appropriate, synthetic auth smoke. |
 
@@ -136,7 +136,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Security architecture | Implemented now in docs. | Required before external review: update with final deployment topology and data-flow diagrams. |
 | Endpoint coverage | Implemented now in endpoint matrix and coverage audit. | Required before external review: signed-off endpoint inventory and test evidence. |
 | Access model | Implemented now in permission/profile/grant docs. | Required before external review: role-to-persona mapping approved by product/legal owners. |
-| Audit model | Implemented now. | Required before external review: audit retention/access policy and sample report. |
+| Audit model | Implemented now with protected audit review tooling. | Required before external review: audit retention/access policy, sample report, reviewer procedure, and evidence that review access is restricted. |
 | PGSB/SHAMS integration package | Not implemented. | Required before Ministry / PGSB / SHAMS connection: official forms, technical certificate evidence, network readiness proof, NDA/security commitments if applicable, integration test plan. |
 
 ## 15. Environment Separation

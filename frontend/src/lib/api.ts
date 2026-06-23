@@ -9,3 +9,4 @@ export * from "./api/reminders";
 export * from "./api/measurements";
 export * from "./api/admin-auth";
 export * from "./api/access-grants";
+export * from "./api/audit-log";

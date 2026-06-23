@@ -43,6 +43,15 @@ Later endpoint enforcement phases now write audit logs for protected endpoint gr
 including successful access and denied access events. Endpoint groups that have not yet
 been protected should follow the same pattern when enforcement is added.
 
+Phase 94 adds the first read-only audit review surface:
+
+- `GET /api/health-core/audit-log`
+- strict `ViewAuditLog` authorization
+- bounded pagination and filters
+- safe review DTOs that do not expose `MetadataJson`
+- patient-scoped audit review in the admin Security & Access tab
+- audit logging for successful and denied audit review
+
 ## Future High-Risk Actions to Audit
 
 Future endpoint integration should prioritize:
@@ -61,3 +70,5 @@ Future endpoint integration should prioritize:
 Audit logs are sensitive compliance records. They should be protected from ordinary users, exposed only through restricted admin/compliance workflows, and included in backup, retention, and incident response planning.
 
 Audit logging should be added before or alongside endpoint authorization enforcement so Health Core can explain both allowed and denied access decisions.
+
+AuditLog review must remain separate from Timeline review. Timeline should never be used as a replacement for security evidence, and AuditLog should not be exposed as ordinary clinical history.

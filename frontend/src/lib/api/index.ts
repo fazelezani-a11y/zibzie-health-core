@@ -9,3 +9,4 @@ export * from "./reminders";
 export * from "./measurements";
 export * from "./admin-auth";
 export * from "./access-grants";
+export * from "./audit-log";

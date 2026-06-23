@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AdminSessionBar from "@/components/AdminSessionBar";
 import PatientAccessGrantsPanel from "@/components/PatientAccessGrantsPanel";
+import PatientAuditLogPanel from "@/components/PatientAuditLogPanel";
 import Badge from "@/components/ui/Badge";
 import Notice from "@/components/ui/Notice";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -887,7 +888,12 @@ function SectionContent({
     case "timeline":
       return <PatientTimeline patientId={summary.id} showCreateForm={false} />;
     case "access":
-      return <PatientAccessGrantsPanel patientId={summary.id} />;
+      return (
+        <div className="space-y-4">
+          <PatientAccessGrantsPanel patientId={summary.id} />
+          <PatientAuditLogPanel patientId={summary.id} />
+        </div>
+      );
     case "personal":
       return <PersonalInfoSection summary={summary} />;
     default:

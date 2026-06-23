@@ -20,7 +20,7 @@ Protected endpoint groups:
 
 Phase 84H2 protected patient list/search and patient detail reads. Phase 84H3 protected patient create, update, and soft deactivation. All current patient-record controller groups now have endpoint-level authorization and audit logging.
 
-No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the first internal-admin access grant list/create/revoke workflow.
+Phase 88 adds the first internal-admin access grant list/create/revoke workflow. Phase 94 adds a strict read-only AuditLog review endpoint and a patient-scoped admin review UI.
 
 ## 2. Controller and endpoint inventory
 
@@ -42,6 +42,7 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 | `PatientsController` | Patient update | Protected with authorization + audit | Uses `EditPatientProfile` and `AuditResourceTypes.PatientProfile`. Contact-specific split is deferred. |
 | `PatientsController` | Patient delete/deactivate | Protected with authorization + audit | Uses `DeactivatePatient` and `AuditResourceTypes.PatientProfile`. Endpoint remains soft deactivation. |
 | `PatientAccessGrantsController` | Patient access grant list/detail/create/revoke | Protected with authorization + audit | Uses grant-management permissions and `AuditResourceTypes.PatientAccessGrant`. Internal-admin only by product profile. |
+| `AuditLogController` | Audit log review | Protected with authorization + audit | Uses `ViewAuditLog` and `AuditResourceTypes.AuditLog`. Read-only, bounded, and internal-admin/compliance scoped. |
 
 ## 3. Protected endpoint coverage
 
@@ -60,6 +61,7 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 | Patient directory/profile reads | Yes | `ViewPatientDirectory`, `ViewPatientProfile` | Yes | Yes | `PatientProfile` | Yes |
 | Patient profile writes | Yes | `CreatePatient`, `EditPatientProfile`, `DeactivatePatient` | Yes | Yes | `PatientProfile` | Yes |
 | Patient access grants | Yes | `ViewPatientAccessGrants`, `CreatePatientAccessGrant`, `RevokePatientAccessGrant` | Yes | Yes | `PatientAccessGrant` | Yes |
+| Audit log review | Yes | `ViewAuditLog` | Yes | Yes | `AuditLog` | Yes |
 
 ## 4. Permission catalog consistency findings
 
@@ -88,6 +90,7 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 
 - Protected endpoints use `View`, `Create`, `Update`, `Delete`, and `AccessDenied` consistently with the endpoint action.
 - Grant lifecycle endpoints use `GrantAccess` and `RevokeAccess` for create/revoke operations and `AccessDenied` for denied attempts.
+- Audit review uses `View` for successful review and `AccessDenied` for denied review, with `AuditResourceTypes.AuditLog`.
 - Audit resource types match endpoint domains: document, paraclinical result, condition, allergy, medication, care plan item, reminder, measurement, patient summary, and timeline event.
 - Patient id is included where available. Record-scoped routes resolve patient id before authorization when needed.
 - Resource id is included for single-record actions when available. List endpoints correctly leave resource id empty.
@@ -103,7 +106,7 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 - Patient profile create/update/deactivate endpoints are protected as of Phase 84H3. Directory DTO minimization and grant-scoped filtering remain future work.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
 - Sensitivity and visibility filtering can be improved for mixed list endpoints and timeline events.
-- AuditLog read/admin/reporting endpoints are not implemented. If exposed later, they must be strictly admin-only and audited.
+- AuditLog review is implemented as a strict read-only admin/compliance surface. Full reporting, exports, integrity controls, and SIEM integration remain future work.
 - Audit volume management is not implemented for frequent successful reads.
 - Future medical-history modules such as surgery, hospitalization, vaccination, family history, and social history are not implemented.
 - Security smoke test planning and a local smoke script exist as of Phase 86; broader E2E automation remains future work.
@@ -113,7 +116,7 @@ No AuditLog read/admin endpoints are currently implemented. Phase 88 adds the fi
 1. Complete production JWT/service identity configuration and replace development/header fallback before production use. See [Production auth and JWT strategy](production-auth-jwt-strategy.md).
 2. Extend PatientAccessGrant workflows with public consent/sharing, emergency access policy, and service account lifecycle management.
 3. Apply grant-scoped directory filtering.
-4. Add strict admin-only AuditLog read/reporting endpoints only when operationally needed.
+4. Extend AuditLog review into strict reporting/export workflows only with redaction, retention, and integrity controls.
 5. Implement partial Patient Summary filtering/redaction so product-specific roles do not receive unauthorized section data.
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
 7. Add audit volume controls for frequent successful reads while always auditing denied access.
