@@ -108,11 +108,11 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Backup policy | Partially addressed: Phase 93 adds a backup/restore/data-safety runbook and local PostgreSQL backup script. | Requires infrastructure/operator action before production: automated encrypted backups, schedule, storage location, RPO/RTO targets, and backup access policy. |
-| Restore process | Partially addressed: Phase 93 adds a cautious local PostgreSQL restore script and restore validation checklist. | Required before production use: restore drill evidence in staging/production-like environment and documented operator procedure. |
+| Backup policy | Partially addressed: Phase 93 adds a backup/restore/data-safety runbook and local PostgreSQL backup script. Phase 93B ran a local Docker PostgreSQL backup drill and produced a non-empty ignored dump file. | Requires infrastructure/operator action before production: automated encrypted backups, schedule, storage location, RPO/RTO targets, and backup access policy. |
+| Restore process | Partially addressed: Phase 93 adds a cautious local PostgreSQL restore script and restore validation checklist. Phase 93B restored the local backup into a temporary test database, verified table metadata, and dropped the temporary database. | Required before production use: repeated restore drill evidence in staging/production-like environment and documented operator procedure. |
 | Audit backup | Partially addressed: AuditLog is included in PostgreSQL backup scope. | Requires legal/regulatory review: audit retention duration, tamper-resistance/integrity expectations, and access rules. |
 | Uploaded documents | Not complete: current scripts cover PostgreSQL only. | Required before production use if binary document storage exists: object/file storage backup, encryption, retention, and restore order between metadata and files. |
-| Restore evidence | Not yet available from a live drill. | Required before production and Ministry readiness: documented restore test with operator, timestamp, backup file, duration, validation checks, and issues found. |
+| Restore evidence | Partially available: Phase 93B records local/dev drill evidence in the backup/restore runbook. | Required before production and Ministry readiness: periodic restore tests with operator, timestamp, backup file, duration, validation checks, issues found, and production-like environment evidence. |
 
 ## 12. Monitoring and Alerting
 

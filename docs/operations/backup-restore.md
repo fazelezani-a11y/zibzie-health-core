@@ -180,6 +180,34 @@ Record:
 - issues found
 - decision: usable / not usable
 
+## Local Drill Status
+
+Latest local drill:
+
+| Field | Result |
+| --- | --- |
+| Date | 2026-06-23 |
+| Environment | Local Windows development workspace with Docker PostgreSQL container `zibzie-healthcore-db` |
+| Backup command | `.\scripts\backup-postgres.ps1` |
+| Backup result | Succeeded |
+| Backup output | `backups/postgres/zibzie_healthcore-20260623-181950.dump` |
+| Backup size | 75,371 bytes |
+| Git handling | Backup path is ignored by `.gitignore` through `backups/` |
+| Restore target | Temporary database `zibzie_healthcore_restore_drill_20260623_181950` |
+| Restore command | `.\scripts\restore-postgres.ps1 -BackupFile ".\backups\postgres\zibzie_healthcore-20260623-181950.dump" -DatabaseName "zibzie_healthcore_restore_drill_20260623_181950" -Force` |
+| Restore result | Succeeded |
+| Restore verification | Metadata-only check confirmed 16 public tables and key security tables including `AdminUsers`, `AuditLogEntries`, and `PatientAccessGrants` |
+| Cleanup | Temporary restore database was dropped and verified absent |
+| Sensitive data handling | No row data was inspected or printed |
+
+Limitations:
+
+- This was a local/dev drill, not production evidence.
+- It validates PostgreSQL backup/restore mechanics only.
+- It does not validate uploaded document binary storage restore.
+- It does not validate encrypted/offsite backups.
+- It does not replace periodic staging/production-like restore drills.
+
 ## Uploaded Medical Documents and File Storage
 
 The current backup scripts only back up PostgreSQL.
