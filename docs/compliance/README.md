@@ -72,6 +72,7 @@ This index groups the current Health Core security and compliance documentation 
 ## Release Readiness
 
 - [Health Core release candidate review](../release/health-core-release-candidate-review.md)
+- [Production blockers prioritization](../release/production-blockers-prioritization.md)
 
 ## Operations and Data Safety
 
@@ -87,6 +88,7 @@ restore evidence still require operational setup.
 The strongest remaining readiness work is:
 
 - treat the current Health Core baseline as internally release-candidate ready with production blockers, as summarized in the release candidate review
+- address P0 production blockers in the order defined by the production blockers prioritization roadmap
 - complete production JWT/service identity adoption and retire development fallback before production
 - continue fallback-off rollout and admin auth/session hardening
 - run and automate fallback-off verification for the admin JWT/session/proxy path

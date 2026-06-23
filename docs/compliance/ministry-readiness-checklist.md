@@ -196,6 +196,9 @@ Phase 96 release-candidate verdict:
 
 See [Health Core release candidate review](../release/health-core-release-candidate-review.md).
 
+Phase 97 prioritizes production and Ministry-readiness blockers in
+[Production blockers prioritization](../release/production-blockers-prioritization.md).
+
 Health Core has a strong internal readiness foundation:
 
 - centralized access model

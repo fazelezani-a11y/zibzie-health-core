@@ -222,6 +222,8 @@ Recommended next work after closing the Health Core internal baseline:
 6. Define formal legal/privacy/retention policies.
 7. Prepare Ministry/PGSB/SHAMS evidence package only after official requirements are reviewed.
 
+Phase 97 prioritizes these blockers in [Production blockers prioritization](production-blockers-prioritization.md).
+
 ## Final Verdict
 
 **Internal Release Candidate Ready with Production Blockers**
