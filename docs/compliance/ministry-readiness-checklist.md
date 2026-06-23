@@ -71,7 +71,16 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Data minimization | Partially ready: documented; some DTOs preserve existing shape for compatibility. | Required before production use: minimize list/search/profile output and review national code/contact/address exposure. |
 | Encryption at rest | Not implemented in app code. | Requires infrastructure/operator action: database/storage encryption, backup encryption, key management. |
 
-## 7. Transport Security
+## 7. API Contract Readiness
+
+| Area | Current readiness | Remaining requirements |
+| --- | --- | --- |
+| Internal/admin contracts | Partially ready: current Health Core endpoints are protected, audited, and documented for admin/care-team use. | Required before external review: signed-off OpenAPI grouping and contract examples. |
+| Product integration contracts | Partially ready: product code, product role, permission, and PatientAccessGrant concepts exist. | Required before production use by product backends: service identity lifecycle, grant-scoped directory filtering, and product-specific DTO review. |
+| Public/consumer contracts | Not ready for direct exposure: current DTOs are admin/care-team oriented and include sensitive identity/contact/clinical fields. | Required before public consumer use: patient/family auth, ownership/guardian model, consumer-safe DTOs, redaction/minimization, consent workflow, and legal/privacy review. |
+| API versioning | Not implemented. | Required before stable public or partner contracts: versioning strategy and OpenAPI grouping by audience. |
+
+## 8. Transport Security
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -79,7 +88,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | PGSB/GSB/SHAMS connectivity | Not implemented. | Required before Ministry / PGSB / SHAMS connection: official network path, VPN/IP allowlisting or approved gateway connectivity, routing/firewall review, connectivity test evidence. |
 | CORS/cookie domain | Partially ready: same-origin Next proxy reduces browser exposure. | Required before production use: final deployment CORS and cookie-domain review. |
 
-## 8. Production Fallback Safety
+## 9. Production Fallback Safety
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -87,7 +96,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Bootstrap admin | Implemented now: Production startup validation rejects bootstrap. | Required before production use: staff provisioning path that does not rely on bootstrap credentials. |
 | JWT config | Implemented now: Production startup validation requires issuer/audience/lifetime/signing-key safety. | Requires infrastructure/operator action: secrets supplied by environment/secret store, not repository. |
 
-## 9. Admin Authentication and Session Controls
+## 10. Admin Authentication and Session Controls
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -96,7 +105,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Login abuse protection | Implemented now: process-local throttle. | Required before production use: distributed rate limiting/lockout or reverse-proxy/WAF rate limiting. |
 | Logout | Implemented now: clears cookie; 401 clears cookie. | Required before production use: user-facing session expiry handling and monitoring. |
 
-## 10. CSRF and Cookie-Backed Route Hardening
+## 11. CSRF and Cookie-Backed Route Hardening
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -104,7 +113,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | CSRF token | Not implemented. | Required before public exposure if same-origin guard is not sufficient: formal CSRF token or equivalent anti-forgery mechanism. |
 | Security headers | Implemented now: no-store and basic browser security headers. | Required before production use: CSP/HSTS decision after frontend asset/deployment review. |
 
-## 11. Data Backup and Restore Readiness
+## 12. Data Backup and Restore Readiness
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -114,7 +123,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Uploaded documents | Not complete: current scripts cover PostgreSQL only. | Required before production use if binary document storage exists: object/file storage backup, encryption, retention, and restore order between metadata and files. |
 | Restore evidence | Partially available: Phase 93B records local/dev drill evidence in the backup/restore runbook. | Required before production and Ministry readiness: periodic restore tests with operator, timestamp, backup file, duration, validation checks, issues found, and production-like environment evidence. |
 
-## 12. Monitoring and Alerting
+## 13. Monitoring and Alerting
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -122,24 +131,25 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Operational logs | Basic app logging exists. | Requires infrastructure/operator action: centralized logging, retention, redaction rules, alert routing. |
 | Health checks | Basic `/health` exists. | Required before production use: readiness/liveness probes, database dependency checks if appropriate, synthetic auth smoke. |
 
-## 13. Incident Response
+## 14. Incident Response
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
 | Incident response process | Not implemented in app code. | Requires infrastructure/operator action and legal/regulatory review: severity model, notification path, audit preservation, breach review, contact list. |
 | Evidence preservation | Partially ready through AuditLog. | Required before production use: define who can access audit logs and how exports are controlled. |
 
-## 14. Documentation Required for External Review
+## 15. Documentation Required for External Review
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
 | Security architecture | Implemented now in docs. | Required before external review: update with final deployment topology and data-flow diagrams. |
 | Endpoint coverage | Implemented now in endpoint matrix and coverage audit. | Required before external review: signed-off endpoint inventory and test evidence. |
+| API contract readiness | Partially documented now. | Required before consumer or partner exposure: approved audience-specific contracts, DTO redaction rules, OpenAPI examples, and versioning decision. |
 | Access model | Implemented now in permission/profile/grant docs. | Required before external review: role-to-persona mapping approved by product/legal owners. |
 | Audit model | Implemented now with protected audit review tooling. | Required before external review: audit retention/access policy, sample report, reviewer procedure, and evidence that review access is restricted. |
 | PGSB/SHAMS integration package | Not implemented. | Required before Ministry / PGSB / SHAMS connection: official forms, technical certificate evidence, network readiness proof, NDA/security commitments if applicable, integration test plan. |
 
-## 15. Environment Separation
+## 16. Environment Separation
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -147,7 +157,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Staging | Not fully defined. | Required before production use: fallback off by default, production-like JWT, seeded test data only, smoke automation. |
 | Production | Production validation exists. | Required before production use: secrets, TLS, database, backup, monitoring, incident response, legal approvals. |
 
-## 16. Secret Management and Key Rotation
+## 17. Secret Management and Key Rotation
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -155,7 +165,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | JWT keys | Validation exists. | Required before Ministry / PGSB / SHAMS connection: issuer/key management approved for integration path. |
 | Service secrets | Not implemented. | Required before service-to-service production: service-account credential lifecycle and rotation. |
 
-## 17. Legal / Privacy / Retention
+## 18. Legal / Privacy / Retention
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
@@ -163,7 +173,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | Retention/deletion | Soft deactivation preferred. | Requires legal/regulatory review: retention periods, correction policy, deletion policy, backup retention. |
 | Data exchange | Not implemented. | Requires legal/regulatory review: data sharing agreements, patient consent/authorization, external exchange contracts. |
 
-## 18. Operator Responsibilities Outside Code
+## 19. Operator Responsibilities Outside Code
 
 Operators must own:
 
@@ -178,7 +188,7 @@ Operators must own:
 - legal/privacy review evidence
 - external certification or Ministry checklist submission
 
-## 19. Current Readiness Summary
+## 20. Current Readiness Summary
 
 Health Core has a strong internal readiness foundation:
 
@@ -188,6 +198,7 @@ Health Core has a strong internal readiness foundation:
 - admin JWT/session path
 - production fallback safety
 - same-origin mutation guard and security headers
+- internal API contract inventory and consumer-contract gap analysis
 - compliance documentation
 
 Health Core is not ready for real Ministry / PGSB / SHAMS connection until:
@@ -197,5 +208,6 @@ Health Core is not ready for real Ministry / PGSB / SHAMS connection until:
 - legal/privacy/retention policies are approved
 - infrastructure/network/security evidence is prepared
 - backup/restore and monitoring are operational
+- consumer-safe contracts and ownership/guardian models are designed before public exposure
 - integration-specific schemas, contracts, and testing are defined
 - any required technical certification process is completed

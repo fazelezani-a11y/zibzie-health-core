@@ -64,6 +64,11 @@ This index groups the current Health Core security and compliance documentation 
 - [PGSB / GSB / SHAMS readiness notes](pgsb-shams-readiness-notes.md)
 - [Privacy and data handling principles](privacy-data-handling-principles.md)
 
+## API Contract Readiness
+
+- [Health Core API contract readiness](../api/health-core-api-contract-readiness.md)
+- [Future consumer app contract gaps](../api/future-consumer-app-contract-gaps.md)
+
 ## Operations and Data Safety
 
 - [Backup / restore / data safety runbook](../operations/backup-restore.md)
@@ -82,6 +87,7 @@ The strongest remaining readiness work is:
 - run and automate fallback-off verification for the admin JWT/session/proxy path
 - define and pilot service-to-service auth for product backends without reusing admin tokens
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
+- define consumer-safe API contracts before any Family Health Record / Family Health Badge implementation
 - add grant-scoped patient directory filtering
 - implement production backup automation, encryption, monitoring, restore drills, retention policy, and incident response evidence
 - add centralized monitoring/alerting around audit anomalies, failed login bursts, denied access spikes, backup failures, and uptime

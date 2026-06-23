@@ -106,6 +106,7 @@ Phase 88 adds the first internal-admin access grant list/create/revoke workflow.
 - Patient profile create/update/deactivate endpoints are protected as of Phase 84H3. Directory DTO minimization and grant-scoped filtering remain future work.
 - Patient summary uses all-or-nothing authorization. Section-level filtering/redaction is intentionally deferred.
 - Sensitivity and visibility filtering can be improved for mixed list endpoints and timeline events.
+- Current contracts are admin/care-team oriented. Future consumer/family apps need separate consumer-safe DTOs, ownership/guardian semantics, and API versioning before public exposure.
 - AuditLog review is implemented as a strict read-only admin/compliance surface. Full reporting, exports, integrity controls, and SIEM integration remain future work.
 - Audit volume management is not implemented for frequent successful reads.
 - Future medical-history modules such as surgery, hospitalization, vaccination, family history, and social history are not implemented.
@@ -119,9 +120,10 @@ Phase 88 adds the first internal-admin access grant list/create/revoke workflow.
 4. Extend AuditLog review into strict reporting/export workflows only with redaction, retention, and integrity controls.
 5. Implement partial Patient Summary filtering/redaction so product-specific roles do not receive unauthorized section data.
 6. Strengthen sensitivity and visibility filtering for list endpoints and timeline views.
-7. Add audit volume controls for frequent successful reads while always auditing denied access.
-8. Apply the same authorization/audit pattern to future medical-history modules.
-9. Expand security smoke tests and end-to-end tests for protected endpoint groups.
+7. Define consumer-safe API contracts before any family/patient-facing product integration.
+8. Add audit volume controls for frequent successful reads while always auditing denied access.
+9. Apply the same authorization/audit pattern to future medical-history modules.
+10. Expand security smoke tests and end-to-end tests for protected endpoint groups.
 
 ## 9. Recommended next phase
 
