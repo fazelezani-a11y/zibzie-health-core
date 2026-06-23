@@ -147,6 +147,7 @@ legal, privacy, network, infrastructure, and operator requirements.
 | API contract readiness | Partially documented now. | Required before consumer or partner exposure: approved audience-specific contracts, DTO redaction rules, OpenAPI examples, and versioning decision. |
 | Access model | Implemented now in permission/profile/grant docs. | Required before external review: role-to-persona mapping approved by product/legal owners. |
 | Audit model | Implemented now with protected audit review tooling. | Required before external review: audit retention/access policy, sample report, reviewer procedure, and evidence that review access is restricted. |
+| Legal/privacy/retention baseline | Documented in Phase 100. | Required before production or external review: formal legal/privacy approval, final retention periods, approved consent/sharing model, export/correction/deletion procedures, and operator responsibilities. |
 | PGSB/SHAMS integration package | Not implemented. | Required before Ministry / PGSB / SHAMS connection: official forms, technical certificate evidence, network readiness proof, NDA/security commitments if applicable, integration test plan. |
 
 ## 16. Environment Separation
@@ -169,8 +170,8 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Privacy principles | Documented. | Requires legal/regulatory review: privacy notice, data subject rights, patient consent model, lawful basis. |
-| Retention/deletion | Soft deactivation preferred. | Requires legal/regulatory review: retention periods, correction policy, deletion policy, backup retention. |
+| Privacy principles | Documented; Phase 100 adds a conservative legal/privacy/retention baseline and data classification. | Requires legal/regulatory review: privacy notice, data subject rights, patient consent model, lawful basis, disclosure rules. |
+| Retention/deletion | Soft deactivation preferred; Phase 100 documents deactivation vs deletion considerations and suggested retention categories. | Requires legal/regulatory review: final retention periods, correction policy, deletion policy, backup retention, audit retention. |
 | Data exchange | Not implemented. | Requires legal/regulatory review: data sharing agreements, patient consent/authorization, external exchange contracts. |
 
 ## 19. Operator Responsibilities Outside Code
@@ -206,6 +207,11 @@ Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling.
 Phase 99B records successful local fallback-off JWT smoke without recording
 passwords, JWTs, secret values, patient ids, or patient data. Real staging and
 production execution evidence remains required before production use.
+
+Phase 100 documents a legal/privacy/retention baseline in
+[Legal / privacy / retention baseline](legal-privacy-retention-baseline.md).
+Formal legal/privacy approval remains a production and Ministry-readiness
+blocker.
 
 Health Core has a strong internal readiness foundation:
 

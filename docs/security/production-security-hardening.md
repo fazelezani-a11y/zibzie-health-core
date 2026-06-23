@@ -107,7 +107,7 @@ Still required before real production:
 - production secret management and signing-key rotation
 - monitoring/alerting for authentication and audit anomalies
 - production backup automation, encryption, monitoring, and restore validation evidence
-- legal/privacy review
+- legal/privacy/retention review and approval
 - deployment-level HTTPS, CORS, proxy, and cookie-domain hardening
 - WAF/reverse-proxy rate limiting
 - service-token issuer/lifecycle and central identity integration
@@ -163,6 +163,10 @@ restore evidence remain operational requirements.
 
 Environment and secret handling expectations are documented in
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
+
+Legal, privacy, and retention expectations are documented in
+[Legal / privacy / retention baseline](../compliance/legal-privacy-retention-baseline.md).
+This is a baseline only; formal approval remains required before production.
 
 For Ministry / PGSB / SHAMS readiness framing, see
 [Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)

@@ -44,6 +44,7 @@ Health Core currently provides:
 - backup/restore runbook and local PostgreSQL drill evidence
 - Ministry/PGSB/SHAMS readiness checklist
 - API contract readiness notes for future product integration
+- legal/privacy/retention baseline documentation
 
 ## Verification Results
 
@@ -138,7 +139,7 @@ Blocking before Ministry / PGSB / SHAMS readiness:
 - no real PGSB/GSB/SHAMS integration exists
 - no certification or approval claim exists
 - production identity and service-account lifecycle must be finalized
-- legal/privacy/retention policies must be approved
+- legal/privacy/retention baseline exists, but formal policies must be approved
 - infrastructure/network/security evidence must be prepared
 - backup/restore and monitoring must be operational with evidence
 - integration-specific schemas, contracts, routing, firewall, and connectivity tests must be defined
@@ -192,7 +193,7 @@ Health Core should not be used with real production health data until these are 
 - production DB hardening
 - encrypted offsite backup and restore evidence
 - document/file storage backup plan
-- legal/privacy/retention approval
+- formal legal/privacy/retention approval
 - deployment hardening and operational evidence
 
 ## Ministry / PGSB / SHAMS Blockers
@@ -219,12 +220,13 @@ Recommended next work after closing the Health Core internal baseline:
 3. Produce deployment-specific security and backup evidence.
 4. Decide production identity and service-token lifecycle.
 5. Draft consumer-safe DTOs and ownership/guardian model before starting the Family Health Record / Badge app.
-6. Define formal legal/privacy/retention policies.
+6. Obtain formal legal/privacy/retention approval for the Phase 100 baseline and convert it into operating policy.
 7. Prepare Ministry/PGSB/SHAMS evidence package only after official requirements are reviewed.
 
 Phase 97 prioritizes these blockers in [Production blockers prioritization](production-blockers-prioritization.md).
 Phase 98 documents environment and secret handling in [Production environment and secrets](../operations/production-environment-and-secrets.md).
 Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling. Phase 99B records successful local fallback-off JWT smoke against `http://localhost:5230` without recording secrets, tokens, or patient data; real staging and production execution evidence is still required before production use.
+Phase 100 documents the legal/privacy/retention baseline; formal approval remains required before production use.
 
 ## Final Verdict
 

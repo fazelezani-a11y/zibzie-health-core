@@ -21,7 +21,7 @@ staging and production environments and evidence is recorded.
 
 Health Core is internally release-candidate ready for the admin/care-team baseline, but it should not handle real production health data until the P0 blockers below are addressed. Ministry / PGSB / SHAMS readiness requires additional P2 work and external review. Consumer app design can begin in parallel only as contract/product design, not public exposure of current Health Core endpoints.
 
-Recommended next blocker to tackle:
+Original Phase 97 next blocker:
 
 **Phase 98: Production Environment and Secrets Readiness**
 
@@ -31,6 +31,15 @@ Why this should be next:
 - it is required before staging/prod-like smoke is meaningful
 - it does not require new product features
 - it reduces risk before any real data or external product integration
+
+Current status after Phase 100:
+
+- Phase 98 environment/secrets readiness is documented; operational secret-store and key-rotation evidence remains required.
+- Phase 99B local fallback-off JWT smoke passed; real staging and production smoke evidence remains required.
+- Phase 100 legal/privacy/retention baseline is documented; formal legal/privacy approval remains required.
+
+Next P0 work should focus on real staging/production fallback-off evidence,
+formal legal/privacy approval, and production backup/offsite/restore operations.
 
 ## 2. Priority Categories
 
@@ -47,7 +56,7 @@ Why this should be next:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Secret management and JWT key rotation | Token signing keys or DB credentials could leak, be reused, or become unrotatable. | Production auth cannot be trusted without controlled secrets and rotation. | Phase 98: Production environment and secrets readiness documented; evidence still required | Infra / config / operator / docs | Deployment target decision, secret store choice | No, design can proceed | Yes | Yes |
 | Fallback-off staging/prod-like smoke evidence | Protected endpoints might still rely on dev/header fallback. | Production must prove JWT/session/proxy flow works with fallback disabled. | Phase 99B: local fallback-off JWT smoke passed; real staging and production run evidence still required | Config / scripts / operator / docs | Phase 98 secrets/config baseline | No | Yes | Yes |
-| Legal/privacy/retention baseline | Health data handling may lack approved lawful basis, retention, deletion, and disclosure rules. | Compliance posture cannot be claimed without legal/privacy approval. | Phase 100: Legal/privacy/retention baseline package | Legal / compliance / docs | Product policy owner and jurisdiction review | Yes, for real product launch | Yes | Yes |
+| Legal/privacy/retention approval | Health data handling needs approved lawful basis, retention, deletion, disclosure, and staff/operator rules. | Compliance posture cannot be claimed without legal/privacy approval. | Phase 100: baseline documented; formal approval still required | Legal / compliance / operator / docs | Product policy owner and jurisdiction review | Yes, for real product launch | Yes | Yes |
 | Production backup/offsite/restore policy | Data loss or untested restore could make Health Core unsafe for real health records. | Local drill exists, but production needs automated encrypted backup and restore evidence. | Phase 101: Production backup and restore operations | Infra / operator / docs / scripts | Secret/encryption key strategy, storage location | No | Yes | Yes |
 | Admin/staff lifecycle basics | Orphaned admin accounts, weak onboarding/offboarding, and no reset path create account risk. | Internal admin access is powerful and must be operationally controlled. | Phase 102: Admin staff lifecycle and MFA decision | Backend / frontend / legal / operator / docs | Identity policy decision, email/SMS/IdP direction | No | Yes | Yes |
 | Production deployment hardening | TLS, CORS, proxy headers, cookie domain, DB security, and environment separation may be inconsistent. | Security controls depend on final deployment topology. | Phase 98 or Phase 103: Deployment hardening checklist | Infra / config / operator / docs | Hosting target | No | Yes | Yes |
@@ -93,13 +102,16 @@ Why this should be next:
    - status: documented in Phase 98; operational evidence still required
 
 2. **Phase 99: Fallback-Off Staging Smoke and Release Gate**
+   - status: local fallback-off JWT smoke passed in Phase 99B
    - run backend/frontend path with fallback disabled
    - verify admin login, httpOnly cookie, server-side fetches, proxy calls, grant endpoints, audit review
+   - repeat in real staging and production environments
    - capture smoke evidence and make it a release gate
 
 3. **Phase 100: Legal / Privacy / Retention Baseline Package**
-   - define data categories, retention/deletion/correction policy, admin access policy, audit access policy
-   - decide what requires legal/regulatory review before production
+   - status: baseline documented
+   - defines data categories, sensitivity, minimum necessary access, deactivation/deletion considerations, export/correction considerations, backup privacy, and audit-retention gaps
+   - formal legal/privacy approval remains required before production
 
 4. **Phase 101: Production Backup and Restore Operations**
    - define encrypted offsite backup target

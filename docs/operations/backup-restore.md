@@ -279,7 +279,9 @@ Production frequency should be decided by:
 
 ## Retention Recommendations
 
-Retention must be reviewed legally before production.
+Retention must be reviewed legally before production. Phase 100 documents the
+baseline categories and open legal/privacy questions in
+[Legal / privacy / retention baseline](../compliance/legal-privacy-retention-baseline.md).
 
 Planning model:
 

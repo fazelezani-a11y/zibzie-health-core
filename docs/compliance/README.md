@@ -63,6 +63,7 @@ This index groups the current Health Core security and compliance documentation 
 - [Ministry / PGSB / SHAMS readiness checklist](ministry-readiness-checklist.md)
 - [PGSB / GSB / SHAMS readiness notes](pgsb-shams-readiness-notes.md)
 - [Privacy and data handling principles](privacy-data-handling-principles.md)
+- [Legal / privacy / retention baseline](legal-privacy-retention-baseline.md)
 
 ## API Contract Readiness
 
@@ -95,6 +96,7 @@ The strongest remaining readiness work is:
 - complete production JWT/service identity adoption and retire development fallback before production
 - continue fallback-off rollout and admin auth/session hardening
 - repeat and automate the Phase 99B fallback-off JWT smoke in real staging and production environments
+- complete formal legal/privacy review using the Phase 100 legal/privacy/retention baseline
 - define and pilot service-to-service auth for product backends without reusing admin tokens
 - extend PatientAccessGrant workflows with consent/sharing and emergency-access policy
 - define consumer-safe API contracts before any Family Health Record / Family Health Badge implementation
