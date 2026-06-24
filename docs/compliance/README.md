@@ -78,13 +78,15 @@ This index groups the current Health Core security and compliance documentation 
 ## Operations and Data Safety
 
 - [Backup / restore / data safety runbook](../operations/backup-restore.md)
+- [Production backup / offsite / restore plan](../operations/production-backup-offsite-restore-plan.md)
 - [Production environment and secrets](../operations/production-environment-and-secrets.md)
 - [Environment example](../operations/env.example.md)
 
 Phase 93 adds local PostgreSQL backup/restore scripts and a data-safety runbook.
-This documents restore validation and backup handling expectations, but
-production backup automation, encryption, monitoring, retention approval, and
-restore evidence still require operational setup.
+Phase 93B records a local restore drill. Phase 101 adds a production
+backup/offsite/restore plan. Production backup automation, encryption, offsite
+storage, monitoring, retention approval, and restore evidence still require
+operational setup.
 
 ## Operational Next Steps
 

@@ -42,6 +42,7 @@ Health Core currently provides:
 - HealthCoreAuthorizationService
 - ProductAccessProfiles and permission catalog
 - backup/restore runbook and local PostgreSQL drill evidence
+- production backup/offsite/restore plan
 - Ministry/PGSB/SHAMS readiness checklist
 - API contract readiness notes for future product integration
 - legal/privacy/retention baseline documentation
@@ -227,6 +228,9 @@ Phase 97 prioritizes these blockers in [Production blockers prioritization](prod
 Phase 98 documents environment and secret handling in [Production environment and secrets](../operations/production-environment-and-secrets.md).
 Phase 99 strengthens and syntax-checks fallback-off smoke evidence tooling. Phase 99B records successful local fallback-off JWT smoke against `http://localhost:5230` without recording secrets, tokens, or patient data; real staging and production execution evidence is still required before production use.
 Phase 100 documents the legal/privacy/retention baseline; formal approval remains required before production use.
+Phase 101 documents the production backup/offsite/restore plan; scheduled
+encrypted offsite backups, monitoring, and production-like restore evidence
+remain required before production use.
 
 ## Final Verdict
 

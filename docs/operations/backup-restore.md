@@ -8,6 +8,10 @@ This runbook provides a local/development PostgreSQL backup and restore
 foundation for the current Docker setup. It is not a complete production backup
 system.
 
+Production backup, offsite storage, encryption, monitoring, retention, and
+restore-drill requirements are planned in
+[Production backup / offsite / restore plan](production-backup-offsite-restore-plan.md).
+
 ## Purpose
 
 Backup/restore readiness supports:
@@ -207,6 +211,7 @@ Limitations:
 - It does not validate uploaded document binary storage restore.
 - It does not validate encrypted/offsite backups.
 - It does not replace periodic staging/production-like restore drills.
+- It does not close the production backup/offsite/restore blocker.
 
 ## Release Candidate Status
 
@@ -217,6 +222,10 @@ documented and drilled.
 Backup/restore remains a production blocker until automated encrypted backups,
 offsite storage, monitoring, retention approval, document/file storage backup,
 and repeated production-like restore evidence are in place.
+
+Phase 101 adds a production backup/offsite/restore plan. It documents the target
+production posture but does not implement scheduled backups, encrypted offsite
+storage, or production restore evidence.
 
 Production backup encryption keys and restore credentials must be handled through
 the same secret-management process described in
@@ -342,5 +351,6 @@ Still required before production:
 
 - [Compliance documentation index](../compliance/README.md)
 - [Ministry / PGSB / SHAMS readiness checklist](../compliance/ministry-readiness-checklist.md)
+- [Production backup / offsite / restore plan](production-backup-offsite-restore-plan.md)
 - [Production security hardening](../security/production-security-hardening.md)
 - [Final production readiness checklist](../security/final-production-readiness-checklist.md)

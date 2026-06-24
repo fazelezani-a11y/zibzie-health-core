@@ -57,7 +57,7 @@ formal legal/privacy approval, and production backup/offsite/restore operations.
 | Secret management and JWT key rotation | Token signing keys or DB credentials could leak, be reused, or become unrotatable. | Production auth cannot be trusted without controlled secrets and rotation. | Phase 98: Production environment and secrets readiness documented; evidence still required | Infra / config / operator / docs | Deployment target decision, secret store choice | No, design can proceed | Yes | Yes |
 | Fallback-off staging/prod-like smoke evidence | Protected endpoints might still rely on dev/header fallback. | Production must prove JWT/session/proxy flow works with fallback disabled. | Phase 99B: local fallback-off JWT smoke passed; real staging and production run evidence still required | Config / scripts / operator / docs | Phase 98 secrets/config baseline | No | Yes | Yes |
 | Legal/privacy/retention approval | Health data handling needs approved lawful basis, retention, deletion, disclosure, and staff/operator rules. | Compliance posture cannot be claimed without legal/privacy approval. | Phase 100: baseline documented; formal approval still required | Legal / compliance / operator / docs | Product policy owner and jurisdiction review | Yes, for real product launch | Yes | Yes |
-| Production backup/offsite/restore policy | Data loss or untested restore could make Health Core unsafe for real health records. | Local drill exists, but production needs automated encrypted backup and restore evidence. | Phase 101: Production backup and restore operations | Infra / operator / docs / scripts | Secret/encryption key strategy, storage location | No | Yes | Yes |
+| Production backup/offsite/restore operations | Data loss or untested restore could make Health Core unsafe for real health records. | Local drill exists, but production needs automated encrypted backup and restore evidence. | Phase 101: plan documented; scheduled encrypted offsite backups and production-like restore evidence still required | Infra / operator / docs / scripts | Secret/encryption key strategy, storage location | No | Yes | Yes |
 | Admin/staff lifecycle basics | Orphaned admin accounts, weak onboarding/offboarding, and no reset path create account risk. | Internal admin access is powerful and must be operationally controlled. | Phase 102: Admin staff lifecycle and MFA decision | Backend / frontend / legal / operator / docs | Identity policy decision, email/SMS/IdP direction | No | Yes | Yes |
 | Production deployment hardening | TLS, CORS, proxy headers, cookie domain, DB security, and environment separation may be inconsistent. | Security controls depend on final deployment topology. | Phase 98 or Phase 103: Deployment hardening checklist | Infra / config / operator / docs | Hosting target | No | Yes | Yes |
 
@@ -114,11 +114,13 @@ formal legal/privacy approval, and production backup/offsite/restore operations.
    - formal legal/privacy approval remains required before production
 
 4. **Phase 101: Production Backup and Restore Operations**
+   - status: production backup/offsite/restore plan documented
    - define encrypted offsite backup target
    - schedule backups
    - monitor failures
    - perform staging/production-like restore drill
    - include uploaded document storage plan
+   - operational implementation and evidence remain required
 
 5. **Phase 104: Monitoring, Alerting, and Incident Response**
    - centralize logs

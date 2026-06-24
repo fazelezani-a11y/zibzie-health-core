@@ -161,6 +161,11 @@ local PostgreSQL backup/restore scripts for development and restore drills, but
 production backup scheduling, encryption, monitoring, retention approval, and
 restore evidence remain operational requirements.
 
+Phase 101 documents the production backup/offsite/restore plan in
+[Production backup / offsite / restore plan](../operations/production-backup-offsite-restore-plan.md).
+It is a plan only; encrypted offsite backup implementation and production-like
+restore evidence remain required.
+
 Environment and secret handling expectations are documented in
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
 

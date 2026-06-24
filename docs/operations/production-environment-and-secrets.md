@@ -251,13 +251,19 @@ execution and documentation.
 | Monitoring/alerting configured | Yes before real data | Alert test |
 | Incident response owner defined | Yes before real data | Runbook |
 
+Production backup/offsite/restore planning is documented in
+[Production backup / offsite / restore plan](production-backup-offsite-restore-plan.md).
+Backup encryption keys, restore credentials, storage credentials, and monitoring
+tokens must be supplied through the same approved secret-management path as
+other production secrets.
+
 ## Remaining Production Gaps
 
 - production secret store selection and operator process
 - JWT key rotation drill
 - fallback-off staging smoke evidence
 - production database hardening evidence
-- production backup encryption/offsite/restore drill
+- production backup encryption/offsite/restore drill and evidence
 - monitoring/alerting
 - incident response runbook
 - staff access lifecycle
