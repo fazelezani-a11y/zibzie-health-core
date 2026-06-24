@@ -65,8 +65,8 @@ formal legal/privacy approval, and production backup/offsite/restore operations.
 
 | Blocker | Risk | Why it matters | Recommended next phase | Implementation type | Dependencies | Blocks consumer app planning | Blocks production | Blocks Ministry readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Centralized monitoring and alerting | Failed login spikes, denied access anomalies, backup failures, and downtime may go unnoticed. | Production health systems need operational detection and response. | Phase 104: Monitoring and alerting foundation | Infra / operator / docs | Production logging target, alert channels | No | Yes for broader pilot | Yes |
-| Incident response runbook | Security or data incidents may be handled inconsistently. | Audit, notification, evidence preservation, and escalation need a documented process. | Phase 105: Incident response runbook | Operator / legal / docs | Monitoring signals, staff roles | No | Yes for broader pilot | Yes |
+| Centralized monitoring and alerting | Failed login spikes, denied access anomalies, backup failures, and downtime may go unnoticed. | Production health systems need operational detection and response. | Phase 102: runbook baseline documented; monitoring implementation still pending | Infra / operator / docs | Production logging target, alert channels | No | Yes for broader pilot | Yes |
+| Incident response runbook | Security or data incidents may be handled inconsistently. | Audit, notification, evidence preservation, and escalation need a documented process. | Phase 102: runbook baseline documented; approval/exercises still pending | Operator / legal / docs | Monitoring signals, staff roles | No | Yes for broader pilot | Yes |
 | Persistent rate limiting / WAF / reverse proxy controls | Current login throttle is process-local and not enough for multi-instance production. | Public/staging exposure needs durable abuse protection. | Phase 106: Edge protection and distributed throttling | Infra / backend / config | Deployment topology, WAF/proxy choice | No | Yes for broader pilot | Yes |
 | Service-account lifecycle | Product services might use unmanaged or over-broad identities. | Service-to-service access needs issuance, rotation, disable/revoke, owner tracking. | Phase 107: Service-account lifecycle foundation | Backend / infra / docs | Phase 98 secret strategy, first product integration target | Yes for product integration planning | Yes if services call Health Core | Yes |
 | Grant-scoped patient directory filtering | Product roles could discover patients outside assigned grants if directory is exposed. | Directory/search can leak patient existence. | Phase 108: Grant-scoped directory filtering | Backend / tests / docs | Product/role decisions, PatientAccessGrant policy | Yes for consumer/public planning | Yes for external users | Yes |
@@ -123,9 +123,11 @@ formal legal/privacy approval, and production backup/offsite/restore operations.
    - operational implementation and evidence remain required
 
 5. **Phase 104: Monitoring, Alerting, and Incident Response**
+   - status: Phase 102 runbook baseline documented
    - centralize logs
    - alert on failed login bursts, denied access spikes, audit write failures, backup failures
-   - create incident response runbook and contact/escalation path
+   - approve incident response contact/escalation path
+   - implement alert delivery and production evidence
 
 ## 8. What Can Stay Backlog While Starting Consumer App Design
 

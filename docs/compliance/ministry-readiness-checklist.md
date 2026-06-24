@@ -127,16 +127,16 @@ legal, privacy, network, infrastructure, and operator requirements.
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Audit data | Implemented now with human review capability for protected audit events. | Required before production use: dashboards/alerts for denied access, failed login bursts, audit write failures, grant changes, unexpected fallback attempts. |
-| Operational logs | Basic app logging exists. | Requires infrastructure/operator action: centralized logging, retention, redaction rules, alert routing. |
-| Health checks | Basic `/health` exists. | Required before production use: readiness/liveness probes, database dependency checks if appropriate, synthetic auth smoke. |
+| Audit data | Implemented now with human review capability for protected audit events. Phase 102 documents alert categories and audit-review response procedures. | Required before production use: dashboards/alerts for denied access, failed login bursts, audit write failures, grant changes, unexpected fallback attempts. |
+| Operational logs | Basic app logging exists. Phase 102 documents evidence-preservation expectations. | Requires infrastructure/operator action: centralized logging, retention, redaction rules, alert routing. |
+| Health checks | Basic `/health` exists. Phase 102 documents uptime/dependency monitoring requirements. | Required before production use: readiness/liveness probes, database dependency checks if appropriate, synthetic auth smoke. |
 
 ## 14. Incident Response
 
 | Area | Current readiness | Remaining requirements |
 | --- | --- | --- |
-| Incident response process | Not implemented in app code. | Requires infrastructure/operator action and legal/regulatory review: severity model, notification path, audit preservation, breach review, contact list. |
-| Evidence preservation | Partially ready through AuditLog. | Required before production use: define who can access audit logs and how exports are controlled. |
+| Incident response process | Documented baseline in Phase 102. | Requires infrastructure/operator action and legal/regulatory review: approved notification path, on-call/contact list, alert integration, breach review, and exercises. |
+| Evidence preservation | Partially ready through AuditLog; Phase 102 documents evidence-preservation rules and incident record template. | Required before production use: define who can access audit logs, how exports are controlled, and how evidence is retained. |
 
 ## 15. Documentation Required for External Review
 
@@ -217,6 +217,12 @@ Phase 101 documents the production backup/offsite/restore plan in
 [Production backup / offsite / restore plan](../operations/production-backup-offsite-restore-plan.md).
 Encrypted offsite backups, monitoring, final retention policy, and
 production-like restore evidence remain blockers.
+
+Phase 102 documents the monitoring and incident response baseline in
+[Monitoring / incident response runbook](../operations/monitoring-incident-response-runbook.md).
+Centralized logs, alert delivery, on-call ownership, SIEM/log retention,
+production monitoring evidence, and legal/privacy incident procedures remain
+blockers.
 
 Health Core has a strong internal readiness foundation:
 

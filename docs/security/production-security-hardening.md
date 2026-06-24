@@ -166,6 +166,11 @@ Phase 101 documents the production backup/offsite/restore plan in
 It is a plan only; encrypted offsite backup implementation and production-like
 restore evidence remain required.
 
+Phase 102 documents monitoring and incident response in
+[Monitoring / incident response runbook](../operations/monitoring-incident-response-runbook.md).
+It is a runbook baseline only; centralized logs, alerts, on-call ownership, and
+production incident exercises remain required.
+
 Environment and secret handling expectations are documented in
 [Production environment and secrets](../operations/production-environment-and-secrets.md).
 

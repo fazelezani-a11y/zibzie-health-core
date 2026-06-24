@@ -79,6 +79,7 @@ This index groups the current Health Core security and compliance documentation 
 
 - [Backup / restore / data safety runbook](../operations/backup-restore.md)
 - [Production backup / offsite / restore plan](../operations/production-backup-offsite-restore-plan.md)
+- [Monitoring / incident response runbook](../operations/monitoring-incident-response-runbook.md)
 - [Production environment and secrets](../operations/production-environment-and-secrets.md)
 - [Environment example](../operations/env.example.md)
 
@@ -87,6 +88,10 @@ Phase 93B records a local restore drill. Phase 101 adds a production
 backup/offsite/restore plan. Production backup automation, encryption, offsite
 storage, monitoring, retention approval, and restore evidence still require
 operational setup.
+
+Phase 102 adds a monitoring and incident response runbook. Centralized logs,
+alert delivery, on-call ownership, SIEM/log retention, and production monitoring
+evidence still require operational setup.
 
 ## Operational Next Steps
 

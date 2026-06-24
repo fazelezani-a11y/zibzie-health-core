@@ -204,6 +204,9 @@ Minimum evidence:
 - incident response path for backup failures
 - backup job logs with no secrets or patient row data
 
+Backup failure response is documented in
+[Monitoring / incident response runbook](monitoring-incident-response-runbook.md).
+
 ## Restore Drill Schedule
 
 Suggested schedule until formal policy is approved:
@@ -343,4 +346,3 @@ This document does not claim:
 - uploaded document/file backup is complete
 - retention/legal approval is complete
 - Ministry / PGSB / SHAMS readiness or certification is complete
-

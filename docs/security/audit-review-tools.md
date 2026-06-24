@@ -99,6 +99,11 @@ Audit review is itself audited:
 
 Phase 94 adds human review capability, not full production observability.
 
+Phase 102 documents the monitoring and incident response baseline in
+[Monitoring / incident response runbook](../operations/monitoring-incident-response-runbook.md).
+The runbook defines alert categories, severity levels, evidence preservation,
+and audit-review procedures, but does not implement centralized logs or alerts.
+
 Remaining gaps include:
 
 - centralized application and infrastructure logs
@@ -108,6 +113,6 @@ Remaining gaps include:
 - alerting on backup failures
 - audit anomaly detection
 - uptime and dependency monitoring
-- incident response runbook
+- approved incident response contacts, exercises, and alert integration
 - SIEM/log retention policy
 - tamper-resistance and audit integrity controls

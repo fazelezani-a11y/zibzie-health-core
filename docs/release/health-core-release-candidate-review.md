@@ -43,6 +43,7 @@ Health Core currently provides:
 - ProductAccessProfiles and permission catalog
 - backup/restore runbook and local PostgreSQL drill evidence
 - production backup/offsite/restore plan
+- monitoring and incident response runbook
 - Ministry/PGSB/SHAMS readiness checklist
 - API contract readiness notes for future product integration
 - legal/privacy/retention baseline documentation
@@ -190,7 +191,7 @@ Health Core should not be used with real production health data until these are 
 - staff onboarding/offboarding and admin credential lifecycle
 - persistent rate limiting/lockout or WAF/reverse-proxy equivalent
 - monitoring and alerting
-- incident response runbook
+- incident response approval, exercises, and alert integration
 - production DB hardening
 - encrypted offsite backup and restore evidence
 - document/file storage backup plan
@@ -231,6 +232,9 @@ Phase 100 documents the legal/privacy/retention baseline; formal approval remain
 Phase 101 documents the production backup/offsite/restore plan; scheduled
 encrypted offsite backups, monitoring, and production-like restore evidence
 remain required before production use.
+Phase 102 documents the monitoring and incident response runbook; centralized
+logs, alert delivery, on-call ownership, legal/privacy incident procedures, and
+production evidence remain required before production use.
 
 ## Final Verdict
 
