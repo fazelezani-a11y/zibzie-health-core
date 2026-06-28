@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import {
   createCarePlanItem,
   getPatientCarePlan,
   type CarePlanItem,
   type CreateCarePlanItemPayload,
 } from "@/lib/api";
+import { formatDateTime, formatNumberPersian } from "@/lib/format";
 import {
   carePlanCategoryOptions as categoryOptions,
   carePlanItemTypeOptions as itemTypeOptions,
@@ -18,6 +20,7 @@ import {
   sensitivityLevelOptions,
   sourceTypeOptions,
   verificationStatusOptions,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 
@@ -86,36 +89,12 @@ const filterDefinitions = [
   ...advancedFilterDefinitions,
 ];
 
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
 function formatCount(value: number) {
-  return new Intl.NumberFormat("fa-IR").format(value);
+  return formatNumberPersian(value);
 }
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value) {
-    return "ثبت نشده";
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value);
 }
 
 function Field({
@@ -579,16 +558,16 @@ function CarePlanCreateForm({
           onChange={(value) => updateForm("assignedTo", value)}
           value={form.assignedTo}
         />
-        <TextInput
+        <PersianDateInput
           label="زمان برنامه‌ریزی‌شده"
+          mode="datetime"
           onChange={(value) => updateForm("plannedAt", value)}
-          type="datetime-local"
           value={form.plannedAt}
         />
-        <TextInput
+        <PersianDateInput
           label="موعد انجام"
+          mode="datetime"
           onChange={(value) => updateForm("dueAt", value)}
-          type="datetime-local"
           value={form.dueAt}
         />
         <SelectInput

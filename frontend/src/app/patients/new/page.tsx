@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import AdminSessionBar from "@/components/AdminSessionBar";
+import PersianDateInput from "@/components/PersianDateInput";
 import { createPatient, type CreatePatientInput } from "@/lib/api";
+import {
+  bloodTypeOptions,
+  genderOptions,
+  maritalStatusOptions,
+  selectPlaceholder,
+  type HealthOption,
+} from "@/lib/health-options";
 
 const emptyForm: CreatePatientInput = {
   firstName: "",
@@ -83,6 +91,39 @@ function TextAreaField({
         onChange={(event) => onChange(name, event.target.value)}
         value={value}
       />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  name,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  name: keyof CreatePatientInput;
+  value: string;
+  options: HealthOption[];
+  onChange: (name: keyof CreatePatientInput, value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+      <span>{label}</span>
+      <select
+        className="h-11 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+        name={name}
+        onChange={(event) => onChange(name, event.target.value)}
+        value={value}
+      >
+        <option value="">{selectPlaceholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -171,11 +212,9 @@ export default function NewPatientPage() {
             required
             value={form.lastName}
           />
-          <TextField
+          <PersianDateInput
             label="تاریخ تولد"
-            name="birthDate"
-            onChange={updateField}
-            type="date"
+            onChange={(value) => updateField("birthDate", value)}
             value={form.birthDate}
           />
           <TextField
@@ -184,24 +223,25 @@ export default function NewPatientPage() {
             onChange={updateField}
             value={form.nationalCode}
           />
-          <TextField
+          <SelectField
             label="جنسیت"
             name="gender"
             onChange={updateField}
-            placeholder="مثلا مرد یا زن"
+            options={genderOptions}
             value={form.gender}
           />
-          <TextField
+          <SelectField
             label="گروه خونی"
             name="bloodType"
             onChange={updateField}
-            placeholder="مثلا O+"
+            options={bloodTypeOptions}
             value={form.bloodType}
           />
-          <TextField
+          <SelectField
             label="وضعیت تاهل"
             name="maritalStatus"
             onChange={updateField}
+            options={maritalStatusOptions}
             value={form.maritalStatus}
           />
           <TextField

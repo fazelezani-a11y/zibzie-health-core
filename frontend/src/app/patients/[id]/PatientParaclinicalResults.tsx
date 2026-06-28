@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import SharedNotice from "@/components/ui/Notice";
 import {
   createParaclinicalResult,
@@ -13,11 +14,17 @@ import {
   type ParaclinicalResult,
 } from "@/lib/api";
 import {
+  formatBooleanPersian,
+  formatDateTime,
+  formatNumberPersian,
+} from "@/lib/format";
+import {
   paraclinicalResultTypeOptions as resultTypeOptions,
   selectPlaceholder,
   sensitivityLevelOptions,
   sourceTypeOptions,
   verificationStatusOptions,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 
@@ -58,40 +65,12 @@ const abnormalOptions = [
   { label: "خیر", value: "false" },
 ];
 
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
 function formatBoolean(value: boolean | null) {
-  if (value === null) {
-    return "ثبت نشده";
-  }
-
-  return value ? "بله" : "خیر";
+  return formatBooleanPersian(value);
 }
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value, "");
 }
 
 function hasFilledLabItem(item: CreateLabResultItemPayload) {
@@ -334,7 +313,7 @@ function ParaclinicalResultCard({ result }: { result: ParaclinicalResult }) {
             >
               {showLabItems
                 ? "بستن آیتم‌های آزمایش"
-                : `مشاهده آیتم‌های آزمایش (${new Intl.NumberFormat("fa-IR").format(
+                : `مشاهده آیتم‌های آزمایش (${formatNumberPersian(
                     result.labItems.length,
                   )})`}
             </button>
@@ -610,16 +589,14 @@ function ParaclinicalResultCreateForm({
           required
           value={form.title}
         />
-        <TextInput
+        <PersianDateInput
           label="تاریخ انجام"
           onChange={(value) => updateForm("performedAt", value)}
-          type="date"
           value={form.performedAt}
         />
-        <TextInput
+        <PersianDateInput
           label="تاریخ نتیجه"
           onChange={(value) => updateForm("resultDate", value)}
-          type="date"
           value={form.resultDate}
         />
         <TextInput

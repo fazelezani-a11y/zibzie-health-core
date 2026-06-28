@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import {
   createAllergy,
   createCondition,
@@ -25,6 +26,7 @@ import {
   sensitivityLevelOptions,
   sourceTypeOptions,
   verificationStatusOptions,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 import PatientDocuments from "./PatientDocuments";
@@ -107,11 +109,7 @@ const tabs: Array<{
 ];
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value) {
-    return "ثبت نشده";
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value);
 }
 
 function formatMissing(value: string | number | null | undefined) {
@@ -551,11 +549,9 @@ export function MedicationCreateForm({ patientId }: { patientId: string }) {
           options={medicationRouteOptions}
           value={form.route}
         />
-        <TextField<CreateMedicationInput>
+        <PersianDateInput
           label="تاریخ شروع"
-          name="startDate"
-          onChange={updateField}
-          type="date"
+          onChange={(value) => updateField("startDate", value)}
           value={form.startDate}
         />
       </div>

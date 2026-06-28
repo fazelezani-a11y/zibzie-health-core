@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import Notice from "@/components/ui/Notice";
 import {
   ApiError,
@@ -11,6 +12,13 @@ import {
   type PatientAccessGrant,
 } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
+import {
+  accessGrantReasonOptions,
+  accessScopeOptions,
+  getHealthOptionLabel,
+  productCodeOptions,
+  productRoleOptions,
+} from "@/lib/health-options";
 
 type RecipientType = "service" | "user";
 
@@ -562,7 +570,7 @@ export default function PatientAccessGrantsPanel({
           </div>
 
           <button
-            className="inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex h-10 min-w-36 shrink-0 items-center justify-center whitespace-nowrap rounded-md bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
             onClick={() => {
               setIsCreateOpen((current) => !current);
               setActionErrorMessage(null);
@@ -711,17 +719,12 @@ export default function PatientAccessGrantsPanel({
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                <span>پایان اعتبار</span>
-                <input
-                  className="h-10 rounded-md border border-slate-200 bg-white px-3 text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-100"
-                  onChange={(event) =>
-                    updateCreateForm("validUntil", event.target.value)
-                  }
-                  type="datetime-local"
-                  value={createForm.validUntil}
-                />
-              </label>
+              <PersianDateInput
+                label="پایان اعتبار"
+                mode="datetime"
+                onChange={(value) => updateCreateForm("validUntil", value)}
+                value={createForm.validUntil}
+              />
 
               <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
                 <span>یادداشت</span>
@@ -781,7 +784,8 @@ export default function PatientAccessGrantsPanel({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="break-words text-base font-bold text-slate-950">
-                    {grant.productCode} / {grant.productRole}
+                    {getHealthOptionLabel(productCodeOptions, grant.productCode)} /{" "}
+                    {getHealthOptionLabel(productRoleOptions, grant.productRole)}
                   </h3>
                   <span
                     className={`rounded-md px-2.5 py-1 text-xs font-semibold ${status.className}`}
@@ -806,8 +810,14 @@ export default function PatientAccessGrantsPanel({
             </div>
 
             <dl className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              <GrantMeta label="دامنه" value={grant.scope} />
-              <GrantMeta label="دلیل" value={grant.reason} />
+              <GrantMeta
+                label="دامنه"
+                value={getHealthOptionLabel(accessScopeOptions, grant.scope)}
+              />
+              <GrantMeta
+                label="دلیل"
+                value={getHealthOptionLabel(accessGrantReasonOptions, grant.reason)}
+              />
               <GrantMeta label="شروع اعتبار" value={formatDateTime(grant.validFrom)} />
               <GrantMeta label="پایان اعتبار" value={formatGrantDate(grant.validUntil)} />
               <GrantMeta label="زمان اعطا" value={formatDateTime(grant.grantedAt)} />

@@ -7,6 +7,7 @@ import Badge from "@/components/ui/Badge";
 import FormField from "@/components/ui/FormField";
 import MetaItem from "@/components/ui/MetaItem";
 import Notice from "@/components/ui/Notice";
+import PersianDateInput from "@/components/PersianDateInput";
 import SectionHeader from "@/components/ui/SectionHeader";
 import {
   createPatientDocument,
@@ -14,13 +15,14 @@ import {
   type CreatePatientDocumentPayload,
   type PatientDocument,
 } from "@/lib/api";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatFileSizePersian } from "@/lib/format";
 import {
   documentTypeOptions,
   selectPlaceholder,
   sensitivityLevelOptions,
   sourceTypeOptions,
   verificationStatusOptions,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 
@@ -128,31 +130,7 @@ function FormNotice({
 }
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
-}
-
-function formatFileSize(value: number | null) {
-  if (value === null) {
-    return null;
-  }
-
-  if (value >= 1024 * 1024) {
-    return `${new Intl.NumberFormat("fa-IR", {
-      maximumFractionDigits: 1,
-    }).format(value / (1024 * 1024))} MB`;
-  }
-
-  if (value >= 1024) {
-    return `${new Intl.NumberFormat("fa-IR", {
-      maximumFractionDigits: 1,
-    }).format(value / 1024)} KB`;
-  }
-
-  return `${new Intl.NumberFormat("fa-IR").format(value)} B`;
+  return getHealthOptionLabel(options, value, "");
 }
 
 function PatientDocumentCard({ document }: { document: PatientDocument }) {
@@ -173,7 +151,7 @@ function PatientDocumentCard({ document }: { document: PatientDocument }) {
     sensitivityLevelOptions,
     document.sensitivityLevel,
   );
-  const fileSize = formatFileSize(document.fileSizeBytes);
+  const fileSize = formatFileSizePersian(document.fileSizeBytes);
   const secondaryParts = [
     documentDate ? `تاریخ: ${documentDate}` : null,
     document.issuerName ? `مرکز: ${document.issuerName}` : null,
@@ -357,10 +335,9 @@ function PatientDocumentCreateForm({
           required
           value={form.title}
         />
-        <TextInput
+        <PersianDateInput
           label="تاریخ مدرک"
           onChange={(value) => updateForm("documentDate", value)}
-          type="date"
           value={form.documentDate}
         />
         <TextInput

@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import Badge from "@/components/ui/Badge";
 import Notice from "@/components/ui/Notice";
 import {
@@ -10,6 +11,8 @@ import {
   type CreateTimelineEventPayload,
   type TimelineEvent,
 } from "@/lib/api";
+import { formatDateTime as formatPersianDateTime } from "@/lib/format";
+import { getHealthOptionLabel } from "@/lib/health-options";
 
 const emptyForm: CreateTimelineEventPayload = {
   eventType: "Note",
@@ -106,23 +109,7 @@ const timelineFilters = [...primaryTimelineFilters, ...advancedTimelineFilters];
 const timelineRefreshEventName = "zibzie:timeline-refresh";
 
 function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "ثبت نشده";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return formatPersianDateTime(value) ?? "ثبت نشده";
 }
 
 function formatMissing(value: string | null | undefined) {
@@ -130,11 +117,7 @@ function formatMissing(value: string | null | undefined) {
 }
 
 function getOptionLabel(options: TimelineOption[], value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "ثبت نشده";
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value);
 }
 
 function eventMatchesText(event: TimelineEvent, values: string[]) {
@@ -241,14 +224,22 @@ function SelectField({
 function MetaItem({
   label,
   value,
+  isTechnical = false,
 }: {
   label: string;
   value: string | null | undefined;
+  isTechnical?: boolean;
 }) {
+  const hasTechnicalValue = isTechnical && Boolean(value?.trim());
+
   return (
     <div className="rounded-md bg-slate-50 px-3 py-2">
       <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-1 break-all text-sm font-semibold text-slate-800">
+      <dd
+        className="mt-1 break-all text-sm font-semibold text-slate-800"
+        dir={hasTechnicalValue ? "ltr" : undefined}
+        style={hasTechnicalValue ? { unicodeBidi: "plaintext" } : undefined}
+      >
         {formatMissing(value)}
       </dd>
     </div>
@@ -318,7 +309,11 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
               label="نوع رکورد مرتبط"
               value={hasRelatedRecord ? relatedRecordLabel : null}
             />
-            <MetaItem label="شناسه رکورد مرتبط" value={event.relatedRecordId} />
+            <MetaItem
+              label="شناسه رکورد مرتبط"
+              value={event.relatedRecordId}
+              isTechnical
+            />
             <MetaItem
               label="منبع"
               value={getOptionLabel(sourceTypeOptions, event.sourceType)}
@@ -428,14 +423,12 @@ function TimelineCreateForm({
             value={form.title}
           />
         </Field>
-        <Field label="زمان وقوع">
-          <input
-            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-            onChange={(event) => updateForm("occurredAt", event.target.value)}
-            type="datetime-local"
-            value={form.occurredAt}
-          />
-        </Field>
+        <PersianDateInput
+          label="زمان وقوع"
+          mode="datetime"
+          onChange={(value) => updateForm("occurredAt", value)}
+          value={form.occurredAt}
+        />
         <SelectField
           label="منبع"
           onChange={(value) => updateForm("sourceType", value)}

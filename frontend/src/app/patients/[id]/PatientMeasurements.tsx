@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import Badge from "@/components/ui/Badge";
 import Notice from "@/components/ui/Notice";
 import {
@@ -11,6 +12,11 @@ import {
   type CreatePatientMeasurementPayload,
   type PatientMeasurement,
 } from "@/lib/api";
+import {
+  formatBooleanPersian,
+  formatDateTime,
+  formatNumberPersian,
+} from "@/lib/format";
 import {
   defaultPriorityMeasurementTypes,
   labMeasurementTypes,
@@ -21,6 +27,7 @@ import {
   selectPlaceholder,
   sensitivityLevelOptions,
   vitalSignMeasurementTypes,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 
@@ -85,38 +92,14 @@ const measurementFilters = [
   ...advancedMeasurementFilters,
 ];
 
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
 function formatNumber(value: number) {
-  return new Intl.NumberFormat("fa-IR", {
+  return formatNumberPersian(value, {
     maximumFractionDigits: 3,
-  }).format(value);
+  });
 }
 
 function formatBoolean(value: boolean | null) {
-  if (value === null) {
-    return "ثبت نشده";
-  }
-
-  return value ? "بله" : "خیر";
+  return formatBooleanPersian(value);
 }
 
 function valueWithUnit(measurement: PatientMeasurement) {
@@ -124,11 +107,7 @@ function valueWithUnit(measurement: PatientMeasurement) {
 }
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "ثبت نشده";
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value);
 }
 
 function getMeasurementTypeLabel(value: string, displayName?: string | null) {
@@ -851,10 +830,10 @@ function MeasurementCreateForm({
           required
           value={form.unit}
         />
-        <TextInput
+        <PersianDateInput
           label="زمان اندازه‌گیری"
+          mode="datetime"
           onChange={(value) => updateForm("measuredAt", value)}
-          type="datetime-local"
           value={form.measuredAt}
         />
         <TextInput

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PersianDateInput from "@/components/PersianDateInput";
 import Badge from "@/components/ui/Badge";
 import FormField from "@/components/ui/FormField";
 import MetaItem from "@/components/ui/MetaItem";
@@ -13,7 +14,7 @@ import {
   type CreatePatientReminderPayload,
   type PatientReminder,
 } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatNumberPersian } from "@/lib/format";
 import {
   audienceOptions,
   channelOptions,
@@ -23,6 +24,7 @@ import {
   selectPlaceholder,
   sensitivityLevelOptions,
   sourceTypeOptions,
+  getHealthOptionLabel,
   type HealthOption,
 } from "@/lib/health-options";
 
@@ -87,15 +89,11 @@ const relatedRecordTypeLabels: HealthOption[] = [
 ];
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("fa-IR").format(value);
+  return formatNumberPersian(value);
 }
 
 function getOptionLabel(options: HealthOption[], value: string | null | undefined) {
-  if (!value?.trim()) {
-    return "ثبت نشده";
-  }
-
-  return options.find((option) => option.value === value)?.label ?? value;
+  return getHealthOptionLabel(options, value);
 }
 
 function parseDate(value: string | null | undefined) {
@@ -553,11 +551,11 @@ function ReminderCreateForm({
           required
           value={form.title}
         />
-        <TextInput
+        <PersianDateInput
           label="زمان سررسید"
+          mode="datetime"
           onChange={(value) => updateForm("dueAt", value)}
           required
-          type="datetime-local"
           value={form.dueAt}
         />
         <SelectInput
