@@ -72,6 +72,7 @@ This index groups the current Health Core security and compliance documentation 
 
 ## Release Readiness
 
+- [Health Core final closure review](../release/health-core-final-closure-review.md)
 - [Health Core release candidate review](../release/health-core-release-candidate-review.md)
 - [Production blockers prioritization](../release/production-blockers-prioritization.md)
 
@@ -97,7 +98,7 @@ evidence still require operational setup.
 
 The strongest remaining readiness work is:
 
-- treat the current Health Core baseline as internally release-candidate ready with production blockers, as summarized in the release candidate review
+- treat the current Health Core baseline as internally closed with production blockers, as summarized in the final closure review
 - address P0 production blockers in the order defined by the production blockers prioritization roadmap
 - complete production environment/secrets readiness with real secret-store evidence and JWT key rotation procedure
 - complete production JWT/service identity adoption and retire development fallback before production
