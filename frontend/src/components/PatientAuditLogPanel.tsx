@@ -9,7 +9,16 @@ import {
   type AuditLogEntry,
   type AuditLogQueryResponse,
 } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatNumberPersian } from "@/lib/format";
+import {
+  accessScopeOptions,
+  auditActionTypeOptions,
+  auditResourceTypeOptions,
+  getHealthOptionLabel,
+  productCodeOptions,
+  productRoleOptions,
+  type HealthOption,
+} from "@/lib/health-options";
 
 type OutcomeFilter = "all" | "succeeded" | "failed";
 
@@ -19,13 +28,43 @@ function formatMissing(value: string | null | undefined) {
   return value && value.trim().length > 0 ? value : "ثبت نشده";
 }
 
+function TechnicalValue({ value }: { value: string | null | undefined }) {
+  if (!value?.trim()) {
+    return <>{formatMissing(value)}</>;
+  }
+
+  return (
+    <span className="font-mono" dir="ltr" style={{ unicodeBidi: "plaintext" }}>
+      {value}
+    </span>
+  );
+}
+
+function OptionLabel({
+  options,
+  value,
+}: {
+  options: HealthOption[];
+  value: string | null | undefined;
+}) {
+  return <>{getHealthOptionLabel(options, value)}</>;
+}
+
 function formatActor(entry: AuditLogEntry) {
   if (entry.userId) {
-    return `کاربر: ${entry.userId}`;
+    return (
+      <>
+        کاربر: <TechnicalValue value={entry.userId} />
+      </>
+    );
   }
 
   if (entry.serviceAccountId) {
-    return `سرویس: ${entry.serviceAccountId}`;
+    return (
+      <>
+        سرویس: <TechnicalValue value={entry.serviceAccountId} />
+      </>
+    );
   }
 
   return "عامل ثبت نشده";
@@ -59,7 +98,8 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={outcomeTone(entry)}>{outcomeLabel(entry)}</Badge>
             <span className="text-sm font-bold text-slate-950">
-              {entry.actionType} / {entry.resourceType}
+              <OptionLabel options={auditActionTypeOptions} value={entry.actionType} /> /{" "}
+              <OptionLabel options={auditResourceTypeOptions} value={entry.resourceType} />
             </span>
           </div>
           <p className="mt-2 text-xs leading-6 text-slate-500">
@@ -68,7 +108,8 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
           </p>
         </div>
         <div className="text-left text-xs font-medium text-slate-500">
-          {formatMissing(entry.httpMethod)} {formatMissing(entry.requestPath)}
+          <TechnicalValue value={entry.httpMethod} />{" "}
+          <TechnicalValue value={entry.requestPath} />
         </div>
       </div>
 
@@ -76,19 +117,21 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
         <div className="rounded-md bg-slate-50 p-3">
           <dt className="font-medium text-slate-500">محصول / نقش</dt>
           <dd className="mt-1 font-bold text-slate-800">
-            {formatMissing(entry.productCode)} / {formatMissing(entry.productRole)}
+            <OptionLabel options={productCodeOptions} value={entry.productCode} /> /{" "}
+            <OptionLabel options={productRoleOptions} value={entry.productRole} />
           </dd>
         </div>
         <div className="rounded-md bg-slate-50 p-3">
           <dt className="font-medium text-slate-500">مجوز</dt>
           <dd className="mt-1 font-bold text-slate-800">
-            {formatMissing(entry.permission)}
+            <TechnicalValue value={entry.permission} />
           </dd>
         </div>
         <div className="rounded-md bg-slate-50 p-3">
           <dt className="font-medium text-slate-500">دامنه / شناسه منبع</dt>
           <dd className="mt-1 break-all font-bold text-slate-800">
-            {formatMissing(entry.accessScope)} / {formatMissing(entry.resourceId)}
+            <OptionLabel options={accessScopeOptions} value={entry.accessScope} /> /{" "}
+            <TechnicalValue value={entry.resourceId} />
           </dd>
         </div>
       </dl>
@@ -101,7 +144,7 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
 
       {entry.correlationId ? (
         <p className="mt-3 break-all text-xs text-slate-500">
-          Correlation ID: {entry.correlationId}
+          Correlation ID: <TechnicalValue value={entry.correlationId} />
         </p>
       ) : null}
     </article>
@@ -216,7 +259,9 @@ export default function PatientAuditLogPanel({
       {data && data.totalCount > 0 ? (
         <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
           <span>
-            صفحه {data.page} از {Math.max(data.totalPages, 1)} · {data.totalCount} رخداد
+            صفحه {formatNumberPersian(data.page)} از{" "}
+            {formatNumberPersian(Math.max(data.totalPages, 1))} ·{" "}
+            {formatNumberPersian(data.totalCount)} رخداد
           </span>
           <div className="flex gap-2">
             <button

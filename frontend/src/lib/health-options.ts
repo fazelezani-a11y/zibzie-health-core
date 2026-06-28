@@ -3,7 +3,165 @@ export type HealthOption = {
   label: string;
 };
 
+const missingValueLabel = "ثبت نشده";
+
+function normalizeOptionValue(value: string) {
+  return value.trim().toLowerCase().replace(/[\s_-]/g, "");
+}
+
+export function getHealthOptionLabel(
+  options: HealthOption[],
+  value: string | null | undefined,
+  fallback = missingValueLabel,
+) {
+  if (!value?.trim()) {
+    return fallback;
+  }
+
+  const exactMatch = options.find((option) => option.value === value);
+
+  if (exactMatch) {
+    return exactMatch.label;
+  }
+
+  const normalizedValue = normalizeOptionValue(value);
+  const normalizedMatch = options.find(
+    (option) => normalizeOptionValue(option.value) === normalizedValue,
+  );
+
+  return normalizedMatch?.label ?? value;
+}
+
 export const selectPlaceholder = "انتخاب کنید";
+
+export const genderOptions: HealthOption[] = [
+  { value: "Male", label: "مرد" },
+  { value: "Female", label: "زن" },
+  { value: "Other", label: "سایر" },
+  { value: "Unknown", label: "نامشخص" },
+];
+
+export const bloodTypeOptions: HealthOption[] = [
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B+", label: "B+" },
+  { value: "B-", label: "B-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
+  { value: "Unknown", label: "نامشخص" },
+];
+
+export const maritalStatusOptions: HealthOption[] = [
+  { value: "Single", label: "مجرد" },
+  { value: "Married", label: "متاهل" },
+  { value: "Divorced", label: "طلاق‌گرفته" },
+  { value: "Widowed", label: "همسر فوت‌شده" },
+  { value: "Unknown", label: "نامشخص" },
+];
+
+export const patientStatusOptions: HealthOption[] = [
+  { value: "active", label: "فعال" },
+  { value: "inactive", label: "غیرفعال" },
+  { value: "true", label: "فعال" },
+  { value: "false", label: "غیرفعال" },
+];
+
+export const productCodeOptions: HealthOption[] = [
+  { value: "InternalAdmin", label: "ادمین داخلی" },
+  { value: "DigiCare", label: "دیجی‌مراقب" },
+  { value: "HomeVisit", label: "ویزیت در منزل" },
+  { value: "SecondOpinion", label: "نظر دوم" },
+  { value: "PersonalHealthRecord", label: "پرونده سلامت شخصی" },
+  { value: "ClinicQueue", label: "صف و نوبت مطب" },
+];
+
+export const productRoleOptions: HealthOption[] = [
+  { value: "SuperAdmin", label: "مدیر ارشد" },
+  { value: "HealthCoreAdmin", label: "ادمین Health Core" },
+  { value: "ReadOnlyAuditor", label: "بازبین فقط‌خواندنی" },
+  { value: "SupportOperator", label: "اپراتور پشتیبانی" },
+  { value: "DigiCareCaseManager", label: "مدیر پرونده دیجی‌مراقب" },
+  { value: "DigiCareCareTeamManager", label: "مدیر تیم مراقبت" },
+  { value: "DigiCareClinician", label: "درمانگر/پزشک دیجی‌مراقب" },
+  { value: "DigiCarePersonalDoctor", label: "پزشک شخصی" },
+  { value: "DigiCarePersonalCounselor", label: "مشاور شخصی" },
+  { value: "DigiCareNutritionSpecialist", label: "متخصص تغذیه" },
+  { value: "DigiCareExerciseSpecialist", label: "متخصص ورزش" },
+  { value: "DigiCareOperations", label: "عملیات دیجی‌مراقب" },
+  { value: "DigiCareTransportCoordinator", label: "هماهنگ‌کننده حمل‌ونقل" },
+  { value: "HomeVisitDoctor", label: "پزشک ویزیت در منزل" },
+  { value: "HomeVisitDispatcher", label: "دیسپچر ویزیت در منزل" },
+  { value: "HomeVisitPatient", label: "بیمار ویزیت در منزل" },
+  { value: "SecondOpinionCaseManager", label: "مدیر پرونده نظر دوم" },
+  { value: "SecondOpinionLeadSpecialist", label: "متخصص لیدر" },
+  { value: "SecondOpinionInvitedSpecialist", label: "متخصص دعوت‌شده" },
+  { value: "SecondOpinionPatient", label: "بیمار نظر دوم" },
+  { value: "PersonalHealthRecordOwner", label: "مالک پرونده شخصی" },
+  { value: "PersonalHealthRecordFamilyViewer", label: "عضو خانواده مجاز" },
+  { value: "PersonalHealthRecordSharedProvider", label: "ارائه‌دهنده مشترک" },
+  { value: "ClinicQueueReceptionist", label: "منشی/پذیرش مطب" },
+  { value: "ClinicQueueClinicAdmin", label: "مدیر کلینیک" },
+  { value: "ClinicQueuePatient", label: "بیمار صف مطب" },
+];
+
+export const accessScopeOptions: HealthOption[] = [
+  { value: "AllPatients", label: "همه بیماران" },
+  { value: "AssignedPatientsOnly", label: "فقط بیماران تخصیص‌یافته" },
+  { value: "OwnRecordOnly", label: "فقط پرونده خود فرد" },
+  { value: "FamilyAuthorizedRecords", label: "پرونده‌های مجاز خانواده" },
+  { value: "InvitedCasesOnly", label: "فقط پرونده‌های دعوت‌شده" },
+  { value: "OrganizationPatients", label: "بیماران سازمان/مرکز" },
+  { value: "TemporaryAccess", label: "دسترسی موقت" },
+  { value: "EmergencyAccess", label: "دسترسی اضطراری" },
+  { value: "CreatedByMe", label: "موارد ایجادشده توسط خود فرد" },
+];
+
+export const accessGrantReasonOptions: HealthOption[] = [
+  { value: "ActiveCare", label: "مراقبت فعال" },
+  { value: "SecondOpinion", label: "نظر دوم" },
+  { value: "HomeVisit", label: "ویزیت در منزل" },
+  { value: "PatientShared", label: "اشتراک‌گذاری توسط بیمار" },
+  { value: "Emergency", label: "شرایط اضطراری" },
+  { value: "CareTeamOperation", label: "عملیات تیم مراقبت" },
+  { value: "SystemAutomation", label: "اتوماسیون سیستمی" },
+];
+
+export const auditActionTypeOptions: HealthOption[] = [
+  { value: "View", label: "مشاهده" },
+  { value: "Create", label: "ایجاد" },
+  { value: "Update", label: "به‌روزرسانی" },
+  { value: "Delete", label: "حذف/غیرفعال‌سازی" },
+  { value: "Export", label: "خروجی گرفتن" },
+  { value: "Share", label: "اشتراک‌گذاری" },
+  { value: "Login", label: "ورود" },
+  { value: "Logout", label: "خروج" },
+  { value: "AccessDenied", label: "رد دسترسی" },
+  { value: "GrantAccess", label: "اعطای دسترسی" },
+  { value: "RevokeAccess", label: "لغو دسترسی" },
+  { value: "SystemAction", label: "اقدام سیستمی" },
+];
+
+export const auditResourceTypeOptions: HealthOption[] = [
+  { value: "PatientProfile", label: "پروفایل بیمار" },
+  { value: "MedicalHistory", label: "سوابق پزشکی" },
+  { value: "Condition", label: "بیماری/مشکل" },
+  { value: "Allergy", label: "حساسیت" },
+  { value: "Medication", label: "دارو" },
+  { value: "Document", label: "مدرک" },
+  { value: "ParaclinicalResult", label: "نتیجه پاراکلینیک" },
+  { value: "LabResultItem", label: "آیتم آزمایش" },
+  { value: "CarePlanItem", label: "پلن مراقبتی" },
+  { value: "Reminder", label: "یادآور" },
+  { value: "Measurement", label: "شاخص سلامت" },
+  { value: "TimelineEvent", label: "رویداد خط زمانی" },
+  { value: "PatientAccessGrant", label: "مجوز دسترسی بیمار" },
+  { value: "AuditLog", label: "گزارش امنیتی" },
+  { value: "ProductAccessProfile", label: "پروفایل دسترسی محصول" },
+  { value: "SecuritySettings", label: "تنظیمات امنیتی" },
+  { value: "PatientSummary", label: "خلاصه بیمار" },
+];
 
 export const sourceTypeOptions: HealthOption[] = [
   { value: "Manual", label: "دستی" },

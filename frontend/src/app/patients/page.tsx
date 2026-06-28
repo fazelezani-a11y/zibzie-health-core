@@ -3,21 +3,13 @@ import AdminAccessState from "@/components/AdminAccessState";
 import AdminSessionBar from "@/components/AdminSessionBar";
 import type { PatientListItem } from "@/lib/api";
 import { getPatientsServer, ServerApiError } from "@/lib/api/server-client";
+import { formatDate, formatNullable } from "@/lib/format";
+import { getHealthOptionLabel, patientStatusOptions } from "@/lib/health-options";
 
 export const dynamic = "force-dynamic";
 
 function formatBirthDate(value: string | null) {
-  if (!value) {
-    return "ثبت نشده";
-  }
-
-  const date = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("fa-IR").format(date);
+  return formatDate(value) ?? formatNullable(null);
 }
 
 function DetailRow({
@@ -30,12 +22,19 @@ function DetailRow({
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
       <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800">{value || "ثبت نشده"}</span>
+      <span className="font-medium text-slate-800">
+        {formatNullable(value)}
+      </span>
     </div>
   );
 }
 
 function PatientCard({ patient }: { patient: PatientListItem }) {
+  const statusLabel = getHealthOptionLabel(
+    patientStatusOptions,
+    String(patient.isActive),
+  );
+
   return (
     <Link
       className="block rounded-md border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
@@ -49,8 +48,14 @@ function PatientCard({ patient }: { patient: PatientListItem }) {
             </h2>
             <p className="mt-1 text-xs text-slate-500">پرونده سلامت بیمار</p>
           </div>
-          <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-            فعال
+          <span
+            className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+              patient.isActive
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {statusLabel}
           </span>
         </div>
 

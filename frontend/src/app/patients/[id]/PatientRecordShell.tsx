@@ -19,8 +19,24 @@ import {
   type PatientReminder,
   type PatientSummary,
 } from "@/lib/api";
-import { formatDate, formatDateTime, formatNullable } from "@/lib/format";
-import { defaultPriorityMeasurementTypes } from "@/lib/health-options";
+import {
+  formatDate,
+  formatDateTime,
+  formatNullable,
+  formatNumberPersian,
+} from "@/lib/format";
+import {
+  allergySeverityOptions,
+  allergyTypeOptions,
+  bloodTypeOptions,
+  carePlanStatusOptions,
+  conditionStatusOptions,
+  defaultPriorityMeasurementTypes,
+  genderOptions,
+  getHealthOptionLabel,
+  medicationRouteOptions,
+  reminderStatusOptions,
+} from "@/lib/health-options";
 import MedicalHistoryForms from "./MedicalHistoryForms";
 import PatientCarePlan from "./PatientCarePlan";
 import PatientMeasurements from "./PatientMeasurements";
@@ -144,13 +160,13 @@ function formatMissing(value: string | number | null | undefined) {
 }
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat("fa-IR").format(value);
+  return formatNumberPersian(value);
 }
 
 function formatNumber(value: number) {
-  return new Intl.NumberFormat("fa-IR", {
+  return formatNumberPersian(value, {
     maximumFractionDigits: 2,
-  }).format(value);
+  });
 }
 
 function formatMeasurementTargetRange(measurement: PatientMeasurement) {
@@ -163,6 +179,13 @@ function formatMeasurementTargetRange(measurement: PatientMeasurement) {
       ? formatNumber(measurement.targetMax)
       : "ثبت نشده"
   }`;
+}
+
+function formatOptionLabel(
+  options: Array<{ value: string; label: string }>,
+  value: string | null | undefined,
+) {
+  return getHealthOptionLabel(options, value);
 }
 
 function formatBirthDate(value: string | null | undefined) {
@@ -200,7 +223,7 @@ function calculateAge(value: string | null | undefined) {
     age -= 1;
   }
 
-  return age >= 0 ? new Intl.NumberFormat("fa-IR").format(age) : null;
+  return age >= 0 ? formatNumberPersian(age) : null;
 }
 
 function isTerminalCarePlanStatus(status: string) {
@@ -622,7 +645,8 @@ function OverviewSection({
       (item): SummaryItemWithDue => ({
         id: `care-plan-${item.id}`,
         title: item.title,
-        description: `سررسید: ${formatDateTime(item.dueAt) ?? "ثبت نشده"} · وضعیت: ${formatMissing(
+        description: `سررسید: ${formatDateTime(item.dueAt) ?? "ثبت نشده"} · وضعیت: ${formatOptionLabel(
+          carePlanStatusOptions,
           item.status,
         )}`,
         meta: "پلن مراقبتی",
@@ -635,7 +659,8 @@ function OverviewSection({
       (reminder): SummaryItemWithDue => ({
         id: `reminder-${reminder.id}`,
         title: reminder.title,
-        description: `سررسید: ${formatDateTime(reminder.dueAt) ?? "ثبت نشده"} · وضعیت: ${formatMissing(
+        description: `سررسید: ${formatDateTime(reminder.dueAt) ?? "ثبت نشده"} · وضعیت: ${formatOptionLabel(
+          reminderStatusOptions,
           reminder.status,
         )}`,
         meta: "یادآور",
@@ -694,8 +719,8 @@ function OverviewSection({
             </div>
             <p className="mt-2 text-sm leading-7 text-slate-600">
               {formatBirthDate(summary.birthDate)} · جنسیت:{" "}
-              {formatMissing(summary.gender)} · گروه خونی:{" "}
-              {formatMissing(summary.bloodType)}
+              {formatOptionLabel(genderOptions, summary.gender)} · گروه خونی:{" "}
+              {formatOptionLabel(bloodTypeOptions, summary.bloodType)}
             </p>
           </div>
           <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2 lg:min-w-80">
@@ -719,7 +744,10 @@ function OverviewSection({
           items={activeConditions.map((condition) => ({
             id: condition.id,
             title: condition.name,
-            description: `وضعیت: ${formatMissing(condition.status)}`,
+            description: `وضعیت: ${formatOptionLabel(
+              conditionStatusOptions,
+              condition.status,
+            )}`,
             meta:
               condition.startedYear !== null && condition.startedYear !== undefined
                 ? `شروع: ${condition.startedYear}`
@@ -734,8 +762,11 @@ function OverviewSection({
           items={importantAllergies.map((allergy) => ({
             id: allergy.id,
             title: allergy.allergen,
-            description: `نوع: ${formatMissing(allergy.allergyType)}`,
-            meta: allergy.severity,
+            description: `نوع: ${formatOptionLabel(
+              allergyTypeOptions,
+              allergy.allergyType,
+            )}`,
+            meta: formatOptionLabel(allergySeverityOptions, allergy.severity),
             targetSection: "medical-history",
             tone: allergy.severity === "Severe" ? "danger" : "warning",
           }))}
@@ -750,7 +781,9 @@ function OverviewSection({
             description: `دوز: ${formatMissing(medication.dose)} · تکرار: ${formatMissing(
               medication.frequency,
             )}`,
-            meta: medication.route,
+            meta: medication.route
+              ? formatOptionLabel(medicationRouteOptions, medication.route)
+              : null,
             targetSection: "medical-history",
           }))}
           onNavigate={onNavigateToSection}
@@ -836,8 +869,11 @@ function PersonalInfoSection({ summary }: { summary: PatientSummary }) {
       <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <InfoItem label="نام کامل" value={summary.fullName} />
         <InfoItem label="تاریخ تولد / سن" value={formatBirthDate(summary.birthDate)} />
-        <InfoItem label="جنسیت" value={summary.gender} />
-        <InfoItem label="گروه خونی" value={summary.bloodType} />
+        <InfoItem label="جنسیت" value={formatOptionLabel(genderOptions, summary.gender)} />
+        <InfoItem
+          label="گروه خونی"
+          value={formatOptionLabel(bloodTypeOptions, summary.bloodType)}
+        />
         <InfoItem label="موبایل" value={summary.mobileNumber} />
         <InfoItem label="کد ملی" value={summary.nationalCode} />
         <InfoItem label="ایمیل" value={summary.email} />
@@ -943,10 +979,10 @@ export default function PatientRecordShell({
                 {formatBirthDate(summary.birthDate)}
               </span>
               <span className="rounded-md bg-slate-100 px-2.5 py-1">
-                جنسیت: {formatMissing(summary.gender)}
+                جنسیت: {formatOptionLabel(genderOptions, summary.gender)}
               </span>
               <span className="rounded-md bg-slate-100 px-2.5 py-1">
-                گروه خونی: {formatMissing(summary.bloodType)}
+                گروه خونی: {formatOptionLabel(bloodTypeOptions, summary.bloodType)}
               </span>
               <span className="rounded-md bg-slate-100 px-2.5 py-1">
                 موبایل: {formatMissing(summary.mobileNumber)}

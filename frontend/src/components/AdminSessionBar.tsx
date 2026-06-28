@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getCurrentAdmin, logoutAdmin, type AdminMeResponse } from "@/lib/api";
+import { getHealthOptionLabel, productRoleOptions } from "@/lib/health-options";
 
 type SessionState =
   | { status: "loading"; admin: null; message: null }
@@ -77,7 +78,7 @@ export default function AdminSessionBar() {
                 {session.admin.displayName || "ادمین Health Core"}
               </span>
               <span className="rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
-                {session.admin.productRole}
+                {getHealthOptionLabel(productRoleOptions, session.admin.productRole)}
               </span>
             </div>
           ) : (
